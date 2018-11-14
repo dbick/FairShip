@@ -50,3 +50,8 @@ c++
 cc
 config.sh
 lcgenv.sh
+
+#IDE project files
+.project
+.cproject
+.settings
