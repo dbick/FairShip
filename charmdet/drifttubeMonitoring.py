@@ -99,7 +99,6 @@ if saveGeofile:
  saveBasicParameters.execute("muflux_geofile.root",ShipGeo)
 
 # alignment
-# From Stefan: Start here for alignment
 xpos = {}
 xposb = {}
 ypos = {}

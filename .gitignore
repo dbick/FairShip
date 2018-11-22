@@ -55,3 +55,4 @@ lcgenv.sh
 .project
 .cproject
 .settings
+.pydevproject
