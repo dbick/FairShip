@@ -2615,6 +2615,7 @@ if withCorrections:
           2:[-0.003,-0.003,-0.003,-0.003]}
  slopeY = {2:[0.005,0.004,0.004,0.005]}
 
+#TODO Implement Alignment module-wise instead of layer-wise (Stefan)
 def correctAlignment(hit):
  detID = hit.GetDetectorID()
  if alignConstants.has_key('strawPositions'):

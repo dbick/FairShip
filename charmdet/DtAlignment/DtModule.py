@@ -30,10 +30,10 @@ class DtModule(DetElement):
             coordinate of the module center in z direction
             
         theta : np.float64
-            rotation of the module w.r.t the global x axis
+            rotation of the module w.r.t the global z axis
             
         phi : np.float64
-            rotation of the module w.r.t the global z axis
+            rotation of the module w.r.t the global y axis
             
         '''
         super().__init__(x,y,z,theta,phi)
@@ -63,7 +63,6 @@ class DtModule(DetElement):
         super().apply_translation(self,dx,dy,dz)
         for tube in self._list_of_tubes:
             tube.apply_translation(dx,dy,dz)
-        #TODO update tube location
         
     def apply_rotation(self,dTheta,dPhi):
         '''Apply rotation to the whole module
@@ -73,16 +72,15 @@ class DtModule(DetElement):
         Parameters
         ----------
         dTheta : np.float64
-            Change of rotation around the x axis
+            Change of rotation around the z axis
         
         dPhi : np.float64
-            Change of rotation around the z axis
+            Change of rotation around the y axis
         '''
         
         super().apply_rotation(self,dTheta,dPhi)
         for tube in self._list_of_tubes:
             tube.apply_rotation(dTheta,dPhi)
-        #TODO update each tube
         
     def get_tubes(self):
         '''Get a list of tubes in this module

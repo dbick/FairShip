@@ -1,12 +1,14 @@
 import numpy as np
 
+#TODO: Two rotational angles only applicable to vectors - consider using Euler angles for Module
+
 class Abstract_DetElement:
     '''Detector element abstract class. Do not instantiate.
     Contains basic members and methods needed for every detector element
     '''
     
     def __init__(self,x,y,z,theta,phi):
-         '''Constructor
+        '''Constructor
             
         Initializes a detector element from the coordinates x,y and z of
         the geometric center of this element and two angles of rotation w.r.t
@@ -15,19 +17,19 @@ class Abstract_DetElement:
         Parameters
         ----------
         x : np.float64
-            coordinate of the module center in x direction
+            coordinate of the element's center in x direction
         
         y : np.float64
-            coordinate of the module center in y direction
+            coordinate of the element's center in y direction
             
         z : np.float64
-            coordinate of the module center in z direction
+            coordinate of the element's center in z direction
             
         theta : np.float64
-            rotation of the module w.r.t the global x axis
+            rotation of the element's w.r.t the global z axis
             
         phi : np.float64
-            rotation of the module w.r.t the global z axis
+            rotation of the element's w.r.t the global y axis
         '''
         self._position = np.array([x,y,z], dtype=np.float64)
         self._rotation = np.array([theta,phi], dtype = np.float64)
@@ -59,12 +61,11 @@ class Abstract_DetElement:
         Parameters
         ----------
         dTheta : np.float64
-            Change of rotation around the x axis
+            Change of rotation around the z axis
         
         dPhi : np.float64
-            Change of rotation around the z axis
+            Change of rotation around the y axis
         '''
         
         self._rotation[0] += dTheta
         self._rotation[1] += dPhi
-        #TODO update each tube
