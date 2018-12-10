@@ -35,7 +35,7 @@ class Abstract_DetElement:
             rotation of the element w.r.t the global x axis
         '''
         self._position = np.array([x,y,z], dtype=np.float64)
-        self._rotation = np.array([theta,phi,rhoo], dtype = np.float64)
+        self._rotation = np.array([theta,phi,rho], dtype = np.float64)
                 
     def apply_translation(self,dx,dy,dz):
         '''Apply a translation to the whole module
