@@ -7,7 +7,7 @@ class DtModule(DetElement):
     Defines a module of drift tubes which resembles a physical assembly of
     drift tubes. These are arranged in four layers of twelve tubes each.
     '''
-    def __init__(self,list_of_tubes,x,y,z,theta,phi):
+    def __init__(self,list_of_tubes,x,y,z,theta,phi,rho):
         '''Constructor
             
         Initializes a drift tube module from the list of tubes
@@ -34,6 +34,9 @@ class DtModule(DetElement):
             
         phi : np.float64
             rotation of the module w.r.t the global y axis
+            
+        rho : np.float64
+            rotation of the module w.r.t the global x axis
             
         '''
         super().__init__(x,y,z,theta,phi)
@@ -64,10 +67,12 @@ class DtModule(DetElement):
         for tube in self._list_of_tubes:
             tube.apply_translation(dx,dy,dz)
         
-    def apply_rotation(self,dTheta,dPhi):
+    def apply_rotation(self,dTheta,dPhi,dRho):
         '''Apply rotation to the whole module
         Applies a translation to the whole module assuming that the relative
         orientations of the individual tubes in the module remain unchanged.
+        This updates the tubes center positions first and then rotates them to match the
+        module's orientation
         
         Parameters
         ----------
@@ -76,11 +81,19 @@ class DtModule(DetElement):
         
         dPhi : np.float64
             Change of rotation around the y axis
+            
+        dRho : np.float64
+            Change of rotation around the x axis
         '''
         
-        super().apply_rotation(self,dTheta,dPhi)
+        super().apply_rotation(self,dTheta,dPhi,dRho)
+        
         for tube in self._list_of_tubes:
-            tube.apply_rotation(dTheta,dPhi)
+            vec_tubecenter_modcenter = [tube._position[0] - self._position[0],
+                                        tube._position[1] - self._position[1],
+                                        tube._position[2] - self._position[2]]
+            #TODO rotate vector with passed angles
+            tube.apply_rotation(dTheta,dPhi,dRho)
         
     def get_tubes(self):
         '''Get a list of tubes in this module

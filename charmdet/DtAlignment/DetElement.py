@@ -7,7 +7,7 @@ class Abstract_DetElement:
     Contains basic members and methods needed for every detector element
     '''
     
-    def __init__(self,x,y,z,theta,phi):
+    def __init__(self,x,y,z,theta,phi,rho):
         '''Constructor
             
         Initializes a detector element from the coordinates x,y and z of
@@ -26,13 +26,16 @@ class Abstract_DetElement:
             coordinate of the element's center in z direction
             
         theta : np.float64
-            rotation of the element's w.r.t the global z axis
+            rotation of the element w.r.t the global z axis
             
         phi : np.float64
-            rotation of the element's w.r.t the global y axis
+            rotation of the element w.r.t the global y axis
+        
+        rho : np.float64
+            rotation of the element w.r.t the global x axis
         '''
         self._position = np.array([x,y,z], dtype=np.float64)
-        self._rotation = np.array([theta,phi], dtype = np.float64)
+        self._rotation = np.array([theta,phi,rhoo], dtype = np.float64)
                 
     def apply_translation(self,dx,dy,dz):
         '''Apply a translation to the whole module
@@ -54,7 +57,7 @@ class Abstract_DetElement:
         self._position[1] += dy
         self._position[2] += dz
         
-    def apply_rotation(self,dTheta,dPhi):
+    def apply_rotation(self,dTheta,dPhi,dRho):
         '''Apply rotation to the detector element
         Applies a translation to the element.
         
@@ -69,3 +72,4 @@ class Abstract_DetElement:
         
         self._rotation[0] += dTheta
         self._rotation[1] += dPhi
+        self._rotation[2] += dRho
