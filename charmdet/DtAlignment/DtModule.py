@@ -31,16 +31,17 @@ class DtModule(DetElement):
             coordinate of the module center in z direction
             
         phi : np.float64
-            rotation of the module w.r.t the global z axis
+            rotation of the module euler angle (x-convention)
             
         theta : np.float64
-            rotation of the module w.r.t the global y axis
+            rotation of the module euler angle (x-convention)
             
         psi : np.float64
-            rotation of the module w.r.t the global x axis
+            rotation of the module euler angle (x-convention)
             
         '''
-        super().__init__(x,y,z,phi,theta,psi)
+        DetElement.__init__(self,x,y,z,phi,theta,psi) #python2
+        #super().__init__(x,y,z,phi,theta,psi) #python3
         self._is_aligned = False
         #TODO consider deep copy
         self._list_of_tubes = list_of_tubes
@@ -64,7 +65,8 @@ class DtModule(DetElement):
         dz : np.float64
             Translation in z direction
         '''
-        super().apply_translation(self,dx,dy,dz)
+        DetElement.apply_translation(self,dx,dy,dz) #python2
+        # super().apply_translation(dx,dy,dz) #python3
         for tube in self._list_of_tubes:
             tube.apply_translation(dx,dy,dz)
         
@@ -88,7 +90,8 @@ class DtModule(DetElement):
         dPsi : np.float64
             Rotation angle psi
         '''
-        super().apply_rotation(self,dPhi,dTheta,dPsi)
+        DetElement.apply_rotation(self,dPhi,dTheta,dPsi) #python2
+        #super().apply_rotation(dPhi,dTheta,dPsi) #python3
 
         # First: Update tube positions after module rotation, then update tube rotation to be the same as for module      
         for tube in self._list_of_tubes:

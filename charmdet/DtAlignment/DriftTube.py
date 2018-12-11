@@ -3,15 +3,42 @@ from ROOT import TVector3
 import shipunit as u
 
 class DriftTube(DetElement):
+    """Representation of a drift tube. It holds a position containing its
+    geometric center position as well as its rotation as a ROOT TRotation object.
+    Additionally, it holds its unique detector ID.    
+    """
     #TODO check if constructor should take tube center positions and rotation instead
-    def __init__(self,detId,vec_bottom,vec_top):
+    def __init__(self,detId,x,y,z,phi = 0,theta = 0,psi = 0):
         '''Constructor. Initializes a drift tube.
+        In terms of rotation the rotational angles 0,0,0 correspond to the
+        tube in vertical orientation.
         
         Parameters
         ----------
         id : int
             Unique detector ID of this drift tube
+            
+        x : np.float64
+            coordinate of the tube's center in x direction
+        
+        y : np.float64
+            coordinate of the tube's center in y direction
+            
+        z : np.float64
+            coordinate of the tube's center in z direction
+            
+        phi : np.float64
+            rotation of the tube euler angle (x-convention)
+            
+        theta : np.float64
+            rotation of the tube euler angle (x-convention)
+            
+        psi : np.float64
+            rotation of the tube euler angle (x-convention)  
         '''
+        DetElement.__init__(self,x,y,z,phi,theta,psi) # python2
+        #super().__init__(x,y,z,phi,theta,psi) #python3
+        
         #TODO: Read length from TGeo
         if(int(detId / 1000000) < 3):
             self.length = 100 * u.cm
@@ -19,8 +46,6 @@ class DriftTube(DetElement):
             self._length = 160 * u.cm
             
         self._ID = detId
-        self._bottom = vec_bottom
-        self._top = vec_top
         
     def wire_end_positions(self):
         '''Returns the end positions of the wire in a global reference system.
@@ -33,13 +58,16 @@ class DriftTube(DetElement):
         TVector3
             Bottom position of the wire
         '''
+        global_y_axis = TVector3(0,1,0)
         l = self._length / 2
-        x_top = self._position[0] #TODO consider rotation
-        y_top = self._position[1] + l #TODO consider rotation
-        z_top = self._position[2] #TODO consider rotation
+        tube_axis = self._rotation * global_y_axis
+        #TODO: test if rotation is implemented correctly
+        x_top = self._position[0] + (l * tube_axis.Unit())[0]
+        y_top = self._position[1] + (l * tube_axis.Unit())[1]
+        z_top = self._position[2] + (l * tube_axis.Unit())[2]
         
-        x_bot = self._position[0] #TODO consider rotation
-        y_bot = self._position[1] - l #TODO consider rotation
-        z_bot = self._position[2] #TODO consider rotation
+        x_bot = self._position[0] - (l * tube_axis.Unit())[0]
+        y_bot = self._position[1] - (l * tube_axis.Unit())[1]
+        z_bot = self._position[2] - (l * tube_axis.Unit())[2]
         
         return TVector3(x_top,y_top,z_top), TVector3(x_bot,y_bot,z_bot)
