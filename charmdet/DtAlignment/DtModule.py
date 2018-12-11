@@ -1,13 +1,14 @@
 import numpy as np
 import DtAlignment.DriftTube as Tube
 import DtAlignment.DetElement as DetElement
+from ROOT import TRotation, TVector3
 
 class DtModule(DetElement):
     '''Drift tube module: Physical assembly of 48 drift tubes
     Defines a module of drift tubes which resembles a physical assembly of
     drift tubes. These are arranged in four layers of twelve tubes each.
     '''
-    def __init__(self,list_of_tubes,x,y,z,theta,phi,rho):
+    def __init__(self,list_of_tubes,x,y,z,phi = 0,theta = 0,psi = 0):
         '''Constructor
             
         Initializes a drift tube module from the list of tubes
@@ -29,17 +30,17 @@ class DtModule(DetElement):
         z : np.float64
             coordinate of the module center in z direction
             
-        theta : np.float64
+        phi : np.float64
             rotation of the module w.r.t the global z axis
             
-        phi : np.float64
+        theta : np.float64
             rotation of the module w.r.t the global y axis
             
-        rho : np.float64
+        psi : np.float64
             rotation of the module w.r.t the global x axis
             
         '''
-        super().__init__(x,y,z,theta,phi)
+        super().__init__(x,y,z,phi,theta,psi)
         self._is_aligned = False
         #TODO consider deep copy
         self._list_of_tubes = list_of_tubes
@@ -67,33 +68,35 @@ class DtModule(DetElement):
         for tube in self._list_of_tubes:
             tube.apply_translation(dx,dy,dz)
         
-    def apply_rotation(self,dTheta,dPhi,dRho):
-        '''Apply rotation to the whole module
+    def apply_rotation(self,dPhi,dTheta,dPsi):
+        '''Apply a rotation to the whole module using the x-convention.
         Applies a translation to the whole module assuming that the relative
         orientations of the individual tubes in the module remain unchanged.
         This updates the tubes center positions first and then rotates them to match the
         module's orientation
+        This rotates the detector element starting from its original rotation. Hence, it doesn't set
+        the passed angles as new angles unless the element has zero rotation before.
         
         Parameters
         ----------
-        dTheta : np.float64
-            Change of rotation around the z axis
-        
         dPhi : np.float64
-            Change of rotation around the y axis
+            Rotation angle phi
+        
+        dThata : np.float64
+            Rotation angle theta
             
-        dRho : np.float64
-            Change of rotation around the x axis
+        dPsi : np.float64
+            Rotation angle psi
         '''
-        
-        super().apply_rotation(self,dTheta,dPhi,dRho)
-        
+        super().apply_rotation(self,dPhi,dTheta,dPsi)
+
+        # First: Update tube positions after module rotation, then update tube rotation to be the same as for module      
         for tube in self._list_of_tubes:
-            vec_tubecenter_modcenter = [tube._position[0] - self._position[0],
-                                        tube._position[1] - self._position[1],
-                                        tube._position[2] - self._position[2]]
-            #TODO rotate vector with passed angles
-            tube.apply_rotation(dTheta,dPhi,dRho)
+            vec_tubecenter_modcenter = tube.get_center_position() - self._position
+            new_tubecenter = self._rotation * vec_tubecenter_modcenter
+            tube_translation = new_tubecenter - vec_tubecenter_modcenter
+            tube.apply_translation(tube_translation[0],tube_translation[1],tube_translation[2])
+            tube.apply_rotation(dPhi,dTheta,dPsi)
         
     def get_tubes(self):
         '''Get a list of tubes in this module
