@@ -8,6 +8,7 @@ class DtModule(DetElement):
     Defines a module of drift tubes which resembles a physical assembly of
     drift tubes. These are arranged in four layers of twelve tubes each.
     '''
+    
     def __init__(self,list_of_tubes,x,y,z,phi = 0,theta = 0,psi = 0):
         '''Constructor
             
@@ -46,7 +47,7 @@ class DtModule(DetElement):
         #TODO consider deep copy
         self._list_of_tubes = list_of_tubes
        
-        
+    #Overwritten from DetElement
     def apply_translation(self,dx,dy,dz):
         '''Apply a translation to the whole module
         
@@ -69,7 +70,8 @@ class DtModule(DetElement):
         # super().apply_translation(dx,dy,dz) #python3
         for tube in self._list_of_tubes:
             tube.apply_translation(dx,dy,dz)
-        
+
+    #Overwritten from DetElement
     def apply_rotation(self,dPhi,dTheta,dPsi):
         '''Apply a rotation to the whole module using the x-convention.
         Applies a translation to the whole module assuming that the relative
@@ -97,7 +99,67 @@ class DtModule(DetElement):
         for tube in self._list_of_tubes:
             __update_tube_pos_after_rotation(tube)
             tube.apply_rotation(dPhi,dTheta,dPsi)
+
+    #Overwritten from DetElement
+    def rotate_x(self,rad):
+        """Rotate the whole module around the x-axis.
+        This rotates the module an angle rad (in radians) w.r.t the global x-axis.
+        This is an incremental rotation, hence it starts from the rotation the detector element has before
+        calling this function.
+        This updates the positions of the tube center positions after rotating the
+        module as well.
         
+        Parameters
+        ----------
+        rad : np.float64
+            Rotation incrementation w.r.t the global x axis
+        """
+        DetElement.rotate_x(self,rad) #python2
+        #super().rotate_x(rad) #python3
+        for tube in self._list_of_tubes:
+            __update__update_tube_pos_after_rotation(tube)
+            tube.rotate_x(rad)
+
+    #Overwritten from DetElement
+    def rotate_y(self,rad):
+        """Rotate the whole module around the y-axis.
+        This rotates the module an angle rad (in radians) w.r.t the global y-axis.
+        This is an incremental rotation, hence it starts from the rotation the detector element has before
+        calling this function.
+        This updates the positions of the tube center positions after rotating the
+        module as well.
+        
+        Parameters
+        ----------
+        rad : np.float64
+            Rotation incrementation w.r.t the global x axis
+        """
+        DetElement.rotate_y(self,rad) #python2
+        #super().rotate_y(rad) #python3
+        for tube in self._list_of_tubes:
+            __update__update_tube_pos_after_rotation(tube)
+            tube.rotate_y(rad)
+
+    #Overwritten from DetElement
+    def rotate_z(self,rad):
+        """Rotate the whole module around the z-axis.
+        This rotates the module an angle rad (in radians) w.r.t the global z-axis.
+        This is an incremental rotation, hence it starts from the rotation the detector element has before
+        calling this function.
+        This updates the positions of the tube center positions after rotating the
+        module as well.
+        
+        Parameters
+        ----------
+        rad : np.float64
+            Rotation incrementation w.r.t the global x axis
+        """
+        DetElement.rotate_z(self,rad) #python2
+        #super().rotate_z(rad) #python3
+        for tube in self._list_of_tubes:
+            __update__update_tube_pos_after_rotation(tube)
+            tube.rotate_z(rad)
+            
     def get_tubes(self):
         '''Get a list of tubes in this module
         Returns a list of drift tubes that are part of this module
@@ -111,6 +173,7 @@ class DtModule(DetElement):
 
     
     #Private helper functions
+    
     def __update_tube_pos_after_rotation(self,tube):
         '''Private helper method! Do not call from outside!
         Update the center positions of a tube after the rotation of the module.
