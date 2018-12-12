@@ -56,3 +56,4 @@ lcgenv.sh
 .cproject
 .settings
 .pydevproject
+charmdet/DtAlignment/UML/*.html
