@@ -95,10 +95,7 @@ class DtModule(DetElement):
 
         # First: Update tube positions after module rotation, then update tube rotation to be the same as for module      
         for tube in self._list_of_tubes:
-            vec_tubecenter_modcenter = tube.get_center_position() - self._position
-            new_tubecenter = self._rotation * vec_tubecenter_modcenter
-            tube_translation = new_tubecenter - vec_tubecenter_modcenter
-            tube.apply_translation(tube_translation[0],tube_translation[1],tube_translation[2])
+            __update_tube_pos_after_rotation(tube)
             tube.apply_rotation(dPhi,dTheta,dPsi)
         
     def get_tubes(self):
@@ -111,3 +108,22 @@ class DtModule(DetElement):
             List of tubes contained in this module
         '''
         return self._list_of_tubes
+
+    
+    #Private helper functions
+    def __update_tube_pos_after_rotation(self,tube):
+        '''Private helper method! Do not call from outside!
+        Update the center positions of a tube after the rotation of the module.
+        Should be called after a rotation for each tube that is part of the module
+
+        NOTE: This method is _NOT_ part of this class' interface
+
+        Parameters
+        ----------
+        tube : DriftTube
+            Tube thats center position shall be updated
+        '''
+        vec_tubecenter_modcenter = tube.get_center_position() - self._position
+        new_tubecenter = self._rotation * vec_tubecenter_modcenter
+        tube_translation = new_tubecenter - vec_tubecenter_modcenter
+        tube.apply_translation(tube_translation[0],tube_translation[1],tube_translation[2])

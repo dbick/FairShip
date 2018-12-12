@@ -61,13 +61,14 @@ class DriftTube(DetElement):
         global_y_axis = TVector3(0,1,0)
         l = self._length / 2
         tube_axis = self._rotation * global_y_axis
+        tube_axis.SetMag(l)
         #TODO: test if rotation is implemented correctly
-        x_top = self._position[0] + (l * tube_axis.Unit())[0]
-        y_top = self._position[1] + (l * tube_axis.Unit())[1]
-        z_top = self._position[2] + (l * tube_axis.Unit())[2]
+        x_top = self._position[0] + tube_axis[0]
+        y_top = self._position[1] + tube_axis[1]
+        z_top = self._position[2] + tube_axis[2]
         
-        x_bot = self._position[0] - (l * tube_axis.Unit())[0]
-        y_bot = self._position[1] - (l * tube_axis.Unit())[1]
-        z_bot = self._position[2] - (l * tube_axis.Unit())[2]
+        x_bot = self._position[0] - tube_axis[0]
+        y_bot = self._position[1] - tube_axis[1]
+        z_bot = self._position[2] - tube_axis[2]
         
         return TVector3(x_top,y_top,z_top), TVector3(x_bot,y_bot,z_bot)
