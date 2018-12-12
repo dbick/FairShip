@@ -1,6 +1,6 @@
 import numpy as np
-import DtAlignment.DriftTube as Tube
-import DtAlignment.DetElement as DetElement
+from DriftTube import DriftTube as Tube
+from DetElement import Abstract_DetElement as DetElement
 from ROOT import TRotation, TVector3
 
 class DtModule(DetElement):
