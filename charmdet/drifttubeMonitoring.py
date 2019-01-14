@@ -323,28 +323,32 @@ for i in range(12):
  xpos[n-i] = start - delta * i
  ypos[n-i] = ypos['T1X']
  zpos[n-i] = zpos['T1X']-deltaZ
- tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
+ y_center = ypos[n-i][1] + ((ypos[n-i][0]-ypos[n-i][1]) / 2)
+ tubes['T1X'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 10012001
 start =  daniel['T1_MA_02'][0] +1.1 #   (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. +1.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64-deltaZ
- tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T1X'].append(DriftTube(n-i,xpos[n+i],y_center,zpos[n+i]))
 n = 10102001
 start = start -1.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2.
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64+4.06-deltaZ
- tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 10112001
 start = start - 2.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. - 2.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64+4.06+3.64-deltaZ
- tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
 dt_modules['T1X'] = DtModule(tubes['T1X'],0,0,0)
 for tube in dt_modules['T1X'].get_tubes():
