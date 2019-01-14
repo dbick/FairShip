@@ -1,0 +1,5 @@
+set title 'Tube center positions'
+set xlabel 'x [cm]'
+set ylabel 'z [cm]'
+set zlabel 'y [cm]'
+splot 'T1X.dat' u 1:3:2 t 'T1X', 'T1U.dat' u 1:3:2 t 'T1U'
