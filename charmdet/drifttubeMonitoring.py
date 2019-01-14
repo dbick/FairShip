@@ -1,8 +1,8 @@
 import ROOT,os,time,sys,operator,atexit
 from decorators import *
 import __builtin__ as builtin
-from DtAlignment.DtModule import DtModule
-from testing import list_of_tubes
+import DtAlignment.DriftTube as DriftTube
+import DtAlignment.DtModule as DtModule
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
 # -----Timer--------------------------------------------------------
@@ -305,7 +305,9 @@ rn['T2_MC_03'] = rn['T1_MB_03']
 
 #Stefan: Build set of DT modules
 dt_modules = {}
+tubes = {}
 
+tubes['T1X'] = []
 #overall z positioning
 #T1X:
 zpos['T1X'] = (daniel['T1_MA_01'][2]+daniel['T1_MA_02'][2]+daniel['T1_MA_03'][2]+daniel['T1_MA_04'][2])/4. + 3.03
@@ -321,27 +323,35 @@ for i in range(12):
  xpos[n-i] = start - delta * i
  ypos[n-i] = ypos['T1X']
  zpos[n-i] = zpos['T1X']-deltaZ
+ tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
 n = 10012001
 start =  daniel['T1_MA_02'][0] +1.1 #   (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. +1.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64-deltaZ
+ tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
 n = 10102001
 start = start -1.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2.
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64+4.06-deltaZ
+ tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
 n = 10112001
 start = start - 2.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. - 2.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64+4.06+3.64-deltaZ
+ tubes['T1X'].append(DriftTube(n-i,xpos[n-i],ypos[n-i],zpos[n-i]))
  
-list_of_tubes = []
-dt_modules['T1X'] = DtModule(list_of_tubes,0,0,0,0,0,0)
+dt_modules['T1X'] = DtModule(tubes['T1X'],0,0,0)
+for tube in dt_modules['T1X'].get_tubes():
+    x = tube.get_center_position()[0]
+    y = tube.get_center_position()[1]
+    z = tube.get_center_position()[2]
+    print("{}\t{}\t{}".format(x,y,z))
 
 #T1u: take survey corrected points
 zpos['T1U'] = (daniel['T1_MB_01'][2]+daniel['T1_MB_02'][2]+daniel['T1_MB_03'][2]+daniel['T1_MB_04'][2])/4. - 3.03 -3.64 -4.06 -3.64
