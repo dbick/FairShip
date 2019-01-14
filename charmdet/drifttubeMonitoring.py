@@ -1,6 +1,8 @@
 import ROOT,os,time,sys,operator,atexit
 from decorators import *
 import __builtin__ as builtin
+from DtAlignment.DtModule import DtModule
+from testing import list_of_tubes
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
 # -----Timer--------------------------------------------------------
@@ -301,6 +303,9 @@ rn['T2_MC_02'] = rn['T1_MB_02']
 rn['T2_MC_04'] = rn['T1_MB_04']
 rn['T2_MC_03'] = rn['T1_MB_03']
 
+#Stefan: Build set of DT modules
+dt_modules = {}
+
 #overall z positioning
 #T1X:
 zpos['T1X'] = (daniel['T1_MA_01'][2]+daniel['T1_MA_02'][2]+daniel['T1_MA_03'][2]+daniel['T1_MA_04'][2])/4. + 3.03
@@ -334,6 +339,9 @@ for i in range(12):
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T1X']
  zpos[n+i] = zpos['T1X']+3.64+4.06+3.64-deltaZ
+ 
+list_of_tubes = []
+dt_modules['T1X'] = DtModule(list_of_tubes,0,0,0,0,0,0)
 
 #T1u: take survey corrected points
 zpos['T1U'] = (daniel['T1_MB_01'][2]+daniel['T1_MB_02'][2]+daniel['T1_MB_03'][2]+daniel['T1_MB_04'][2])/4. - 3.03 -3.64 -4.06 -3.64
