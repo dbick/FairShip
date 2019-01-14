@@ -117,7 +117,7 @@ class DtModule(DetElement):
         DetElement.rotate_x(self,rad) #python2
         #super().rotate_x(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update__update_tube_pos_after_rotation(tube)
             tube.rotate_x(rad)
 
     #Overwritten from DetElement
@@ -137,7 +137,7 @@ class DtModule(DetElement):
         DetElement.rotate_y(self,rad) #python2
         #super().rotate_y(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update__update_tube_pos_after_rotation(tube)
             tube.rotate_y(rad)
 
     #Overwritten from DetElement
@@ -157,7 +157,7 @@ class DtModule(DetElement):
         DetElement.rotate_z(self,rad) #python2
         #super().rotate_z(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update_tube_pos_after_rotation(tube)
             tube.rotate_z(rad)
             
     def get_tubes(self):
