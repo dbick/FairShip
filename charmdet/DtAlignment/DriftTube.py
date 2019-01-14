@@ -1,4 +1,4 @@
-import DtAlignment.DetElement as DetElement
+from DetElement import Abstract_DetElement as DetElement
 from ROOT import TVector3
 import shipunit as u
 

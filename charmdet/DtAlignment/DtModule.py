@@ -1,6 +1,6 @@
 import numpy as np
-import DtAlignment.DriftTube as Tube
-import DtAlignment.DetElement as DetElement
+from DriftTube import DriftTube as Tube
+from DetElement import Abstract_DetElement as DetElement
 from ROOT import TRotation, TVector3
 
 class DtModule(DetElement):
@@ -97,7 +97,7 @@ class DtModule(DetElement):
 
         # First: Update tube positions after module rotation, then update tube rotation to be the same as for module      
         for tube in self._list_of_tubes:
-            __update_tube_pos_after_rotation(tube)
+            self.__update_tube_pos_after_rotation(tube)
             tube.apply_rotation(dPhi,dTheta,dPsi)
 
     #Overwritten from DetElement
@@ -117,7 +117,7 @@ class DtModule(DetElement):
         DetElement.rotate_x(self,rad) #python2
         #super().rotate_x(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update__update_tube_pos_after_rotation(tube)
             tube.rotate_x(rad)
 
     #Overwritten from DetElement
@@ -137,7 +137,7 @@ class DtModule(DetElement):
         DetElement.rotate_y(self,rad) #python2
         #super().rotate_y(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update__update_tube_pos_after_rotation(tube)
             tube.rotate_y(rad)
 
     #Overwritten from DetElement
@@ -157,7 +157,7 @@ class DtModule(DetElement):
         DetElement.rotate_z(self,rad) #python2
         #super().rotate_z(rad) #python3
         for tube in self._list_of_tubes:
-            __update__update_tube_pos_after_rotation(tube)
+            self.__update_tube_pos_after_rotation(tube)
             tube.rotate_z(rad)
             
     def get_tubes(self):
@@ -190,3 +190,4 @@ class DtModule(DetElement):
         new_tubecenter = self._rotation * vec_tubecenter_modcenter
         tube_translation = new_tubecenter - vec_tubecenter_modcenter
         tube.apply_translation(tube_translation[0],tube_translation[1],tube_translation[2])
+        
