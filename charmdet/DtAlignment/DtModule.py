@@ -97,7 +97,7 @@ class DtModule(DetElement):
 
         # First: Update tube positions after module rotation, then update tube rotation to be the same as for module      
         for tube in self._list_of_tubes:
-            __update_tube_pos_after_rotation(tube)
+            self.__update_tube_pos_after_rotation(tube)
             tube.apply_rotation(dPhi,dTheta,dPsi)
 
     #Overwritten from DetElement
@@ -190,3 +190,4 @@ class DtModule(DetElement):
         new_tubecenter = self._rotation * vec_tubecenter_modcenter
         tube_translation = new_tubecenter - vec_tubecenter_modcenter
         tube.apply_translation(tube_translation[0],tube_translation[1],tube_translation[2])
+        
