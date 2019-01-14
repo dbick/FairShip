@@ -3,6 +3,7 @@ from decorators import *
 import __builtin__ as builtin
 import DtAlignment.DriftTube as DriftTube
 import DtAlignment.DtModule as DtModule
+import DtAlignment.utils
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
 # -----Timer--------------------------------------------------------
@@ -351,12 +352,7 @@ for i in range(12):
  tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
 dt_modules['T1X'] = DtModule(tubes['T1X'],0,0,0)
-for tube in dt_modules['T1X'].get_tubes():
-    x = tube.get_center_position()[0]
-    y = tube.get_center_position()[1]
-    z = tube.get_center_position()[2]
-    print("{}\t{}\t{}".format(x,y,z))
-
+tubes['T1U'] = []
 #T1u: take survey corrected points
 zpos['T1U'] = (daniel['T1_MB_01'][2]+daniel['T1_MB_02'][2]+daniel['T1_MB_03'][2]+daniel['T1_MB_04'][2])/4. - 3.03 -3.64 -4.06 -3.64
 angleu1 = ROOT.TMath.ATan2((daniel['T1_MB_01'][0]-daniel['T1_MB_04'][0]),(daniel['T1_MB_01'][1]-daniel['T1_MB_04'][1]))
@@ -364,6 +360,9 @@ angleu2 = ROOT.TMath.ATan2((daniel['T1_MB_02'][0]-daniel['T1_MB_03'][0]),(daniel
 angleu = (angleu1+angleu2)/2.
 
 angle = -angleu # 60.208/180.*ROOT.TMath.Pi()  ???
+#Stefan: convert angle to Euler angles
+phi,theta,psi = DtAlignment.utils.z_rotation_to_euler_angles(angle)
+
 tx,ty=0,0
 for i in range(1,5):
  p = 'T1_MB_0'+str(i)
@@ -389,6 +388,12 @@ for i in range(12):
  xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n-i] = zpos['T1U']-deltaZ
+ #build DriftTube object
+ top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+ bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T1U'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
+ 
 n = 11012001
 start = (rn['T1_MB_02'][0]+rn['T1_MB_03'][0])/2.+1.1
 for i in range(12): 
@@ -400,6 +405,10 @@ for i in range(12):
  xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n+i] = zpos['T1U']+3.64-deltaZ
+ top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+ bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 11102001
 start = (rn['T1_MB_02'][0]+rn['T1_MB_03'][0])/2.
 for i in range(12): 
@@ -411,6 +420,10 @@ for i in range(12):
  xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n+i] = zpos['T1U']+3.64+4.06 -deltaZ
+ top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+ bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 11112001
 start = start - 2.1
 for i in range(12): 
@@ -422,6 +435,12 @@ for i in range(12):
  xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n+i] = zpos['T1U']+3.64+4.06+3.64-deltaZ
+ top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+ bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
+ 
+dt_modules['T1U'] = DtModule(tubes['T1U'],0,0,0,phi,theta,psi)
 
 # T2X:
 zpos['T2X'] = (daniel['T2_MD_01'][2]+daniel['T2_MD_02'][2]+daniel['T2_MD_03'][2]+daniel['T2_MD_04'][2])/4. - 3.03 - 3.64 - 4.06 - 3.6480

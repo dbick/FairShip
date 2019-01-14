@@ -7,7 +7,6 @@ class DriftTube(DetElement):
     geometric center position as well as its rotation as a ROOT TRotation object.
     Additionally, it holds its unique detector ID.    
     """
-    #TODO check if constructor should take tube center positions and rotation instead
     def __init__(self,detId,x,y,z,phi = 0,theta = 0,psi = 0):
         '''Constructor. Initializes a drift tube.
         In terms of rotation the rotational angles 0,0,0 correspond to the
@@ -47,6 +46,7 @@ class DriftTube(DetElement):
             
         self._ID = detId
         
+            
     def wire_end_positions(self):
         '''Returns the end positions of the wire in a global reference system.
         
