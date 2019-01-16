@@ -330,3 +330,9 @@ for tube in dt_modules['T1U'].get_tubes():
     z = tube.get_center_position()[2]
     print("{}\t{}\t{}".format(x,y,z))
     
+for module in dt_modules.keys():
+    for j in range(len(dt_modules[module].get_tubes())):
+        tube = dt_modules[module].get_tubes()[j]
+        #print("Module: {}\tTube: {}\tID: {}\tLength: {}cm".format(module,j,tube._ID,tube._length))
+        print("Module: {}\tTube: {}\tLength: {}cm".format(module,j,tube._length))
+    
