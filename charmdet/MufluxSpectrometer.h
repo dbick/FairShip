@@ -63,16 +63,6 @@ class MufluxSpectrometer:public FairDetector
     void SetTStationsX(Double_t T1x_x, Double_t T1u_x, Double_t T2x_x, Double_t T2v_x, Double_t T3x, Double_t T4x);
     void SetTStationsY(Double_t T1x_y, Double_t T1u_y, Double_t T2x_y, Double_t T2v_y, Double_t T3y, Double_t T4y);    
     //add surevy results for charm by Daniel
-    void SetT3a(Double_t SurveyCharm_T3ax, Double_t SurveyCharm_T3ay, Double_t SurveyCharm_T3az);
-    void SetT3b(Double_t SurveyCharm_T3bx, Double_t SurveyCharm_T3by, Double_t SurveyCharm_T3bz);
-    void SetT3c(Double_t SurveyCharm_T3cx, Double_t SurveyCharm_T3cy, Double_t SurveyCharm_T3cz);
-    void SetT3d(Double_t SurveyCharm_T3dx, Double_t SurveyCharm_T3dy, Double_t SurveyCharm_T3dz);
-    void SetT3t(Double_t SurveyCharm_T3tx, Double_t SurveyCharm_T3ty, Double_t SurveyCharm_T3tz);
-    void SetT4a(Double_t SurveyCharm_T4ax, Double_t SurveyCharm_T4ay, Double_t SurveyCharm_T4az);
-    void SetT4b(Double_t SurveyCharm_T4bx, Double_t SurveyCharm_T4by, Double_t SurveyCharm_T4bz);
-    void SetT4c(Double_t SurveyCharm_T4cx, Double_t SurveyCharm_T4cy, Double_t SurveyCharm_T4cz);
-    void SetT4d(Double_t SurveyCharm_T4dx, Double_t SurveyCharm_T4dy, Double_t SurveyCharm_T4dz);
-    void SetT4t(Double_t SurveyCharm_T4tx, Double_t SurveyCharm_T4ty, Double_t SurveyCharm_T4tz);
 
     void SetT3(Double_t SurveyCharm_T3x, Double_t SurveyCharm_T3y, Double_t SurveyCharm_T3z, Int_t mnb);
     void SetT4(Double_t SurveyCharm_T4x, Double_t SurveyCharm_T4y, Double_t SurveyCharm_T4z, Int_t mnb);
@@ -234,40 +224,6 @@ private:
     Double_t fSurveyCharm_T4x[5];
     Double_t fSurveyCharm_T4y[5];
     Double_t fSurveyCharm_T4z[5];
-    
-    Double_t fSurveyCharm_T3ax;
-    Double_t fSurveyCharm_T3ay;
-    Double_t fSurveyCharm_T3az;
-    Double_t fSurveyCharm_T3bx;
-    Double_t fSurveyCharm_T3by;
-    Double_t fSurveyCharm_T3bz;
-    Double_t fSurveyCharm_T3cx;
-    Double_t fSurveyCharm_T3cy;
-    Double_t fSurveyCharm_T3cz;
-    Double_t fSurveyCharm_T3dx;
-    Double_t fSurveyCharm_T3dy;
-    Double_t fSurveyCharm_T3dz;
-
-    Double_t fSurveyCharm_T3tx;
-    Double_t fSurveyCharm_T3ty;
-    Double_t fSurveyCharm_T3tz;
-
-    Double_t fSurveyCharm_T4ax;
-    Double_t fSurveyCharm_T4ay;
-    Double_t fSurveyCharm_T4az;
-    Double_t fSurveyCharm_T4bx;
-    Double_t fSurveyCharm_T4by;
-    Double_t fSurveyCharm_T4bz;
-    Double_t fSurveyCharm_T4cx;
-    Double_t fSurveyCharm_T4cy;
-    Double_t fSurveyCharm_T4cz;
-    Double_t fSurveyCharm_T4dx;
-    Double_t fSurveyCharm_T4dy;
-    Double_t fSurveyCharm_T4dz;
-
-    Double_t fSurveyCharm_T4tx;
-    Double_t fSurveyCharm_T4ty;
-    Double_t fSurveyCharm_T4tz;
     
     
     /** container for data points */
