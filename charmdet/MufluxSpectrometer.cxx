@@ -1227,9 +1227,9 @@ void MufluxSpectrometer::ConstructGeometry()
 		  TGeoCombiTrans c6s(t6s, r6s);
 		  TGeoHMatrix *h6s = new TGeoHMatrix(c6s);
 		  if(mnb==4){
-		    layerbox_34->AddNode(short_drifttube,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+1000+snb,h6s);
-		    layerbox_34->AddNode(short_gas,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+snb,h6s);
-		    layerbox_34->AddNode(short_wire,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+3000+snb,h6s);
+		    layerbox_34->AddNode(short_drifttube,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+1000+snb+12*mnb,h6s);
+		    layerbox_34->AddNode(short_gas,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+snb+12*mnb,h6s);
+		    layerbox_34->AddNode(short_wire,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+3000+snb+12*mnb,h6s);
 		  }
 		  else{
 		    layerbox_34->AddNode(drifttube,statnb*10000000+vnb*1000000+pnb*100000+lnb*10000+1000+12*mnb+snb,h6s);
