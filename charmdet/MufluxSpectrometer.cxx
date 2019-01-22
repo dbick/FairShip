@@ -1218,10 +1218,10 @@ void MufluxSpectrometer::ConstructGeometry()
 		  //tubes loop
 		  if (statnb==3){		      	      
 		    //t6s.SetTranslation(xT3[pnb*2+lnb*1]-ftr34xdim/2.+fTubes_pitch*(snb-1)-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),0,0); }
-		    t6s.SetTranslation(fSurveyCharm_T3x[mnb]+fTubes_pitch*(snb-1-2155./420)-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),fSurveyCharm_T3y[mnb],0); }
+		    t6s.SetTranslation(fSurveyCharm_T3x[mnb]+fTubes_pitch*(snb-1)-225.5*mm-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),fSurveyCharm_T3y[mnb],0); }
 		  if (statnb==4){	       	      	                
 		    //t6s.SetTranslation(xT4[pnb*2+lnb*1]-ftr34xdim/2.+fTubes_pitch*(snb-1)-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),0,0); }
-		    t6s.SetTranslation(fSurveyCharm_T4x[mnb]+fTubes_pitch*(snb-1-2155./420)-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),fSurveyCharm_T4y[mnb],0); }
+		    t6s.SetTranslation(fSurveyCharm_T4x[mnb]+fTubes_pitch*(snb-1)-225.5*mm-fOffset_plane12*(pnb-1)-fOffset_layer12*(pnb*lnb+(pnb-1)*(lnb-1)),fSurveyCharm_T4y[mnb],0); }
 		  
 		  r6s.SetAngles(0,90,90);
 		  TGeoCombiTrans c6s(t6s, r6s);
