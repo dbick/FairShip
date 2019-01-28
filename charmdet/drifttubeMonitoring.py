@@ -357,7 +357,8 @@ for i in range(12):
  zpos[n+i] = zpos['T1X']+3.64+4.06+3.64-deltaZ
  y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
  tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
- 
+
+#TODO change to real center coordinates
 dt_modules['T1X'] = DtModule(tubes['T1X'],0,0,0)
 tubes['T1U'] = []
 #T1u: take survey corrected points
@@ -447,9 +448,11 @@ for i in range(12):
  center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
  tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
  
+#TODO change to real center coordinates
 dt_modules['T1U'] = DtModule(tubes['T1U'],0,0,0,phi,theta,psi)
 
 # T2X:
+tubes['T2X'] = []
 zpos['T2X'] = (daniel['T2_MD_01'][2]+daniel['T2_MD_02'][2]+daniel['T2_MD_03'][2]+daniel['T2_MD_04'][2])/4. - 3.03 - 3.64 - 4.06 - 3.6480
 ypos['T2X'] = [(daniel['T2_MD_01'][1]+daniel['T2_MD_02'][1])/2.,(daniel['T2_MD_04'][1]+daniel['T2_MD_03'][1])/2.]
 n = 21112001
@@ -461,33 +464,47 @@ for i in range(12):
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T2X']
  zpos[n+i] = zpos['T2X']+3.64+4.06+3.64-deltaZ
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21102001
 start = start - 2.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T2X']
  zpos[n+i] = zpos['T2X']+3.64+4.06-deltaZ
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21012001
 start = start + 1.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T2X']
  zpos[n+i] = zpos['T2X']+3.64-deltaZ
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21002001
 start = start + 2.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  ypos[n+i] = ypos['T2X']
  zpos[n+i] = zpos['T2X']-deltaZ
+ y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+ tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T2X'] = DtModule(tubes['T2X'],0,0,0)
 
 #T2v:take survey corrected points
+tubes['T2V'] = []
 anglev1 = ROOT.TMath.ATan2((daniel['T2_MC_02'][0]-daniel['T2_MC_03'][0]),(daniel['T2_MC_02'][1]-daniel['T2_MC_03'][1]))
 anglev2 = ROOT.TMath.ATan2((daniel['T2_MC_01'][0]-daniel['T2_MC_04'][0]),(daniel['T2_MC_01'][1]-daniel['T2_MC_04'][1]))
 anglev = (anglev1+anglev2)/2.
 
+
 zpos['T2V'] = (daniel['T2_MC_01'][2]+daniel['T2_MC_02'][2]+daniel['T2_MC_03'][2]+daniel['T2_MC_04'][2])/4. + 3.03
 L =  110.
 angle = -anglev # ???
+phi, theta, psi = DtAlignment.utils.z_rotation_to_euler_angles(angle)
 tx,ty=0,0
 for i in range(1,5):
  p = 'T2_MC_0'+str(i)
@@ -512,6 +529,11 @@ for i in range(12):
  xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n+i] = zpos['T2V']+3.64+4.06+3.64-deltaZ
+ #Build tubes
+ top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+ bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T2V'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 20102001
 start = start - 2.1
 for i in range(12): 
@@ -523,6 +545,11 @@ for i in range(12):
  xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n+i] = zpos['T2V']+3.64+4.06-deltaZ
+ #Build tubes
+ top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+ bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T2V'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 20012012
 start = (rn['T2_MC_01'][0]+rn['T2_MC_04'][0])/2.
 for i in range(12): 
@@ -534,6 +561,11 @@ for i in range(12):
  xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n-i] = zpos['T2V']+3.64-deltaZ
+ #Build tubes
+ top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+ bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T2V'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
 n = 20002012
 start = start + 2.1
 for i in range(12): 
@@ -545,6 +577,14 @@ for i in range(12):
  xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
  yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
  zpos[n-i] = zpos['T2V']-deltaZ
+ #Build tubes
+ top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+ bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+ center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+ tubes['T2V'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
+ 
+ #TODO change to real center coordinates
+ dt_modules['T2V'] = DtModule(tubes['T2V'],0,0,0,phi,theta,psi)
 
 #T3aX:
 zpos['T3aX'] = (( daniel['T3_T01'][2] + daniel['T3_B01'][2] + daniel['T3_T02'][2] + daniel['T3_B02'][2])/4. + 4.33)
