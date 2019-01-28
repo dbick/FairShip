@@ -587,8 +587,10 @@ for i in range(12):
  dt_modules['T2V'] = DtModule(tubes['T2V'],0,0,0,phi,theta,psi)
 
 #T3aX:
+tubes['T3aX'] = []
 zpos['T3aX'] = (( daniel['T3_T01'][2] + daniel['T3_B01'][2] + daniel['T3_T02'][2] + daniel['T3_B02'][2])/4. + 4.33)
 ypos['T3aX'] = [(daniel['T3_T01'][1]+daniel['T3_T02'][1])/2.,(daniel['T3_B01'][1]+daniel['T3_B02'][1])/2.]
+y_center = ypos['T3aX'][1] + ((ypos['T3aX'][0]-ypos['T3aX'][1]) / 2)
 
 delta = ( (daniel['T3_T01'][0] + daniel['T3_B01'][0])/2. - (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. )/8.
 delta = 4.2
@@ -598,25 +600,34 @@ start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta +2.1 -delta
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3aX']-deltaZ
+ tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3aX']+3.64-deltaZ
+ tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta -1.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3aX']+3.64+4.06-deltaZ
+ tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta -1.1 -2.1
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3aX']+3.64+4.06+3.64-deltaZ
+ tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T3aX'] = DtModule(tubes['T3aX'],0,0,0)
 
 #T3bX:
+tubes['T3bX'] = []
 zpos['T3bX'] = (( daniel['T3_T03'][2] + daniel['T3_B03'][2] + daniel['T3_T04'][2] + daniel['T3_B04'][2])/4. + 4.33)
 ypos['T3bX'] = [(daniel['T3_T03'][1]+daniel['T3_T04'][1])/2.,(daniel['T3_B03'][1]+daniel['T3_B04'][1])/2.]
+y_center = ypos['T3bX'][1] + ((ypos['T3bX'][0]-ypos['T3bX'][1]) / 2)
 
 delta = ( (daniel['T3_T03'][0] + daniel['T3_B03'][0])/2. - (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2. )/8.
 delta = 4.2
@@ -626,25 +637,34 @@ start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta +2.1 -delta
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3bX']-deltaZ
+ tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta 
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3bX']+3.64-deltaZ
+ tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta -1.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3bX']+3.64+4.06-deltaZ
+ tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta -1.1 -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3bX']+3.64+4.06+3.64-deltaZ
+ tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+
+#TODO change to real center coordinates
+dt_modules['T3bX'] = DtModule(tubes['T3bX'],0,0,0)
 
 #T3cX:
+tubes['T3cX'] = []
 zpos['T3cX'] = (( daniel['T3_T05'][2] + daniel['T3_B05'][2] + daniel['T3_T06'][2] + daniel['T3_B06'][2])/4. + 4.33)
 ypos['T3cX'] = [(daniel['T3_T05'][1]+daniel['T3_T06'][1])/2.,(daniel['T3_B05'][1]+daniel['T3_B06'][1])/2.]
+y_center = ypos['T3cX'][1] + ((ypos['T3cX'][0]-ypos['T3cX'][1]) / 2)
 
 delta = ( (daniel['T3_T05'][0] + daniel['T3_B05'][0])/2. - (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. )/8.
 delta = 4.2
@@ -654,25 +674,34 @@ start = (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. -delta +2.1 -delta
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3cX']-deltaZ
+ tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012013
 start = (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. -delta 
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3cX']+3.64-deltaZ
+ tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102013
 start = start -1.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3cX']+3.64+4.06-deltaZ
+ tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112013
 start = start -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3cX']+3.64+4.06+3.64-deltaZ
+ tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T3cX'] = DtModule(tubes['T3cX'],0,0,0)
 
 #T3dX:
+tubes['T3dX'] = []
 zpos['T3dX'] = (( daniel['T3_T07'][2] + daniel['T3_B07'][2] + daniel['T3_T08'][2] + daniel['T3_B08'][2])/4. + 4.33)
 ypos['T3dX'] = [(daniel['T3_T07'][1]+daniel['T3_T08'][1])/2.,(daniel['T3_B07'][1]+daniel['T3_B08'][1])/2.]
+y_center = ypos['T3dX'][1] + ((ypos['T3dX'][0]-ypos['T3dX'][1]) / 2)
 
 delta = ( (daniel['T3_T07'][0] + daniel['T3_B07'][0])/2. - (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. )/8.
 delta = 4.2
@@ -683,25 +712,34 @@ start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta +2.1 -delta
 for i in range(12): 
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3dX'] -deltaZ
+ tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012001
 start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta 
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3dX']+3.64-deltaZ
+ tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102001
 start =(daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta -1.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3dX']+3.64+4.06-deltaZ
+ tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112001
 start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta -1.1 -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T3dX']+3.64+4.06+3.64-deltaZ
+ tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T3dX'] = DtModule(tubes['T3dX'],0,0,0)
 
 #T4aX:
+tubes['T4aX'] = []
 zpos['T4aX'] = (( daniel['T4_T01'][2] + daniel['T4_B01'][2] + daniel['T4_T02'][2] + daniel['T4_B02'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4aX'] = [(daniel['T4_T01'][1]+daniel['T4_T02'][1])/2.,(daniel['T4_B01'][1]+daniel['T4_B02'][1])/2.]
+y_center = ypos['T4aX'][1] + ((ypos['T4aX'][0]-ypos['T4aX'][1]) / 2)
 
 delta = ( (daniel['T4_T01'][0] + daniel['T4_B01'][0])/2. - (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2. )/8.
 delta = 4.2
@@ -711,25 +749,34 @@ start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta +45.2
 for i in range(12):
  xpos[n-i] = start - delta * i
  zpos[n-i] = zpos['T4aX']-deltaZ
+ tubes['T4aX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta +1.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4aX']+3.64-deltaZ
+ tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta  
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4aX']+3.64+4.06-deltaZ
+ tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta  -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4aX']+3.64+4.06+3.64-deltaZ
+ tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T4aX'] = DtModule(tubes['T4aX'],0,0,0)
 
 #T4bX:
+tubes['T4bX'] = []
 zpos['T4bX'] = (( daniel['T4_T03'][2] + daniel['T4_B03'][2] + daniel['T4_T04'][2] + daniel['T4_B04'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4bX'] = [(daniel['T4_T03'][1]+daniel['T4_T04'][1])/2.,(daniel['T4_B03'][1]+daniel['T4_B04'][1])/2.]
+y_center = ypos['T4bX'][1] + ((ypos['T4bX'][0]-ypos['T4bX'][1]) / 2)
 
 delta = ( (daniel['T4_T03'][0] + daniel['T4_B03'][0])/2. - (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. )/8.
 delta = 4.2
@@ -739,25 +786,34 @@ start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta +45.2
 for i in range(12):
  xpos[n-i] = start - delta * i
  zpos[n-i] = zpos['T4bX']-deltaZ
+ tubes['T4bX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta +45.2 -10*delta-2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4bX']+3.64-deltaZ
+ tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta 
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4bX']+3.64+4.06-deltaZ
+ tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta  -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4bX']+3.64+4.06+3.64-deltaZ
+ tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+
+#TODO change to real center coordinates
+dt_modules['T4bX'] = DtModule(tubes['T4bX'],0,0,0)
 
 #T4cX:
+tubes['T4cX'] = []
 zpos['T4cX'] = (( daniel['T4_T05'][2] + daniel['T4_B05'][2] + daniel['T4_T06'][2] + daniel['T4_B06'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4cX'] = [(daniel['T4_T05'][1]+daniel['T4_T06'][1])/2.,(daniel['T4_B05'][1]+daniel['T4_B06'][1])/2.]
+y_center = ypos['T4cX'][1] + ((ypos['T4cX'][0]-ypos['T4cX'][1]) / 2)
 
 delta = ( (daniel['T4_T05'][0] + daniel['T4_B05'][0])/2. - (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2. )/8.
 delta = 4.2
@@ -767,25 +823,34 @@ start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta +45.2
 for i in range(12):
  xpos[n-i] = start - delta * i
  zpos[n-i] = zpos['T4cX']-deltaZ
+ tubes['T4cX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta +45.2 -10*delta-2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4cX']+3.64-deltaZ
+ tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta  
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4cX']+3.64+4.06-deltaZ
+ tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4cX']+3.64+4.06+3.64-deltaZ
+ tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T4cX'] = DtModule(tubes['T4cX'],0,0,0)
 
 #T4dX:
+tubes['T4dX'] = []
 zpos['T4dX'] = (( daniel['T4_T07'][2] + daniel['T4_B07'][2] + daniel['T4_T08'][2] + daniel['T4_B08'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4dX'] = [(daniel['T4_T07'][1]+daniel['T4_T08'][1])/2.,(daniel['T4_B07'][1]+daniel['T4_B08'][1])/2.]
+y_center = ypos['T4dX'][1] + ((ypos['T4dX'][0]-ypos['T4dX'][1]) / 2)
 
 delta = ( (daniel['T4_T07'][0] + daniel['T4_B07'][0])/2. - (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2. )/8.
 delta = 4.2
@@ -795,21 +860,28 @@ start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2. -delta +45.2
 for i in range(12):
  xpos[n-i] = start - delta * i
  zpos[n-i] = zpos['T4dX']-deltaZ
+ tubes['T4dX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta +45.2 -10*delta-2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4dX']+3.64-deltaZ
+ tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4dX']+3.64+4.06-deltaZ
+ tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta -2.1
 for i in range(12):
  xpos[n+i] = start + delta * i
  zpos[n+i] = zpos['T4dX']+3.64+4.06+3.64-deltaZ
+ tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+#TODO change to real center coordinates
+dt_modules['T4dX'] = DtModule(tubes['T4dX'],0,0,0)
 
 if debug:
  for a in Langle:
