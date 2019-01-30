@@ -2,7 +2,31 @@ from ROOT import TVector3, TRotation
 import shipunit as u
 
 def calculate_center_from_lot(list_of_tubes):
-    return -1
+    '''Calculates the geometric center point of a DtModule from a given list of DriftTube objects
+    that are passed to this function as parameter list_of_tubes.
+    
+    Parameters
+    ----------
+    list_of_tubes: list
+        List of drift tube objects that are part of the module for which the geometric center is to be computed
+        
+    Returns
+    -------
+    TVector3
+        Vector to the center point of the module
+    '''
+    x_sum, y_sum, z_sum = 0,0,0
+    for tube in list_of_tubes:
+        tube_center = tube.get_center_position()
+        x_sum += tube_center[0]
+        y_sum += tube_center[1]
+        z_sum += tube_center[2]
+    
+    center_x = x_sum / len(list_of_tubes)
+    center_y = y_sum / len(list_of_tubes)
+    center_z = z_sum / len(list_of_tubes)
+    
+    return TVector3(center_x,center_y,center_z)
     
 def calculate_rotation_from_lot(list_of_tubes):
     return -1 
