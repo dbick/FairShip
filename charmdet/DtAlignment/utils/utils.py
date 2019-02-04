@@ -15,7 +15,9 @@ def calculate_center_from_lot(list_of_tubes):
     TVector3
         Vector to the center point of the module
     '''
-    x_sum, y_sum, z_sum = 0,0,0
+    x_sum = 0
+    y_sum = 0
+    z_sum = 0
     for tube in list_of_tubes:
         tube_center = tube.get_center_position()
         x_sum += tube_center[0]

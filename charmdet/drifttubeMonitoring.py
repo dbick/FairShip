@@ -358,8 +358,8 @@ for i in range(12):
  y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
  tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 
-#TODO change to real center coordinates
-dt_modules['T1X'] = DtModule(tubes['T1X'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T1X'])
+dt_modules['T1X'] = DtModule(tubes['T1X'],mod_center[0],mod_center[1],mod_center[2])
 tubes['T1U'] = []
 #T1u: take survey corrected points
 zpos['T1U'] = (daniel['T1_MB_01'][2]+daniel['T1_MB_02'][2]+daniel['T1_MB_03'][2]+daniel['T1_MB_04'][2])/4. - 3.03 -3.64 -4.06 -3.64
@@ -448,8 +448,8 @@ for i in range(12):
  center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
  tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
  
-#TODO change to real center coordinates
-dt_modules['T1U'] = DtModule(tubes['T1U'],0,0,0,phi,theta,psi)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T1U'])
+dt_modules['T1U'] = DtModule(tubes['T1U'],mod_center[0],mod_center[1],mod_center[2],phi,theta,psi)
 
 # T2X:
 tubes['T2X'] = []
@@ -491,8 +491,8 @@ for i in range(12):
  y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
  tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T2X'] = DtModule(tubes['T2X'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T2X'])
+dt_modules['T2X'] = DtModule(tubes['T2X'],mod_center[0],mod_center[1],mod_center[2])
 
 #T2v:take survey corrected points
 tubes['T2V'] = []
@@ -583,8 +583,8 @@ for i in range(12):
  center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
  tubes['T2V'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
  
- #TODO change to real center coordinates
- dt_modules['T2V'] = DtModule(tubes['T2V'],0,0,0,phi,theta,psi)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T2V'])
+dt_modules['T2V'] = DtModule(tubes['T2V'],mod_center[0],mod_center[1],mod_center[2],phi,theta,psi)
 
 #T3aX:
 tubes['T3aX'] = []
@@ -620,8 +620,8 @@ for i in range(12):
  zpos[n+i] = zpos['T3aX']+3.64+4.06+3.64-deltaZ
  tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T3aX'] = DtModule(tubes['T3aX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3aX'])
+dt_modules['T3aX'] = DtModule(tubes['T3aX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T3bX:
 tubes['T3bX'] = []
@@ -657,8 +657,8 @@ for i in range(12):
  zpos[n+i] = zpos['T3bX']+3.64+4.06+3.64-deltaZ
  tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 
-#TODO change to real center coordinates
-dt_modules['T3bX'] = DtModule(tubes['T3bX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3bX'])
+dt_modules['T3bX'] = DtModule(tubes['T3bX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T3cX:
 tubes['T3cX'] = []
@@ -694,8 +694,8 @@ for i in range(12):
  zpos[n+i] = zpos['T3cX']+3.64+4.06+3.64-deltaZ
  tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T3cX'] = DtModule(tubes['T3cX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3cX'])
+dt_modules['T3cX'] = DtModule(tubes['T3cX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T3dX:
 tubes['T3dX'] = []
@@ -732,8 +732,8 @@ for i in range(12):
  zpos[n+i] = zpos['T3dX']+3.64+4.06+3.64-deltaZ
  tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T3dX'] = DtModule(tubes['T3dX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3dX'])
+dt_modules['T3dX'] = DtModule(tubes['T3dX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4aX:
 tubes['T4aX'] = []
@@ -769,8 +769,8 @@ for i in range(12):
  zpos[n+i] = zpos['T4aX']+3.64+4.06+3.64-deltaZ
  tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T4aX'] = DtModule(tubes['T4aX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4aX'])
+dt_modules['T4aX'] = DtModule(tubes['T4aX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4bX:
 tubes['T4bX'] = []
@@ -806,8 +806,8 @@ for i in range(12):
  zpos[n+i] = zpos['T4bX']+3.64+4.06+3.64-deltaZ
  tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 
-#TODO change to real center coordinates
-dt_modules['T4bX'] = DtModule(tubes['T4bX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4bX'])
+dt_modules['T4bX'] = DtModule(tubes['T4bX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4cX:
 tubes['T4cX'] = []
@@ -843,8 +843,8 @@ for i in range(12):
  zpos[n+i] = zpos['T4cX']+3.64+4.06+3.64-deltaZ
  tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T4cX'] = DtModule(tubes['T4cX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4cX'])
+dt_modules['T4cX'] = DtModule(tubes['T4cX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4dX:
 tubes['T4dX'] = []
@@ -880,8 +880,8 @@ for i in range(12):
  zpos[n+i] = zpos['T4dX']+3.64+4.06+3.64-deltaZ
  tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
  
-#TODO change to real center coordinates
-dt_modules['T4dX'] = DtModule(tubes['T4dX'],0,0,0)
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4dX'])
+dt_modules['T4dX'] = DtModule(tubes['T4dX'],mod_center[0],mod_center[1],mod_center[2])
 
 if debug:
  for a in Langle:
