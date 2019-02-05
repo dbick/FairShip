@@ -145,7 +145,7 @@ struct ChannelId {
        module = (channel >= 32 && channel < 80) ? 1 : 0;
        module_channel = (channel + 16) % 48;
        //cable swap
-       if(module==1) module_channel += ( channel < 16 ) ? 16 : ( channel < 32 ) ? -16 : 0;
+       if(module==1) module_channel += ( module_channel < 16 ) ? 16 : ( module_channel < 32 ) ? -16 : 0;
        break;
      case 2:
        trigger = channel == 126;
