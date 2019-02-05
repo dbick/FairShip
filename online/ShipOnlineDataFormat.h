@@ -136,7 +136,8 @@ struct ChannelId {
        station = 3;
        module = (channel < 96) ? 2 + (channel / 48) % 2 : 0;
        module_channel = channel % 48;
-       if(module == 4) module_channel = 12*(module_channel/12)+(11-module_channel%12);
+       //reverse front end board
+       if(module == 3) module_channel = 12*(module_channel/12)+(11-module_channel%12);
        break;
      case 1:
        trigger = channel == 0;
