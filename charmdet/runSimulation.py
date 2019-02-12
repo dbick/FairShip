@@ -35,23 +35,22 @@ def getFilesLocal():
   if os.path.isdir(x): fl.append(x)
  return fl
 
-def simulationStep():
- fnames = getFilesFromEOS()
+def simulationStep(fnames=[]):
+ if len(fnames)==0: fnames = getFilesFromEOS()
  Nfiles = len(fnames)
  print "fileList established ",Nfiles
  for fname in fnames:
-    N = fileList[fname]-1
+    N = fnames[fname]-1
     odir = fname[fname.rfind('/')+1:].replace('.root','')
     cmd = "python $FAIRSHIP/macro/run_simScript.py -n "+str(N)+" --MuonBack --charm=1 --CharmdetSetup=0 --output "+odir+" -f "+fname+" &"
     print 'step 1:', cmd
     os.system(cmd)
-    time.sleep(100)
     while 1>0:
         if count_python_processes('run_simScript')<ncpus: break 
         time.sleep(100)
  print "finished all the tasks."
-def digiStep():
- fnames = getFilesLocal()
+def digiStep(fnames=[]):
+ if len(fnames)==0: fnames = getFilesLocal()
  Nfiles = len(fnames)
  print "fileList established ",Nfiles
  for fname in fnames:
@@ -67,8 +66,8 @@ def digiStep():
         time.sleep(100)
  print "finished all the tasks."
 
-def splitDigiFiles(splitFactor=10):
- fnames = getFilesLocal()
+def splitDigiFiles(splitFactor=10,fnames=[]):
+ if len(fnames)==0: fnames = getFilesLocal()
  Nfiles = len(fnames)
  print "fileList established ",Nfiles
  for fname in fnames:
@@ -89,8 +88,8 @@ def splitDigiFiles(splitFactor=10):
      N+=deltaN
    os.chdir('../')
 
-def recoStep(splitFactor=10):
- fnames = getFilesLocal()
+def recoStep(splitFactor=10,fnames=[]):
+ if len(fnames)==0: fnames = getFilesLocal()
  Nfiles = len(fnames)
  print "fileList established ",Nfiles
  for fname in fnames:
@@ -124,6 +123,7 @@ def checkFilesWithTracks(D='.',splitFactor=10):
     for i in range(splitFactor):
      recoFile = mcFile.replace('.root','-'+str(i)+'.root')
      if recoFile in os.listdir('.'):
+      print "check",fname,recoFile
       test = ROOT.TFile(recoFile)
       sTree = test.Get('cbmsim')
       if sTree:
@@ -138,22 +138,21 @@ def makeMomDistributions(D='.',splitFactor=10):
  for df in fileList:
    tmp = df.split('/')
    if len(tmp)>1: os.chdir(tmp[0])
-   cmd = "python $FAIRSHIP/charmdet/drifttubeMonitoring.py -c anaResiduals -f "+tmp[1]+' &'
-   print 'execute:', cmd
-   os.system(cmd)
+   if not "histos-analysis-"+tmp[1] in os.listdir('.'):
+    cmd = "python $FAIRSHIP/charmdet/drifttubeMonitoring.py -c anaResiduals -f "+tmp[1]+' &'
+    print 'execute:', cmd
+    os.system(cmd)
+   if len(tmp)>1: os.chdir('../')
    while 1>0:
         if count_python_processes('drifttubeMonitoring')<ncpus: break 
         time.sleep(100)
-   if len(tmp)>1: os.chdir('../')
  print "finished all the tasks."
 
 def mergeHistos(case='residuals'):
- fileList=checkFilesWithTracks()
+ dirList=getFilesLocal()
  if case == 'residuals':  cmd = 'hadd -f residuals.root '
  else:                    cmd = 'hadd -f momDistributions.root '
- for x in allFiles:
-  if (case != 'residuals' and not x.find('analysis')<0 ):  histoFile = x.replace("/","/histos-analysis-")
-  else:  histoFile = x.replace("/","/histos-")
-  if not os.path.isfile(histoFile):continue
-  cmd += x+" "
-
+ for d in dirList:
+  for x in os.listdir(d):
+   if (case != 'residuals' and not x.find('analysis')<0 ):  cmd += d+'/'+x+" "
+ os.system(cmd)
