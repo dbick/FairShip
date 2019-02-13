@@ -34,7 +34,24 @@ def calculate_rotation_from_lot(list_of_tubes):
     return -1 
     
 def parse_det_id(det_id):
-    return -1
+    """Parse the detector id to human readable dictionary so that a specific tube can easily be
+    identified and adressed out of a bigger detector arangement
+    
+    Parameters
+    ----------
+    det_id: int
+        Detector ID that is to be parsed
+        
+    Returns
+    -------
+    dict
+        dictionary containing the result in human readable form
+    """
+    result = {}
+    result['station'] = det_id / 10000000
+    result['module'] = 0
+    result['tube'] = 0
+    return result
 
 def calculate_center(vec1, vec2):
     '''Calculate the position in the middle between two positions pointed to by vectors.
@@ -74,3 +91,15 @@ def z_rotation_to_euler_angles(rad_z):
     rot = TRotation()
     rot.RotateZ(rad_z)    
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
+
+def distance_to_wire(track):
+    n_track_representations = track.getNumReps()
+    if n_track_representations > 0:
+        track_representation = track.getTrackRep(0)
+        mom = track_representation.getMom()
+        pos = track_representation.getPos()        
+    else:
+        print("No track representation found.")
+        return -1
+    distance = 0.0 * u.mm
+    return distance
