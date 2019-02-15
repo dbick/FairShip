@@ -48,8 +48,32 @@ def parse_det_id(det_id):
         dictionary containing the result in human readable form
     """
     result = {}
+    str_id = str(det_id)
+    last_four = int(str_id[-4:])
+    #parse view
+    view = "X"
     result['station'] = det_id / 10000000
-    result['module'] = 0
+    if result['station'] == 1:
+        if str_id[1] == '1':
+            view = "U"
+    elif result['station'] == 2:
+        if str_id[1] == '1':
+            view = "V"
+            
+    #parse module
+    module = "T" + str(result['station'])
+    if result['station'] >= 3:
+        if last_four <= 12:
+            module += "a"
+        elif last_four <= 24:
+            module += "b"
+        elif last_four <= 36:
+            module += "c"
+        else:
+            module += "d"
+            
+    module += view
+    result['module'] = module
     result['tube'] = 0
     return result
 
