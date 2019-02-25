@@ -121,7 +121,10 @@ def checkFilesWithTracks(D='.',splitFactor=10):
  fnames = getFilesLocal()
  Nfiles = len(fnames)
  fileList=[]
+ fileListPer={}
+ failedList = []
  for fname in fnames:
+    fileListPer[fname]=[]
     os.chdir(fname)
     mcFile = 'ship.conical.MuonBack-TGeant4_dig_RT.root'
     for i in range(splitFactor):
@@ -131,19 +134,23 @@ def checkFilesWithTracks(D='.',splitFactor=10):
       test = ROOT.TFile(recoFile)
       sTree = test.Get('cbmsim')
       if sTree:
-       if sTree.GetBranch("FitTracks"): fileList.append(fname+'/'+recoFile)
+       if sTree.GetBranch("FitTracks"): 
+        fileList.append(fname+'/'+recoFile)
+        fileListPer[fname].append(recoFile)
+      else:
+        failedList.append(fname+'/'+recoFile)
     os.chdir('../')
  fileList.sort()
- return fileList
+ return fileList,fileListPer,failedList
 
 def cleanUp():
- reco = checkFilesWithTracks()
+ reco,x,y = checkFilesWithTracks()
  for f in reco:
   df = f.replace('_RT','')
   if os.path.isfile(df): os.system('rm ' +df)
 
 def makeMomDistributions(D='.',splitFactor=10):
- fileList=checkFilesWithTracks(D,splitFactor)
+ fileList,x,y = checkFilesWithTracks(D,splitFactor)
  print "fileList established ",len(fileList)
  for df in fileList:
    tmp = df.split('/')
@@ -158,6 +165,18 @@ def makeMomDistributions(D='.',splitFactor=10):
         time.sleep(100)
  print "finished all the tasks."
 
+def exportToEos(destination="/eos/experiment/ship/user/truf/muflux-sim/1GeV"):
+  remote = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls -l "+destination,shell=True).split('\n')
+  fnames = getFilesLocal()
+  for D in fnames:
+    if not D in remote:
+       os.system("xrdfs "+os.environ['EOSSHIP']+" mkdir  "+destination+"/"+D)
+    for f in os.listdir(D):
+      fname = D+'/'+f
+      cmd = "xrdcp -f "+fname+" $EOSSHIP/"+destination+"/"+fname
+      print cmd
+      os.system(cmd)
+
 def mergeHistos(case='residuals'):
  dirList=getFilesLocal()
  cmd = {}
@@ -171,10 +190,25 @@ def mergeHistos(case='residuals'):
    if (case != 'residuals' and not x.find('analysis')<0 ):  cmd[z] += d+'/'+x+" "
  for z in ['charm','mbias']: os.system(cmd[z])
 
-def checkStatistics():
+def redoMuonTracks():
+ fileList,x,y = checkFilesWithTracks(D='.')
+ for df in fileList:
+   tmp = df.split('/')
+   if len(tmp)>1: 
+    os.chdir(tmp[0])
+    cmd = "python $FAIRSHIP/charmdet/drifttubeMonitoring.py -c  recoMuonTaggerTracks -u 1 -f "+tmp[1]+' &'
+    print 'execute:', cmd
+    os.system(cmd)
+    os.chdir('../')
+   while 1>0:
+        if count_python_processes('drifttubeMonitoring')<ncpus: break 
+        time.sleep(100)
+ print "finished all the tasks."
+
+def checkStatistics(splitFactor=10):
  # 1GeV mbias 1.8 Billion PoT charm 10.2 Billion PoT 
- simFiles = getFilesFromEOS()
- reco = checkFilesWithTracks()
+ simFiles = getFilesFromEOS()  # input data
+ reco,x,y = checkFilesWithTracks()  # 
  Nsim =  {'mbias':0,'charm':0}
  Nreco = {'mbias':0,'charm':0}
  for f in simFiles:
@@ -189,10 +223,11 @@ def checkStatistics():
   for x in reco:
     if  not x.find(dname)<0: n+=1
   fraction = n/float(splitFactor)
+  print "fraction:",dname,fraction
   if dname.find('charm')>0: Nreco['charm']+=fraction*allFiles[dname]
   else: Nreco['mbias'] += fraction*allFiles[dname]
- print "total statistics",Nsim
- print "                ",Nreco
- print "internal MC normalization, to be applied to charm", 10.2/1.8 * Nreco['charm']/Nsim['charm']*Nreco['mbias']/Nsim['mbias']
- # 1.218
-
+ print "total statistics, simulated     ",Nsim
+ print "                , reconstructed ",Nreco
+ # mbias statistics = 1.8 * Nreco/Nsim, charm statistics = 10.2 * Nreco/Nsim
+ # norm factor = 1/charm statistics * mbias statistics
+ print "internal MC normalization, to be applied to charm", 1.8*Nreco['mbias']/Nsim['mbias'] /(10.2*Nreco['charm']/Nsim['charm'])
