@@ -2754,6 +2754,24 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
           if hit.GetDetectorID() in noisyChannels:  continue
           if not hit.hasTimeOverThreshold(): continue
           s,v,p,l,view,channelID,tdcId,nRT = stationInfo(hit)
+          """
+          New calculation of residuals
+          """
+          id = hit.GetDetectorID()
+          print("Parsing detector ID: {}".format(id))
+          module_id = DtAlignment.utils.parse_det_id(id)
+          print("Parsing result:")
+          print(module_id)
+          module = dt_modules[module_id['module']]
+          for i in range(len(module.get_tubes())):
+              tube = module.get_tubes()[i]
+              if tube._ID == id:
+                    break
+          dist = DtAlignment.utils.distance_to_wire(aTrack, module.get_tubes()[i])
+          print("Distance track, hit: {}".format(dist))
+          """
+          End of new calculation
+          """
           vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
           z = (vbot[2]+vtop[2])/2.
           rc,pos,mom = extrapolateToPlane(aTrack,z)

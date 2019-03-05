@@ -49,7 +49,7 @@ def parse_det_id(det_id):
     """
     result = {}
     str_id = str(det_id)
-    last_four = int(str_id[-4:])
+    last_four = int(str_id[-4:]) #last four digits of the detector ID
     #parse view
     view = "X"
     result['station'] = det_id / 10000000
