@@ -141,7 +141,7 @@ def distance_to_wire(track,tube):
         pos = fitted_state.getPos()
         normal_vector = mom.Cross(vtop-vbot)
         vec_any_two_points = vbot - pos
-        distance = vec_any_two_points.Dot(normal_vector).Mag() / normal_vector.Mag()
+        distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()
         return distance
     else:
         print("No track representation found.")
