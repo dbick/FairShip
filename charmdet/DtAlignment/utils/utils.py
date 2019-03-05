@@ -139,7 +139,7 @@ def distance_to_wire(track,tube):
         fitted_state = track.getFittedState(0) #ID = 0 
         mom = fitted_state.getMom()
         pos = fitted_state.getPos()
-        normal_vector = mom.cross(vtop-vbot)
+        normal_vector = mom.Cross(vtop-vbot)
         vec_any_two_points = vbot - pos
         distance = vec_any_two_points.dot(normal_vector).Mag() / normal_vector.Mag()
         return distance
