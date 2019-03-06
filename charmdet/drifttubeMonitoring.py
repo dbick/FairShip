@@ -2712,6 +2712,10 @@ def printResiduals(aTrack):
 
 # make TDC plots for hits matched to tracks)
 def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
+ module_residuals = {}
+ for key in dt_modules.keys():
+  module_residuals[key] = []
+    
  if not onlyPlotting:
   if not h.has_key('hitMapsX'): plotHitMaps()
   for s in xLayers:
@@ -2768,7 +2772,12 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
               if tube._ID == id:
                     break
           dist = DtAlignment.utils.distance_to_wire(aTrack, module.get_tubes()[i])
+          rt_dist = 0
+          if withTDC:
+              rt_dist = RT(hit,hit.GetDigi())
           print("Distance track, hit: {}".format(dist))
+          residual = dist - rt_dist
+          module_residuals[module_id['module']].append(residual)
           """
           End of new calculation
           """
@@ -2909,6 +2918,14 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
       h[hmean].Draw()
      j+=1
  momDisplay()
+ """ File output with new residuals"""
+ for key in module_residuals.keys():
+     residual_filename = key + "_residuals"
+     f = open(residual_filename,"w")
+     for res in module_residuals[key]:
+         f.write("{}\n".format(res))
+     f.close()
+ 
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)
  for tc in h['biasedResiduals'].GetListOfPrimitives():

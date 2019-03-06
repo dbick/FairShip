@@ -134,6 +134,7 @@ def distance_to_wire(track,tube):
     vtop,vbot = tube.wire_end_positions()
     
     if n_track_representations > 0:
+        #TODO trackRep not used
         track_representation = track.getTrackRep(0)
         #TODO check what IDs are useful in getFittedState
         fitted_state = track.getFittedState(0) #ID = 0 
