@@ -2783,7 +2783,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
             f.write("trackmom={}, {}, {} GeV\n".format(mom[0]*u.GeV, mom[1]*u.GeV, mom[2]*u.GeV))
             f.write("trackpos={}, {}, {} mm\n".format(pos[0]*u.mm, pos[1]*u.mm, pos[2]*u.mm))
             f.write("Hits:\n")
-          vtop, vbot = tube.wire_end_points()
+          vtop, vbot = tube.wire_end_positions()
           center = DtAlignment.utils.calculate_center(vtop,vbot)
           with open("track_{}.dat".format(track_no),"a") as f:
             f.write("{}\t{}\t{}\t{}\t{}\n".format(center[0],
