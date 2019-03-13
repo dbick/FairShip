@@ -116,51 +116,28 @@ def z_rotation_to_euler_angles(rad_z):
     rot.RotateZ(rad_z)    
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
 
-def distance_to_wire(track,tube,mom=None,pos=None,filename="test.dat"):
+def distance_to_wire(tube,mom=None,pos=None):
     """Calculates the distance of closest approach for a track and a tube.
     Note: This distance is positive if a valid track was used.
     
     Parameters
     ----------
-    track: ROOT.genfit.Track
-        The Track object containing a TrackRep object after fitting
+    mom: ROOT.TVector3
+        Momentum (a.k.a direction) of the track
+    
+    pos: ROOT.TVector3
+        Position on the track
         
     Returns
     -------
     float
         Closest distance between track and wire
     """
-    n_track_representations = track.getNumReps()
-    vtop,vbot = tube.wire_end_positions()
-    
-    if n_track_representations > 0:
-        #TODO trackRep not used
-        track_representation = track.getTrackRep(0)
-        #TODO check what IDs are useful in getFittedState
-        fitted_state = track.getFittedState(0)
-        if mom==None:
-            mom = fitted_state.getMom()#ID = 0 
-        if pos==None:
-            pos = fitted_state.getPos()
-    
-        normal_vector = mom.Cross(vtop-vbot)
-        vec_any_two_points = vbot - pos
-        distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag() * u.mm
+    vtop,vbot = tube.wire_end_positions()    
+    normal_vector = mom.Cross(vtop-vbot)
+    vec_any_two_points = vbot - pos
+    distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag() * u.mm
 
-        with open(filename,"a") as f:
-            f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(pos[0],
-                                                              pos[1],
-                                                              pos[2],
-                                                              mom[0],
-                                                              mom[1],
-                                                              mom[2],
-                                                              calculate_center(vtop,vbot)[0],
-                                                              calculate_center(vtop,vbot)[1],
-                                                              calculate_center(vtop,vbot)[2],
-                                                              distance))
-        return distance
-    else:
-        print("No track representation found.")
-        return -1
+    return distance
     
 

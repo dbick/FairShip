@@ -2736,11 +2736,14 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    if not findSimpleEvent(sTree): continue
    trackCandidates = findTracks(PR)
    if len(trackCandidates)==1: 
+    track_no = 0
     for aTrack in trackCandidates:
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
        try:
         sta = aTrack.getFittedState(0)
+        mom = sta.getMom()
+        pos = sta.getPos()
        except:
         print "problem with getting state, event",sTree.GetCurrentFile().GetName(),Nr
         continue
@@ -2771,12 +2774,23 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
               if tube._ID == id:
                     break
           tube = module.get_tubes()[i]
-          #rc, pos, mom = extrapolateToPlane(aTrack, tube._position[2])
-          dist = DtAlignment.utils.distance_to_wire(aTrack, tube)
+          dist = DtAlignment.utils.distance_to_wire(tube,mom,pos)
           rt_dist = 0
           if withTDC:
               rt_dist = RT(hit,hit.GetDigi())
           residual = dist - rt_dist
+          with open("track_{}.dat".format(track_no),"a") as f:
+            f.write("trackmom={}, {}, {} GeV\n".format(mom[0]*u.GeV, mom[1]*u.GeV, mom[2]*u.GeV))
+            f.write("trackpos={}, {}, {} mm\n".format(pos[0]*u.mm, pos[1]*u.mm, pos[2]*u.mm))
+            f.write("Hits:\n")
+          vtop, vbot = tube.wire_end_points()
+          center = DtAlignment.utils.calculate_center(vtop,vbot)
+          with open("track_{}.dat".format(track_no),"a") as f:
+            f.write("{}\t{}\t{}\t{}\t{}\n".format(center[0],
+                                                  center[1],
+                                                  center[2],
+                                                  dist,
+                                                  rt_dist))
           module_residuals[module_id['module']].append(residual)
           """
           End of new calculation
@@ -2815,6 +2829,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
             rc = h['T0tmp'].Fill(hit.GetDigi()-t0)
        t0 = h['T0tmp'].GetMean()
        rc = h['T0'].Fill(t0)
+       track_no += 1
    for aTrack in trackCandidates:   aTrack.Delete()
  if not h.has_key('biasedResiduals'): 
       ut.bookCanvas(h,key='biasedResiduals',title='biasedResiduals',nx=1600,ny=1200,cx=4,cy=6)
