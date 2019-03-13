@@ -2771,8 +2771,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
               if tube._ID == id:
                     break
           tube = module.get_tubes()[i]
-          rc, pos, mom = extrapolateToPlane(aTrack, tube._position[2])
-          dist = DtAlignment.utils.distance_to_wire(aTrack, tube, pos, mom)
+          #rc, pos, mom = extrapolateToPlane(aTrack, tube._position[2])
+          dist = DtAlignment.utils.distance_to_wire(aTrack, tube)
           rt_dist = 0
           if withTDC:
               rt_dist = RT(hit,hit.GetDigi())
