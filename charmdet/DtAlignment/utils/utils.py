@@ -116,7 +116,7 @@ def z_rotation_to_euler_angles(rad_z):
     rot.RotateZ(rad_z)    
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
 
-def distance_to_wire(track,tube,mom=None,pos=None):
+def distance_to_wire(track,tube,mom=None,pos=None,filename="test.dat"):
     """Calculates the distance of closest approach for a track and a tube.
     Note: This distance is positive if a valid track was used.
     
