@@ -116,7 +116,7 @@ def z_rotation_to_euler_angles(rad_z):
     rot.RotateZ(rad_z)    
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
 
-def distance_to_wire(track,tube):
+def distance_to_wire(track,tube,mom=None,pos=None):
     """Calculates the distance of closest approach for a track and a tube.
     Note: This distance is positive if a valid track was used.
     
@@ -137,9 +137,12 @@ def distance_to_wire(track,tube):
         #TODO trackRep not used
         track_representation = track.getTrackRep(0)
         #TODO check what IDs are useful in getFittedState
-        fitted_state = track.getFittedState(0) #ID = 0 
-        mom = fitted_state.getMom()
-        pos = fitted_state.getPos()
+        fitted_state = track.getFittedState(0)
+        if mom==None:
+            mom = fitted_state.getMom()#ID = 0 
+        if pos==None:
+            pos = fitted_state.getPos()
+    
         normal_vector = mom.Cross(vtop-vbot)
         vec_any_two_points = vbot - pos
         distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()
@@ -147,3 +150,5 @@ def distance_to_wire(track,tube):
     else:
         print("No track representation found.")
         return -1
+    
+
