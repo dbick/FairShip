@@ -145,7 +145,19 @@ def distance_to_wire(track,tube,mom=None,pos=None):
     
         normal_vector = mom.Cross(vtop-vbot)
         vec_any_two_points = vbot - pos
-        distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()
+        distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag() * u.mm
+
+        with open(filename,"a") as f:
+            f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(pos[0],
+                                                              pos[1],
+                                                              pos[2],
+                                                              mom[0],
+                                                              mom[1],
+                                                              mom[2],
+                                                              calculate_center(vtop,vbot)[0],
+                                                              calculate_center(vtop,vbot)[1],
+                                                              calculate_center(vtop,vbot)[2],
+                                                              distance))
         return distance
     else:
         print("No track representation found.")
