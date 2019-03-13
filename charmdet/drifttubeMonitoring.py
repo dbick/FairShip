@@ -2762,20 +2762,18 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
           New calculation of residuals
           """
           id = hit.GetDetectorID()
-          print("Parsing detector ID: {}".format(id))
           module_id = DtAlignment.utils.parse_det_id(id)
-          print("Parsing result:")
-          print(module_id)
           module = dt_modules[module_id['module']]
           for i in range(len(module.get_tubes())):
               tube = module.get_tubes()[i]
               if tube._ID == id:
                     break
-          dist = DtAlignment.utils.distance_to_wire(aTrack, module.get_tubes()[i])
+          tube = module.get_tubes()[i]
+          rc, pos, mom = extrapolateToPlane(aTrack, tube._position[2])
+          dist = DtAlignment.utils.distance_to_wire(aTrack, tube, pos, mom)
           rt_dist = 0
           if withTDC:
               rt_dist = RT(hit,hit.GetDigi())
-          print("Distance track, hit: {}".format(dist))
           residual = dist - rt_dist
           module_residuals[module_id['module']].append(residual)
           """
