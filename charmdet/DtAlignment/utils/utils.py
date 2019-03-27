@@ -117,7 +117,7 @@ def z_rotation_to_euler_angles(rad_z):
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
 
 def distance_to_wire(tube,mom=None,pos=None):
-    """Calculates the distance of closest approach for a track and a tube.
+    """Calculates the distance of closest approach for a track and a tube in mm.
     Note: This distance is positive if a valid track was used.
     
     Parameters
@@ -131,12 +131,12 @@ def distance_to_wire(tube,mom=None,pos=None):
     Returns
     -------
     float
-        Closest distance between track and wire
+        Closest distance between track and wire in mm
     """
     vtop,vbot = tube.wire_end_positions()    
     normal_vector = mom.Cross(vtop-vbot)
     vec_any_two_points = vbot - pos
-    distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag() * u.mm
+    distance = (abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()) * u.mm
 
     return distance
     
