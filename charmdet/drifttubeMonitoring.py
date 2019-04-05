@@ -2768,7 +2768,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
     for aTrack in trackCandidates:
        #DT debuggung - fitPoints
        ALG_fitted_points = aTrack.getPoints()
-       print("Found {} points in track at {}".format(len(ALG_fitted_points),hex(id(aTrack))))
+       print("Found {} points".format(len(ALG_fitted_points)))
        print("--------------Printing track point params-----------------------------------")
        for ALG_fitpoint_no in range(len(ALG_fitted_points)):
            print("## Point No {} ##".format(ALG_fitpoint_no))
