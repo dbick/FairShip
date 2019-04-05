@@ -139,5 +139,3 @@ def distance_to_wire(tube,mom=None,pos=None):
     distance = (abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()) * u.mm
 
     return distance
-    
-

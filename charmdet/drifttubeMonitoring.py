@@ -2765,7 +2765,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    if not findSimpleEvent(sTree): continue
    trackCandidates = findTracks(PR)
    if len(trackCandidates)==1: 
-    track_no = 0
     for aTrack in trackCandidates:
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
@@ -2846,7 +2845,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
             rc = h['T0tmp'].Fill(hit.GetDigi()-t0)
        t0 = h['T0tmp'].GetMean()
        rc = h['T0'].Fill(t0)
-       track_no += 1
    for aTrack in trackCandidates:   aTrack.Delete()
  if not h.has_key('biasedResiduals'): 
       ut.bookCanvas(h,key='biasedResiduals',title='biasedResiduals',nx=1600,ny=1200,cx=4,cy=6)
