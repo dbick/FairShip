@@ -2778,6 +2778,10 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
            ALG_dt_len = ALG_dt.GetNoElements()
            print("Detector ID: {}".format(ALG_id))
            print("Coords array length: {}".format(ALG_dt_len))
+           print("Coords:")
+           for k in range(ALG_dt_len):
+               print(k,ALG_dt[k])
+               
        #DT debugging end
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
