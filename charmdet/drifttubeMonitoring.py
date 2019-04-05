@@ -2766,6 +2766,19 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    trackCandidates = findTracks(PR)
    if len(trackCandidates)==1: 
     for aTrack in trackCandidates:
+       #DT debuggung - fitPoints
+       ALG_fitted_points = aTrack.getPoints()
+       print("Found {} points in track at {}".format(len(ALG_fitted_points),hex(id(aTrack))))
+       print("--------------Printing track point params-----------------------------------")
+       for ALG_fitpoint_no in range(len(ALG_fitted_points)):
+           print("## Point No {} ##".format(ALG_fitpoint_no))
+           ALG_raw = ALG_fitted_points[ALG_fitpoint_no].getRawMeasurement()
+           ALG_id = ALG_raw.getDetId()
+           ALG_dt = ALG_raw.getRawHitCoords() #TVectorD
+           ALG_dt_len = ALG_dt.GetNoElements()
+           print("Detector ID: {}".format(ALG_id))
+           print("Coords array length: {}".format(ALG_dt_len))
+       #DT debugging end
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
        try:
