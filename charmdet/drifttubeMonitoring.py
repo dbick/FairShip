@@ -2994,7 +2994,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  ALG_DBG_of = open("track_vs_hit.dbg","w")
  for key in ALG_trackcoords.keys():
      if not key in ALG_digiHits.keys():
-         print("Key {} not found".format(key), file=sys.stderr)
+         print("Key {} not found".format(key))
      for meas in range(len(ALG_trackcoords[key])):
          ALG_DBG_of.write("{}\t{}\n".format(ALG_trackcoords[key][meas],ALG_digiHits[key][meas]))
  ALG_DBG_of.close()
