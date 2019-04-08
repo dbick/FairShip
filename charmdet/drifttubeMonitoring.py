@@ -2746,6 +2746,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  module_residuals = {}
  for key in dt_modules.keys():
   module_residuals[key] = []
+ ALG_trackcoords = {}
+ ALG_digiHits = {}
     
  if not onlyPlotting:
   if not h.has_key('hitMapsX'): plotHitMaps()
@@ -2774,13 +2776,17 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
            print("## Point No {} ##".format(ALG_fitpoint_no))
            ALG_raw = ALG_fitted_points[ALG_fitpoint_no].getRawMeasurement()
            ALG_id = ALG_raw.getDetId()
+           if not str(ALG_id) in ALG_trackcoords.keys():
+               ALG_trackcoords[str(ALG_id)] = []
            ALG_dt = ALG_raw.getRawHitCoords() #TVectorD
+           ALG_trackcoords[str(ALG_id)].append(ALG_dt[6])
            ALG_dt_len = ALG_dt.GetNoElements()
            print("Detector ID: {}".format(ALG_id))
            print("Coords array length: {}".format(ALG_dt_len))
            print("Coords:")
            for k in range(ALG_dt_len):
                print(k,ALG_dt[k])
+               
                
        #DT debugging end
        fst = aTrack.getFitStatus()
@@ -2802,9 +2808,12 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        ALG_dt_nHits = len(ALG_dt_hits)
        print("Found {} hits".format(ALG_dt_nHits))
        for hit in ALG_dt_hits:
+           if not str(hit.GetDetectorID()) in ALG_digiHits.keys():
+               ALG_digiHits[str(hit.GetDetectorID())] = []
            print("Detector ID: {}".format(hit.GetDetectorID()))
            print("TDC measurement: {}".format(hit.GetDigi())) #hit.GetDigi() is the same as hit.tdc()
            print("r(t): {}".format(RT(hit,hit.GetDigi())))
+           ALG_digiHits[str(hit.GetDetectorID())].append(RT(hit,hit.GetDigi()))
        for p in aTrack.getPoints():
            rawM = p.getRawMeasurement()
            s = rawM.getDetId()/10000000
@@ -2978,11 +2987,18 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  """ File output with new residuals"""
  for key in module_residuals.keys():
      residual_filename = key + "_residuals"
-     f = open(residual_filename,"w")
+     ALG_f = open(residual_filename,"w")
      for res in module_residuals[key]:
-         f.write("{}\n".format(res))
-     f.close()
- 
+         ALG_f.write("{}\n".format(res))
+     ALG_f.close()
+ ALG_DBG_of = open("track_vs_hit.dbg","w")
+ for key in ALG_trackcoords.keys():
+     if not key in ALG_digiHits.keys():
+         print("Key {} not found".format(key), file=sys.stderr)
+     for meas in range(len(ALG_trackcoords[key])):
+         ALG_DBG_of.write("{}\t{}\n".format(ALG_trackcoords[key][meas],ALG_digiHits[key][meas]))
+ ALG_DBG_of.close()
+     
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)
  for tc in h['biasedResiduals'].GetListOfPrimitives():
