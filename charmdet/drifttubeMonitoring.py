@@ -2795,6 +2795,16 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        if sta.getMomMag() < minP and not zeroField: continue
 # check for hits in each station
        stations={1:0,2:0,3:0,4:0}
+       
+       #DT debuggung - MufluxSpectrometerHits
+       print("--------------Printing MufLuxSpectrometerHits-----------------------------------")
+       ALG_dt_hits = sTree.Digi_MufluxSpectrometerHits
+       ALG_dt_nHits = len(ALG_dt_hits)
+       print("Found {} hits".format(ALG_dt_nHits))
+       for hit in ALG_dt_hits:
+           print("Detector ID: {}".format(hit.GetDetectorID()))
+           print("TDC measurement: {}".format(hit.GetDigi())) #hit.GetDigi() is the same as hit.tdc()
+           print("r(t): {}".format(RT(hit,hit.GetDigi())))
        for p in aTrack.getPoints():
            rawM = p.getRawMeasurement()
            s = rawM.getDetId()/10000000
