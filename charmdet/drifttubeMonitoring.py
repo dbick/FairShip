@@ -2769,6 +2769,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    if len(trackCandidates)==1: 
     for aTrack in trackCandidates:
        #DT debuggung - fitPoints
+       """
        ALG_fitted_points = aTrack.getPoints()
        print("Found {} points".format(len(ALG_fitted_points)))
        print("--------------Printing track point params-----------------------------------")
@@ -2786,8 +2787,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
            print("Coords:")
            for k in range(ALG_dt_len):
                print(k,ALG_dt[k])
-               
-               
+       """       
        #DT debugging end
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
@@ -2803,6 +2803,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        stations={1:0,2:0,3:0,4:0}
        
        #DT debuggung - MufluxSpectrometerHits
+       """
        print("--------------Printing MufLuxSpectrometerHits-----------------------------------")
        ALG_dt_hits = sTree.Digi_MufluxSpectrometerHits
        ALG_dt_nHits = len(ALG_dt_hits)
@@ -2814,6 +2815,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
            print("TDC measurement: {}".format(hit.GetDigi())) #hit.GetDigi() is the same as hit.tdc()
            print("r(t): {}".format(RT(hit,hit.GetDigi())))
            ALG_digiHits[str(hit.GetDetectorID())].append(RT(hit,hit.GetDigi()))
+       """
        for p in aTrack.getPoints():
            rawM = p.getRawMeasurement()
            s = rawM.getDetId()/10000000
@@ -2822,33 +2824,19 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
            stations[s]+=1
        if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
        rc = h['biasResTrackMom'].Fill(sta.getMomMag())
+       """
+       New calculation of residuals
+       """
+       DtAlignment.utils.calculate_residuals(aTrack,dt_modules,module_residuals)
+       """
+       End of new calculation
+       """
        for hit in sTree.Digi_MufluxSpectrometerHits:
           if hit.GetDetectorID() <0:  continue
           if hit.GetDetectorID() in noisyChannels:  continue
           if not hit.hasTimeOverThreshold(): continue
           s,v,p,l,view,channelID,tdcId,nRT = stationInfo(hit)
-          """
-          New calculation of residuals
-          """
-          id = hit.GetDetectorID()
-          module_id = DtAlignment.utils.parse_det_id(id)
-          module = dt_modules[module_id['module']]
-          for i in range(len(module.get_tubes())):
-              tube = module.get_tubes()[i]
-              if tube._ID == id:
-                    break
-          tube = module.get_tubes()[i]
-          dist = DtAlignment.utils.distance_to_wire(tube,mom,pos)
-          rt_dist = 0
-          if withTDC:
-              rt_dist = RT(hit,hit.GetDigi()) * u.mm
-          residual = dist - rt_dist
-          vtop, vbot = tube.wire_end_positions()
-          center = DtAlignment.utils.calculate_center(vtop,vbot)
-          module_residuals[module_id['module']].append(residual)
-          """
-          End of new calculation
-          """
+         
           vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
           z = (vbot[2]+vtop[2])/2.
           rc,pos,mom = extrapolateToPlane(aTrack,z)

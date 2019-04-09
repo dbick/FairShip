@@ -1,5 +1,6 @@
 from ROOT import TVector3, TRotation
 import shipunit as u
+import builtins
 
 def calculate_center_from_lot(list_of_tubes):
     '''Calculates the geometric center point of a DtModule from a given list of DriftTube objects
@@ -139,3 +140,53 @@ def distance_to_wire(tube,mom=None,pos=None):
     distance = (abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()) * u.mm
 
     return distance
+
+def calculate_residuals(track,dtmodules,module_residuals):
+    """ Calculates the residuals for a given track and returns these in a dictionary
+    grouped to modules of 48 drift tubes.
+    
+    Parameters
+    ----------
+    track: 
+        genfit Track object for that the residuals should be calculated
+    dtmodules:
+        dictionary containing the drift tube modules as DtAlignment.DtModule objects
+    module_residuals:
+        dictionary containing the residuals per module with the module name as keys.
+        This is where the result is written to
+    """
+    if __debug__:
+        # Check for conistency
+        for key in dtmodules.keys():
+            if not key in module_residuals.keys():
+                print("Error: key {} not in residuals dictionary".format(key))
+                
+    # 1.) Loop over hits in track
+    n_points = track.getNumPointsWithMeasurement()
+    points = track.getPointsWithMeasurement()
+    for i in range(n_points):
+        point = points[i]
+        raw_measurement = point.getRawMeasurement()
+        det_id = raw_measurement.getDetId()
+        rt_dist = raw_measurement.getRawHitCoords()[6] * u.mm #rt distance stored here
+        # 2.) Parse detector id to module
+        module_id = DtAlignment.utils.parse_det_id(det_id)
+        module = dtmodules[module_id['module']]
+        # 3.) Find correct drift tube in module
+        for j in range(len(module.get_tubes())):
+            tube = module.get_tubes()[j]
+            if tube._ID == det_id:
+                break
+        tube = module.get_tubes()[j]
+    
+        # 4.) Read fitted position and momentum from fitted state
+        fitted_state = track.getFittedState(i)
+        mom = fitted_state.getMom()
+        pos = fitted_state.getPos()
+        
+        # 5.) Calculate distance of track to wire
+        dist = distance_to_wire(tube, mom, pos)
+    
+        # 6.) Calculate residual and append to correct entry in dictionary
+        residual = dist - rt_dist
+        module_residuals[module_id['module']].append(residual)
