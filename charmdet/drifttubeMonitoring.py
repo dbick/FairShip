@@ -2771,8 +2771,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  module_residuals = {}
  for key in dt_modules.keys():
   module_residuals[key] = []
- ALG_trackcoords = {}
- ALG_digiHits = {}
     
  if not onlyPlotting:
   if not h.has_key('hitMapsX'): plotHitMaps()
@@ -2802,27 +2800,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    if len(trackCandidates)==1: 
     timer.Start()
     for aTrack in trackCandidates:
-       #DT debuggung - fitPoints
-       """
-       ALG_fitted_points = aTrack.getPoints()
-       print("Found {} points".format(len(ALG_fitted_points)))
-       print("--------------Printing track point params-----------------------------------")
-       for ALG_fitpoint_no in range(len(ALG_fitted_points)):
-           print("## Point No {} ##".format(ALG_fitpoint_no))
-           ALG_raw = ALG_fitted_points[ALG_fitpoint_no].getRawMeasurement()
-           ALG_id = ALG_raw.getDetId()
-           if not str(ALG_id) in ALG_trackcoords.keys():
-               ALG_trackcoords[str(ALG_id)] = []
-           ALG_dt = ALG_raw.getRawHitCoords() #TVectorD
-           ALG_trackcoords[str(ALG_id)].append(ALG_dt[6])
-           ALG_dt_len = ALG_dt.GetNoElements()
-           print("Detector ID: {}".format(ALG_id))
-           print("Coords array length: {}".format(ALG_dt_len))
-           print("Coords:")
-           for k in range(ALG_dt_len):
-               print(k,ALG_dt[k])
-       """       
-       #DT debugging end
        fst = aTrack.getFitStatus()
        if not fst.isFitConverged(): continue
        try:
@@ -2835,21 +2812,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        if sta.getMomMag() < minP and not zeroField: continue
 # check for hits in each station
        stations={1:0,2:0,3:0,4:0}
-       
-       #DT debuggung - MufluxSpectrometerHits
-       """
-       print("--------------Printing MufLuxSpectrometerHits-----------------------------------")
-       ALG_dt_hits = sTree.Digi_MufluxSpectrometerHits
-       ALG_dt_nHits = len(ALG_dt_hits)
-       print("Found {} hits".format(ALG_dt_nHits))
-       for hit in ALG_dt_hits:
-           if not str(hit.GetDetectorID()) in ALG_digiHits.keys():
-               ALG_digiHits[str(hit.GetDetectorID())] = []
-           print("Detector ID: {}".format(hit.GetDetectorID()))
-           print("TDC measurement: {}".format(hit.GetDigi())) #hit.GetDigi() is the same as hit.tdc()
-           print("r(t): {}".format(RT(hit,hit.GetDigi())))
-           ALG_digiHits[str(hit.GetDetectorID())].append(RT(hit,hit.GetDigi()))
-       """
        for p in aTrack.getPoints():
            rawM = p.getRawMeasurement()
            s = rawM.getDetId()/10000000
