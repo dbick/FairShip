@@ -1,6 +1,5 @@
 from ROOT import TVector3, TRotation
 import shipunit as u
-import builtins
 
 def calculate_center_from_lot(list_of_tubes):
     '''Calculates the geometric center point of a DtModule from a given list of DriftTube objects
