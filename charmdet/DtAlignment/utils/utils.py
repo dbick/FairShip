@@ -33,6 +33,7 @@ def calculate_center_from_lot(list_of_tubes):
 def calculate_rotation_from_lot(list_of_tubes):
     return -1 
     
+#TODO Debug: parsing results are wrong
 def parse_det_id(det_id):
     """Parse the detector id to human readable dictionary so that a specific tube can easily be
     identified and adressed out of a bigger detector arangement
@@ -49,7 +50,7 @@ def parse_det_id(det_id):
     """
     result = {}
     str_id = str(det_id)
-    last_four = int(str_id[-4:]) #last four digits of the detector ID
+    last_two = int(str_id[-2:]) #last four digits of the detector ID
     #parse view
     view = "X"
     result['station'] = det_id / 10000000
@@ -57,20 +58,20 @@ def parse_det_id(det_id):
         if str_id[1] == '1':
             view = "U"
     elif result['station'] == 2:
-        if str_id[1] == '1':
+        if str_id[1] == '0':
             view = "V"
             
     #parse module
     module = "T" + str(result['station'])
     if result['station'] >= 3:
-        if last_four <= 12:
-            module += "a"
-        elif last_four <= 24:
-            module += "b"
-        elif last_four <= 36:
-            module += "c"
-        else:
+        if last_two <= 12:
             module += "d"
+        elif last_two <= 24:
+            module += "c"
+        elif last_two <= 36:
+            module += "b"
+        else:
+            module += "a"
             
     module += view
     result['module'] = module
