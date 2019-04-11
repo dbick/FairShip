@@ -33,10 +33,9 @@ def calculate_center_from_lot(list_of_tubes):
 def calculate_rotation_from_lot(list_of_tubes):
     return -1 
     
-#TODO Debug: parsing results are wrong
 def parse_det_id(det_id):
     """Parse the detector id to human readable dictionary so that a specific tube can easily be
-    identified and adressed out of a bigger detector arangement
+    identified and addressed out of a bigger detector arrangement
     
     Parameters
     ----------
@@ -75,7 +74,6 @@ def parse_det_id(det_id):
             
     module += view
     result['module'] = module
-    result['tube'] = 0
     return result
 
 def calculate_center(vec1, vec2):
@@ -141,7 +139,6 @@ def distance_to_wire(tube,mom=None,pos=None):
 
     return distance
 
-#TODO debug: T3 never contains anything
 def calculate_residuals(track,dtmodules,module_residuals):
     """ Calculates the residuals for a given track and returns these in a dictionary
     grouped to modules of 48 drift tubes.
