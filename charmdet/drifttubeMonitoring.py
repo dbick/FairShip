@@ -2771,10 +2771,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  module_residuals = {}
  for key in dt_modules.keys():
   module_residuals[key] = []
- for key in dt_modules.keys():
-  for tube in dt_modules[key].get_tubes():
-   module_id = DtAlignment.utils.parse_det_id(tube._ID)
-   print("Parsed ID: {} \nto: {}".format(tube._ID,module_id))
     
  if not onlyPlotting:
   if not h.has_key('hitMapsX'): plotHitMaps()
