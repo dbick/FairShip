@@ -35,7 +35,7 @@ def calculate_rotation_from_lot(list_of_tubes):
     
 def parse_det_id(det_id):
     """Parse the detector id to human readable dictionary so that a specific tube can easily be
-    identified and adressed out of a bigger detector arangement
+    identified and addressed out of a bigger detector arrangement
     
     Parameters
     ----------
@@ -49,7 +49,7 @@ def parse_det_id(det_id):
     """
     result = {}
     str_id = str(det_id)
-    last_four = int(str_id[-4:]) #last four digits of the detector ID
+    last_two = int(str_id[-2:]) #last four digits of the detector ID
     #parse view
     view = "X"
     result['station'] = det_id / 10000000
@@ -57,24 +57,23 @@ def parse_det_id(det_id):
         if str_id[1] == '1':
             view = "U"
     elif result['station'] == 2:
-        if str_id[1] == '1':
+        if str_id[1] == '0':
             view = "V"
             
     #parse module
     module = "T" + str(result['station'])
     if result['station'] >= 3:
-        if last_four <= 12:
-            module += "a"
-        elif last_four <= 24:
-            module += "b"
-        elif last_four <= 36:
-            module += "c"
-        else:
+        if last_two <= 12:
             module += "d"
+        elif last_two <= 24:
+            module += "c"
+        elif last_two <= 36:
+            module += "b"
+        else:
+            module += "a"
             
     module += view
     result['module'] = module
-    result['tube'] = 0
     return result
 
 def calculate_center(vec1, vec2):
@@ -116,39 +115,76 @@ def z_rotation_to_euler_angles(rad_z):
     rot.RotateZ(rad_z)    
     return rot.GetXPhi(), rot.GetXTheta(), rot.GetXPsi()
 
-def distance_to_wire(track,tube,mom=None,pos=None):
-    """Calculates the distance of closest approach for a track and a tube.
+def distance_to_wire(tube,mom=None,pos=None):
+    """Calculates the distance of closest approach for a track and a tube in mm.
     Note: This distance is positive if a valid track was used.
     
     Parameters
     ----------
-    track: ROOT.genfit.Track
-        The Track object containing a TrackRep object after fitting
+    mom: ROOT.TVector3
+        Momentum (a.k.a direction) of the track
+    
+    pos: ROOT.TVector3
+        Position on the track
         
     Returns
     -------
     float
-        Closest distance between track and wire
+        Closest distance between track and wire in mm
     """
-    n_track_representations = track.getNumReps()
-    vtop,vbot = tube.wire_end_positions()
-    
-    if n_track_representations > 0:
-        #TODO trackRep not used
-        track_representation = track.getTrackRep(0)
-        #TODO check what IDs are useful in getFittedState
-        fitted_state = track.getFittedState(0)
-        if mom==None:
-            mom = fitted_state.getMom()#ID = 0 
-        if pos==None:
-            pos = fitted_state.getPos()
-    
-        normal_vector = mom.Cross(vtop-vbot)
-        vec_any_two_points = vbot - pos
-        distance = abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()
-        return distance
-    else:
-        print("No track representation found.")
-        return -1
-    
+    vtop,vbot = tube.wire_end_positions()    
+    normal_vector = mom.Cross(vtop-vbot)
+    vec_any_two_points = vbot - pos
+    distance = (abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()) * u.mm
 
+    return distance
+
+def calculate_residuals(track,dtmodules,module_residuals):
+    """ Calculates the residuals for a given track and returns these in a dictionary
+    grouped to modules of 48 drift tubes.
+    
+    Parameters
+    ----------
+    track: 
+        genfit Track object for that the residuals should be calculated
+    dtmodules:
+        dictionary containing the drift tube modules as DtAlignment.DtModule objects
+    module_residuals:
+        dictionary containing the residuals per module with the module name as keys.
+        This is where the result is written to
+    """     
+    if __debug__:
+        # Check for conistency
+        for key in dtmodules.keys():
+            if not key in module_residuals.keys():
+                print("Error: key {} not in residuals dictionary".format(key))
+                
+    # 1.) Loop over hits in track
+    n_points = track.getNumPointsWithMeasurement()
+    points = track.getPointsWithMeasurement()
+    for i in range(n_points):
+        point = points[i]
+        raw_measurement = point.getRawMeasurement()
+        det_id = raw_measurement.getDetId()
+        rt_dist = raw_measurement.getRawHitCoords()[6] * u.mm #rt distance stored here
+        # 2.) Parse detector id to module
+        module_id = parse_det_id(det_id)
+        module = dtmodules[module_id['module']]
+        # 3.) Find correct drift tube in module
+        for j in range(len(module.get_tubes())):
+            tube = module.get_tubes()[j]
+            if tube._ID == det_id:
+                break
+        tube = module.get_tubes()[j]
+    
+        # 4.) Read fitted position and momentum from fitted state
+        fitted_state = track.getFittedState(i)
+        mom = fitted_state.getMom()
+        pos = fitted_state.getPos()
+        
+        # 5.) Calculate distance of track to wire
+        dist = distance_to_wire(tube, mom, pos)
+    
+        # 6.) Calculate residual and append to correct entry in dictionary
+        residual = dist - rt_dist
+        module_residuals[module_id['module']].append(residual)

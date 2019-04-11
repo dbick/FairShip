@@ -1621,7 +1621,7 @@ def extractRTPanda(hname= 'TDC1000_x'):
    N = 0
    for k in range(n0,n):
      N+=h[hname].GetBinContent(k)
-   h['rt'+hname].SetPoint(n-n0,h[hname].GetBinCenter(n), N/float(Ntot+1E-20)*R)
+   h['rt'+hname].SetPoint(n,h[hname].GetBinCenter(n), N/float(Ntot+1E-20)*R)
  h['rt'+hname].SetTitle('rt'+hname)
  h['rt'+hname].SetLineWidth(2)
  if not hname.find('TDC1')<0: h['rt'+hname].SetLineColor(ROOT.kBlue)
@@ -2804,6 +2804,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        if not fst.isFitConverged(): continue
        try:
         sta = aTrack.getFittedState(0)
+        mom = sta.getMom()
+        pos = sta.getPos()
        except:
         print "problem with getting state, event",sTree.GetCurrentFile().GetName(),Nr
         continue
@@ -2820,32 +2822,18 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        rc = h['biasResTrackMom'].Fill(sta.getMomMag())
        timerStats['prepareTrack']+=timer.RealTime()
        timer.Start()
+       """
+       New calculation of residuals
+       """
+       DtAlignment.utils.calculate_residuals(aTrack,dt_modules,module_residuals)
+       """
+       End of new calculation
+       """
        for hit in sTree.Digi_MufluxSpectrometerHits:
           if hit.GetDetectorID() <0:  continue
           if hit.GetDetectorID() in noisyChannels:  continue
           if not hit.hasTimeOverThreshold(): continue
           s,v,p,l,view,channelID,tdcId,nRT = stationInfo(hit)
-          """
-          New calculation of residuals
-          """
-          id = hit.GetDetectorID()
-          module_id = DtAlignment.utils.parse_det_id(id)
-          module = dt_modules[module_id['module']]
-          for i in range(len(module.get_tubes())):
-              tube = module.get_tubes()[i]
-              if tube._ID == id:
-                    break
-          tube = module.get_tubes()[i]
-          #rc, pos, mom = extrapolateToPlane(aTrack, tube._position[2])
-          dist = DtAlignment.utils.distance_to_wire(aTrack, tube)
-          rt_dist = 0
-          if withTDC:
-              rt_dist = RT(hit,hit.GetDigi())
-          residual = dist - rt_dist
-          module_residuals[module_id['module']].append(residual)
-          """
-          End of new calculation
-          """
           vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
           z = (vbot[2]+vtop[2])/2.
           timer.Start()
@@ -3008,11 +2996,11 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  """ File output with new residuals"""
  for key in module_residuals.keys():
      residual_filename = key + "_residuals"
-     f = open(residual_filename,"w")
+     ALG_f = open(residual_filename,"w")
      for res in module_residuals[key]:
-         f.write("{}\n".format(res))
-     f.close()
- 
+         ALG_f.write("{}\n".format(res))
+     ALG_f.close()
+     
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)
  for tc in h['biasedResiduals'].GetListOfPrimitives():
@@ -5237,6 +5225,7 @@ def recoStep1(PR=11):
   fGenFitArray = ROOT.TClonesArray("genfit::Track") 
   fGenFitArray.BypassStreamer(ROOT.kTRUE)
   fitTracks   = sTree.Branch("FitTracks", fGenFitArray,32000,-1)
+
   fTrackInfoArray = ROOT.TClonesArray("TrackInfo")
   fTrackInfoArray.BypassStreamer(ROOT.kTRUE)
   TrackInfos      = sTree.Branch("TrackInfos", fTrackInfoArray,32000,-1)
