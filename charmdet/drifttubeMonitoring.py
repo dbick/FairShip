@@ -1621,7 +1621,7 @@ def extractRTPanda(hname= 'TDC1000_x'):
    N = 0
    for k in range(n0,n):
      N+=h[hname].GetBinContent(k)
-   h['rt'+hname].SetPoint(n,h[hname].GetBinCenter(n), N/float(Ntot+1E-20)*R)
+   h['rt'+hname].SetPoint(n-n0,h[hname].GetBinCenter(n), N/float(Ntot+1E-20)*R)
  h['rt'+hname].SetTitle('rt'+hname)
  h['rt'+hname].SetLineWidth(2)
  if not hname.find('TDC1')<0: h['rt'+hname].SetLineColor(ROOT.kBlue)
