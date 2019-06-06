@@ -3,6 +3,12 @@
 
 #include "TObject.h"
 #include "Mille.h"
+//includes for GBL fitter from genfit
+#include <vector>
+#include <genfit/GBL/include/GblPoint.h>
+#include <genfit/GBL/include/GblTrajectory.h>
+#include <genfit/GBL/include/MilleBinary.h>
+#include <genfit/core/include/Track.h>
 
 /**
  * A class for wrapping the millepede function call such that it can be called from
@@ -25,7 +31,10 @@ public:
 					float measured_residual,
 					float sigma);
 
-	ClassDef(MillepedeCaller,1);
+	std::vector<gbl::GblPoint> list_hits(const genfit::Track& track) const;
+	const int* labels() const;
+
+	ClassDef(MillepedeCaller,2);
 
 private:
 	Mille mille;
