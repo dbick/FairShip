@@ -5,10 +5,10 @@
 #include "Mille.h"
 //includes for GBL fitter from genfit
 #include <vector>
-#include <genfit/GBL/include/GblPoint.h>
-#include <genfit/GBL/include/GblTrajectory.h>
-#include <genfit/GBL/include/MilleBinary.h>
-#include <genfit/core/include/Track.h>
+#include "GblPoint.h"
+#include "GblTrajectory.h"
+#include "MilleBinary.h"
+#include "Track.h"
 
 /**
  * A class for wrapping the millepede function call such that it can be called from
