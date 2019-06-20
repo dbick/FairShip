@@ -121,6 +121,9 @@ def distance_to_wire(tube,mom=None,pos=None):
     
     Parameters
     ----------
+    tube: DriftTube
+        DriftTube object that was hit.
+        
     mom: ROOT.TVector3
         Momentum (a.k.a direction) of the track
     
@@ -134,10 +137,42 @@ def distance_to_wire(tube,mom=None,pos=None):
     """
     vtop,vbot = tube.wire_end_positions()    
     normal_vector = mom.Cross(vtop-vbot)
-    vec_any_two_points = vbot - pos
+    vec_any_two_points = vbot - pos #a vector from any point on one of the straight lines to any point on the other straight
     distance = (abs(vec_any_two_points.Dot(normal_vector)) / normal_vector.Mag()) * u.mm
 
     return distance
+
+def measurement_vector(tube,mom,pos):
+    """ Calculates the vector which is perpendicular to the track AND the sense wire of the passed tube. This is, when the passed track
+    is used as seed for a genfit.GBL refit, the prediction for the measurement at that specific sense wire.
+    
+   
+    
+    Parameters
+    ----------
+    tube: DriftTube
+        DriftTube object that was hit
+        
+    mom: ROOT.TVector3
+        Momentum (a.k.a direction) of the track
+    
+    pos: ROOT.TVector3
+        Position on the track 
+    
+    Returns
+    -------
+    ROOT.TVector3
+        Vector of closest approach in lab system (x,y,z). Note, that this contains no information about the point of closest approach itself.
+    """
+    vtop,vbot = tube.wire_end_positions()    
+    normal_vector = mom.Cross(vtop-vbot)
+    vec_any_two_points = vbot - pos
+    
+    #TODO check direction of vector
+    
+    #TODO set correct length of vector
+    #TODO return correct vector instead normal_vector
+    return normal_vector 
 
 def calculate_residuals(track,dtmodules,module_residuals):
     """ Calculates the residuals for a given track and returns these in a dictionary
