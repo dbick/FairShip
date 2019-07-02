@@ -65,7 +65,7 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
 
 vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track& track) const
 {
-	vector<gbl::GblPoint> result;
+	vector<gbl::GblPoint> result(0);
 
 	size_t n_points = track.getNumPointsWithMeasurement();
 	vector<genfit::TrackPoint* > points = track.getPointsWithMeasurement();
@@ -98,7 +98,33 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track& track) con
 }
 
 
+
 const int* MillepedeCaller::labels() const
 {
 	return new int[100];
+}
+
+TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsigned int hit_id_1, const unsigned int hit_id_2) const
+{
+	TMatrixD* jacobian = new TMatrixD(5,5);
+
+	return jacobian;
+}
+
+map<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track& track) const
+{
+	map<double,TMatrixD*> result;
+
+
+	//calculate length of the track between the two hits (in GBL terms arc length)
+	TVector3 fitted_pos_1 = track.getFittedState(hit_id_1);
+	TVector3 fitted_pos_2 = track.getFittedState(hit_id_2);
+	TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
+	double distance = between_hits.Mag();
+
+	TMatrixD* jacobian = calc_jacobian(track, hit_id_1, hit_id_2);
+
+
+
+	return result;
 }

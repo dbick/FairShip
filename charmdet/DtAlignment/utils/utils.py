@@ -165,14 +165,7 @@ def measurement_vector(tube,mom,pos):
         Vector of closest approach in lab system (x,y,z). Note, that this contains no information about the point of closest approach itself.
     """
     vtop,vbot = tube.wire_end_positions()    
-    normal_vector = mom.Cross(vtop-vbot)
-    vec_any_two_points = vbot - pos
     
-    #TODO check direction of vector
-    
-    #TODO set correct length of vector
-    #TODO return correct vector instead normal_vector
-    return normal_vector 
 
 def calculate_residuals(track,dtmodules,module_residuals):
     """ Calculates the residuals for a given track and returns these in a dictionary

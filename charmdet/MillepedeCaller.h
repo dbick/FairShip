@@ -9,6 +9,9 @@
 #include "GblTrajectory.h"
 #include "MilleBinary.h"
 #include "Track.h"
+#include "TMatrixD.h"
+#include <map>
+#include "TVector3.h"
 
 /**
  * A class for wrapping the millepede function call such that it can be called from
@@ -38,6 +41,10 @@ public:
 
 private:
 	Mille mille;
+
+	//helper methods
+	TMatrixD* calc_jacobian(const genfit::Track& track, const unsigned int hit_id_1, const unsigned int hit_id_2) const;
+	std::map<double,TMatrixD*> jacobians_with_arclength(const genfit::Track& track) const;
 };
 
 #endif /* CHARMDET_MILLEPEDECALLER_H_ */
