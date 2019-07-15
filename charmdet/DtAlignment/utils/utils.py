@@ -1,4 +1,4 @@
-from ROOT import TVector3, TRotation
+from ROOT import TVector3, TRotation, TMatrixD, TVectorD, TDecompLU
 import shipunit as u
 
 def calculate_center_from_lot(list_of_tubes):
@@ -146,7 +146,6 @@ def measurement_vector(tube,mom,pos):
     """ Calculates the vector which is perpendicular to the track AND the sense wire of the passed tube. This is, when the passed track
     is used as seed for a genfit.GBL refit, the prediction for the measurement at that specific sense wire.
     
-   
     
     Parameters
     ----------
@@ -164,8 +163,39 @@ def measurement_vector(tube,mom,pos):
     ROOT.TVector3
         Vector of closest approach in lab system (x,y,z). Note, that this contains no information about the point of closest approach itself.
     """
-    vtop,vbot = tube.wire_end_positions()    
+    vtop,vbot = tube.wire_end_positions()
+    wire_dir = vtop - vbot
+    plane = {'pos' : TVector3(pos - vbot),
+             'dir1' : TVector3(mom),
+             'dir2' : TVector3(-1 * wire_dir)
+        }
+      
+    const_vector = TVectorD(2)
+    coeff_matrix = TMatrixD(2,2)
     
+    const_vector[0] = -(plane['pos'].Dot(mom))
+    const_vector[1] = -(plane['pos'].Dot(wire_dir))
+    
+    coeff_matrix[0][0] = plane['dir1'].Dot(mom)
+    coeff_matrix[0][1] = plane['dir2'].Dot(mom)
+    coeff_matrix[1][0] = plane['dir1'].Dot(wire_dir)
+    coeff_matrix[1][1] = plane['dir2'].Dot(wire_dir)
+    
+    #Solve linear eqs:
+    solvable_matrix = TDecompLU(coeff_matrix)
+    result = TVectorD(const_vector)
+    rc = solvable_matrix.Solve(result)
+    if not rc:
+        print("Matrix solution not successful, returning None instead")
+        return None
+    
+    #Extrapolate track and wire by the result times their directions
+    PCA_on_track = TVector3(pos + result[0] * mom)
+    PCA_on_wire = TVector3(vbot + result[1] * wire_dir)
+    
+    return TVector3(PCA_on_track - PCA_on_wire)
+    
+        
 
 def calculate_residuals(track,dtmodules,module_residuals):
     """ Calculates the residuals for a given track and returns these in a dictionary
