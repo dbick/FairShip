@@ -162,6 +162,7 @@ def measurement_vector(tube,mom,pos):
     -------
     ROOT.TVector3
         Vector of closest approach in lab system (x,y,z). Note, that this contains no information about the point of closest approach itself.
+        Unit of returned vector is mm.
     """
     vtop,vbot = tube.wire_end_positions()
     wire_dir = vtop - vbot
@@ -192,7 +193,7 @@ def measurement_vector(tube,mom,pos):
     PCA_on_track = TVector3(pos + result[0] * mom)
     PCA_on_wire = TVector3(vbot + result[1] * wire_dir)
     
-    return TVector3(PCA_on_track - PCA_on_wire)
+    return TVector3(u.mm * (PCA_on_track - PCA_on_wire))
     
         
 
