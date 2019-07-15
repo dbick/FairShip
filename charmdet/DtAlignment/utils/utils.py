@@ -186,8 +186,7 @@ def measurement_vector(tube,mom,pos):
     result = TVectorD(const_vector)
     rc = solvable_matrix.Solve(result)
     if not rc:
-        print("Matrix solution not successful, returning None instead")
-        return None
+        raise Exception("Matrix is not solvable")
     
     #Extrapolate track and wire by the result times their directions
     PCA_on_track = TVector3(pos + result[0] * mom)
