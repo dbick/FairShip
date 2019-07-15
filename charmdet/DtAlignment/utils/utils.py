@@ -241,7 +241,11 @@ def calculate_residuals(track,dtmodules,module_residuals):
         
         # 5.) Calculate distance of track to wire
         dist = distance_to_wire(tube, mom, pos)
-    
+        """
+        Testing for consistency
+        """
+        vec_between_PCA = measurement_vector(tube, mom, pos)
+        print("Hit: {}\tdist: {}\t Abs(vec): {}".format(i,dist,vec_between_PCA.Mag()))
         # 6.) Calculate residual and append to correct entry in dictionary
         residual = dist - rt_dist
         module_residuals[module_id['module']].append(residual)
