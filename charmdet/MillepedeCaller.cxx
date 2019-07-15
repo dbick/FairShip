@@ -63,39 +63,39 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
 	mille.mille(n_local_derivatives,local_derivatives,n_global_derivatives,global_derivatives,label,measured_residual,sigma);
 }
 
-vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track& track) const
-{
-	vector<gbl::GblPoint> result(0);
-
-	size_t n_points = track.getNumPointsWithMeasurement();
-	vector<genfit::TrackPoint* > points = track.getPointsWithMeasurement();
-
-	for(size_t i = 0; i < n_points; i++)
-	{
-		genfit::TrackPoint* point = points[i];
-		genfit::AbsMeasurement* raw = point->getRawMeasurement();
-		int detId = raw->getDetId();
-	}
-
-	//TODO continue implementing
-
-//	    for i in range(n_points):
-//	        point = points[i]
-//	        raw_measurement = point.getRawMeasurement()
-//	        det_id = raw_measurement.getDetId()
-//	        rt_dist = raw_measurement.getRawHitCoords()[6] * u.mm #rt distance stored here
-//	        # 2.) Parse detector id to module
-//	        module_id = parse_det_id(det_id)
-//	        module = dtmodules[module_id['module']]
-//	        # 3.) Find correct drift tube in module
-//	        for j in range(len(module.get_tubes())):
-//	            tube = module.get_tubes()[j]
-//	            if tube._ID == det_id:
-//	                break
-//	        tube = module.get_tubes()[j]
-
-	return result;
-}
+//vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track& track) const
+//{
+//	vector<gbl::GblPoint> result(0);
+//
+//	size_t n_points = track.getNumPointsWithMeasurement();
+//	vector<genfit::TrackPoint* > points = track.getPointsWithMeasurement();
+//
+//	for(size_t i = 0; i < n_points; i++)
+//	{
+//		genfit::TrackPoint* point = points[i];
+//		genfit::AbsMeasurement* raw = point->getRawMeasurement();
+//		int detId = raw->getDetId();
+//	}
+//
+//	//TODO continue implementing
+//
+////	    for i in range(n_points):
+////	        point = points[i]
+////	        raw_measurement = point.getRawMeasurement()
+////	        det_id = raw_measurement.getDetId()
+////	        rt_dist = raw_measurement.getRawHitCoords()[6] * u.mm #rt distance stored here
+////	        # 2.) Parse detector id to module
+////	        module_id = parse_det_id(det_id)
+////	        module = dtmodules[module_id['module']]
+////	        # 3.) Find correct drift tube in module
+////	        for j in range(len(module.get_tubes())):
+////	            tube = module.get_tubes()[j]
+////	            if tube._ID == det_id:
+////	                break
+////	        tube = module.get_tubes()[j]
+//
+//	return result;
+//}
 
 
 
