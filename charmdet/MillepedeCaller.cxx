@@ -73,7 +73,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track& track) con
 
 	multimap<double,TMatrixD*> jacobians_with_arclen = jacobians_with_arclength(track);
 
-	for(auto it = jacobians_with_arclen.begin(); it < jacobians_with_arclen.end(); it++)
+	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); it++)
 	{
 		TMatrixD* jacobian = it->second;
 		result.push_back(gbl::GblPoint(*jacobian));
