@@ -44,7 +44,7 @@ private:
 
 	//helper methods
 	TMatrixD* calc_jacobian(const genfit::Track& track, const unsigned int hit_id_1, const unsigned int hit_id_2) const;
-//	std::map<double,TMatrixD*> jacobians_with_arclength(const genfit::Track& track) const;
+	std::multimap<double,TMatrixD*> jacobians_with_arclength(const genfit::Track& track) const;
 };
 
 #endif /* CHARMDET_MILLEPEDECALLER_H_ */

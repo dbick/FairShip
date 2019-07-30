@@ -148,8 +148,8 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsig
 
 	//2.) enter non-zero partial differentials
 	//2.1) get the two points on track where reconstruction happened
-	genfit::MeasuredStateOnPlane* state_at_id_1 = track.getFittedState(hit_id_1);
-	genfit::MeasuredStateOnPlane* state_at_id_2 = track.getFittedState(hit_id_2);
+	genfit::MeasuredStateOnPlane state_at_id_1 = track.getFittedState(hit_id_1);
+	genfit::MeasuredStateOnPlane state_at_id_2 = track.getFittedState(hit_id_2);
 
 	TVector3 pos1 = state_at_id_1->getPos();
 	TVector3 pos2 = state_at_id_2->getPos();
@@ -164,20 +164,29 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsig
 	return jacobian;
 }
 
-//map<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track& track) const
-//{
-//	map<double,TMatrixD*> result;
-//
-//
-//	//calculate length of the track between the two hits (in GBL terms arc length)
-//	TVector3 fitted_pos_1 = track.getFittedState(hit_id_1);
-//	TVector3 fitted_pos_2 = track.getFittedState(hit_id_2);
-//	TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
-//	double distance = between_hits.Mag();
-//
-//	TMatrixD* jacobian = calc_jacobian(track, hit_id_1, hit_id_2);
-//
-//
-//
-//	return result;
-//}
+
+//TODO add doc comment
+/**
+ *
+ */
+multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track& track) const
+{
+	multimap<double,TMatrixD*,less<double>> result;
+
+	unsigned int n_hits = track.getNumPointsWithMeasurement();
+
+	for (unsigned int hit_id = 0; hit_id < n_hits; hit_id++)
+	{
+		//calculate length of the track between the two hits (in GBL terms arc length)
+		TVector3 fitted_pos_1 = track.getFittedState(hit_id_1).getPos();
+		TVector3 fitted_pos_2 = track.getFittedState(hit_id_2).getPos();
+		TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
+		double distance = between_hits.Mag();
+
+		TMatrixD* jacobian = calc_jacobian(track, hit_id_1, hit_id_2);
+		result.insert(make_pair(distance, jacobian));
+	}
+
+	//return a copy of the map. Since it's small it is probably better than handling memory
+	return result;
+}
