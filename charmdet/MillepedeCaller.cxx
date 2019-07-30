@@ -136,11 +136,11 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsig
 		{
 			if(row == col)
 			{
-				jacobian[row][col] = 1;
+				(*jacobian)[row][col] = 1;
 			}
 			else
 			{
-				jacobian[row][col] = 0;
+				(*jacobian)[row][col] = 0;
 			}
 		}
 
@@ -151,15 +151,15 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsig
 	genfit::MeasuredStateOnPlane state_at_id_1 = track.getFittedState(hit_id_1);
 	genfit::MeasuredStateOnPlane state_at_id_2 = track.getFittedState(hit_id_2);
 
-	TVector3 pos1 = state_at_id_1->getPos();
-	TVector3 pos2 = state_at_id_2->getPos();
+	TVector3 pos1 = state_at_id_1.getPos();
+	TVector3 pos2 = state_at_id_2.getPos();
 
 	double dx = pos2.X() - pos1.X();
 	double dy = pos2.Y() - pos1.Y();
 
 	//2.2) enter dx and dy to jacobian
-	jacobian[3][1] = dx;
-	jacobian[4][2] = dy;
+	(*jacobian)[3][1] = dx;
+	(*jacobian)[4][2] = dy;
 
 	return jacobian;
 }
