@@ -175,15 +175,15 @@ multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfi
 
 	unsigned int n_hits = track.getNumPointsWithMeasurement();
 
-	for (unsigned int hit_id = 0; hit_id < n_hits; hit_id++)
+	for (unsigned int hit_id = 1; hit_id < n_hits; hit_id++)
 	{
 		//calculate length of the track between the two hits (in GBL terms arc length)
-		TVector3 fitted_pos_1 = track.getFittedState(hit_id_1).getPos();
-		TVector3 fitted_pos_2 = track.getFittedState(hit_id_2).getPos();
+		TVector3 fitted_pos_1 = track.getFittedState(hit_id - 1).getPos();
+		TVector3 fitted_pos_2 = track.getFittedState(hit_id).getPos();
 		TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
 		double distance = between_hits.Mag();
 
-		TMatrixD* jacobian = calc_jacobian(track, hit_id_1, hit_id_2);
+		TMatrixD* jacobian = calc_jacobian(track, hit_id - 1, hit_id);
 		result.insert(make_pair(distance, jacobian));
 	}
 
