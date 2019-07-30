@@ -104,9 +104,62 @@ const int* MillepedeCaller::labels() const
 	return new int[100];
 }
 
+
+//TODO add mathematical description of matrix parameter determination to doc comment
+/**
+ * Calculate the jacobian between two consecutive hits on a predetermined track. This track (in this case) is the result of a predecessing
+ * fit with a KalmanFitter from genfit. It can be rewritten to be any track, even a "guessed" one from any kind of pattern recognition.
+ *
+ * @brief Calculate jacobian between two consecutive hits
+ *
+ * @author Stefan Bieschke
+ * @version 1.0
+ * @date July 30, 2019
+ *
+ * @param track genfit::Track object, of whom the jacobian for two consecutive hits is calculated
+ * @param hit_id_1 ID of the first hit on the track for that the jacobian should be calculated
+ * @param hit_id_2 ID of the second hit on the track for that the jacobian should be calculated
+ *
+ * @return Pointer to a heap object of TMatrixD type with dimensions 5x5
+ *
+ * @warning Requires hit_id_1 = hit_id_2 - 1
+ * @warning Requires hit_id_1 < track.getNumPointsWithMeasurement() && hit_id_2 < track.getNumPointsWithMeasurement()
+ */
 TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsigned int hit_id_1, const unsigned int hit_id_2) const
 {
 	TMatrixD* jacobian = new TMatrixD(5,5);
+
+	// 1.) init unity matrix
+	for(unsigned int row = 0; row < jacobian->GetNrows(); row++)
+	{
+		for(unsigned int col = 0; col < jacobian->GetNcols(); col++)
+		{
+			if(row == col)
+			{
+				jacobian[row][col] = 1;
+			}
+			else
+			{
+				jacobian[row][col] = 0;
+			}
+		}
+
+	}
+
+	//2.) enter non-zero partial differentials
+	//2.1) get the two points on track where reconstruction happened
+	genfit::MeasuredStateOnPlane* state_at_id_1 = track.getFittedState(hit_id_1);
+	genfit::MeasuredStateOnPlane* state_at_id_2 = track.getFittedState(hit_id_2);
+
+	TVector3 pos1 = state_at_id_1->getPos();
+	TVector3 pos2 = state_at_id_2->getPos();
+
+	double dx = pos2.X() - pos1.X();
+	double dy = pos2.Y() - pos1.Y();
+
+	//2.2) enter dx and dy to jacobian
+	jacobian[3][1] = dx;
+	jacobian[4][2] = dy;
 
 	return jacobian;
 }
