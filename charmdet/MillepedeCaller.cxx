@@ -172,6 +172,6 @@ multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfi
 		result.insert(make_pair(distance, jacobian));
 	}
 
-	//return a copy of the map. Since it's small it is probably better than handling memory
+	//return a copy of the map. Since it's small it is probably better than handling memory and matrices are stored as pointers to heap
 	return result;
 }
