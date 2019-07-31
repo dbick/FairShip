@@ -146,6 +146,10 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track& track, const unsig
 	(*jacobian)[3][1] = dx;
 	(*jacobian)[4][2] = dy;
 
+	//debugging output
+	cout << " ------- Jacobian before passing on ----------" << endl;
+	jacobian->Print();
+
 	return jacobian;
 }
 
@@ -160,17 +164,40 @@ multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfi
 
 	unsigned int n_hits = track.getNumPointsWithMeasurement();
 
+	//debugging output
+	cout << " ------- Jacobian ordering ----------" << endl;
+	cout << "Ordering jacobians for " << n_hits << " by arclength" << endl;
+
 	for (unsigned int hit_id = 1; hit_id < n_hits; hit_id++)
 	{
+		//debugging output
+		cout << "Hit: " << hit_id << endl;
 		//calculate length of the track between the two hits (in GBL terms arc length)
 		TVector3 fitted_pos_1 = track.getFittedState(hit_id - 1).getPos();
 		TVector3 fitted_pos_2 = track.getFittedState(hit_id).getPos();
 		TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
 		double distance = between_hits.Mag();
 
+		cout << "Arc length: " << distance << endl;
+
 		TMatrixD* jacobian = calc_jacobian(track, hit_id - 1, hit_id);
+
+		cout << "Jacbian after passing:" << endl;
+		jacobian->Print();
 		result.insert(make_pair(distance, jacobian));
 	}
+
+	//debugging output
+	cout << "-------- Whole map before passing ----------" << endl;
+	for(auto it = result.begin(); it != result.end(); ++it)
+	{
+		double arclen = it->first;
+		TMatrixD* mat = it->second;
+		cout << "Arclen: " << arclen << endl;
+		mat->Print();
+		cout << "END OF HIT" << endl;
+	}
+
 
 	//return a copy of the map. Since it's small it is probably better than handling memory and matrices are stored as pointers to heap
 	return result;
