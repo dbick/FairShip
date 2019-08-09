@@ -2786,6 +2786,9 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  module_residuals = {}
  for key in dt_modules.keys():
   module_residuals[key] = []
+  
+  #debugging
+  milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
     
  if not onlyPlotting:
   if not h.has_key('hitMapsX'): plotHitMaps()
@@ -2806,6 +2809,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
   timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
   for Nr in range(eventRange[0],eventRange[1]):
    getEvent(Nr)
+
    h['T0tmp'].Reset()
    if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
    if not findSimpleEvent(sTree): continue
@@ -2839,6 +2843,11 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        rc = h['biasResTrackMom'].Fill(sta.getMomMag())
        timerStats['prepareTrack']+=timer.RealTime()
        timer.Start()
+       """
+       refit
+       """
+       print("Testing: Processing event number", Nr)
+       chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
        """
        New calculation of residuals
        """
