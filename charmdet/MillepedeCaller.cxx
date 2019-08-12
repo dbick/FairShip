@@ -364,3 +364,7 @@ TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
 	}
 	return result;
 }
+
+//TODO add at least first and last det plane as scatterer to define start and end of trackfit
+//TODO define GLOBAL coord frame with trackpoints being offset in u and v directions (w perp to det planes - a.k.a w = z)
+//TODO ensure track being more or less straight (global u,v)

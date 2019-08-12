@@ -17,19 +17,6 @@
 #include "TRotation.h"
 #include <cstdint>
 
-//class JacobianWithArclen
-//{
-//public:
-//	JacobianWithArclen(TMatrixD* jacobian, double arclen);
-//	~JacobianWithArclen();
-//
-//	TMatrixD* get_jacobian();
-//	double get_arclen();
-//
-//private:
-//	TMatrixD* m_jacobian;
-//	double m_arclen;
-//};
 
 /**
  * A class for wrapping the millepede function call such that it can be called from
