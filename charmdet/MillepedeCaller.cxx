@@ -277,6 +277,14 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	vector<gbl::GblPoint> points = list_hits(&track);
 	gbl::GblTrajectory traj(points);
 
+	//check track validity
+	if(!traj.isValid())
+	{
+		cout << "Error, GBL trajectory is invalid." << endl;
+		cerr << "Error, GBL trajectory is invalid." << endl;
+		return -1;
+	}
+
 	int rc, ndf;
 	double chi2, lostWeight;
 
