@@ -95,6 +95,17 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 	multimap<double,struct hit_info,less<double>> jacobians_with_arclen;
 
+	//TODO test
+	//zero arc length GBL point for first hit
+	TMatrixD* unity = new TMatrixD(5,5);
+	unity->UnitMatrix();
+	struct hit_info hit_zero;
+	hit_zero.jacobian = unity;
+	hit_zero.rt_measurement = 0.0;
+	hit_zero.closest_approach = TVector3(0,0,0);
+	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
+
+
 	//#pragma omp parallel for
 	for(size_t i = 1; i < n_points; i++)
 	{
@@ -118,7 +129,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.rt_measurement = measurement;
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
-	//TODO calculate GBLpoint for hit no. 0
 
 	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); it++)
 	{
@@ -174,21 +184,7 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	TMatrixD* jacobian = new TMatrixD(5,5);
 
 	// 1.) init unity matrix
-	for(uint8_t row = 0; row < jacobian->GetNrows(); row++)
-	{
-		for(uint8_t col = 0; col < jacobian->GetNcols(); col++)
-		{
-			if(row == col)
-			{
-				(*jacobian)[row][col] = 1;
-			}
-			else
-			{
-				(*jacobian)[row][col] = 0;
-			}
-		}
-
-	}
+	jacobian->UnitMatrix();
 
 	//2.) enter non-zero partial differentials
 	//2.1) get the two points on track where reconstruction happened
@@ -221,7 +217,11 @@ multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfi
 	unsigned int n_hits = track->getNumPointsWithMeasurement();
 
 
-	//TODO add unity matrix as first entry
+	//add unity matrix with zero arc length as first entry
+	TMatrixD* unity = new TMatrixD(5,5);
+	unity->UnitMatrix();
+	result.insert(make_pair(0.0,unity));
+
 	for (unsigned int hit_id = 1; hit_id < n_hits; hit_id++)
 	{
 		result.insert(single_jacobian_with_arclength(*track,hit_id));
@@ -257,6 +257,7 @@ multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfi
  */
 pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const genfit::Track& track, const unsigned int hit_id) const
 {
+
 	TVector3 fitted_pos_1 = track.getFittedState(hit_id - 1).getPos();
 	TVector3 fitted_pos_2 = track.getFittedState(hit_id).getPos();
 	TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
