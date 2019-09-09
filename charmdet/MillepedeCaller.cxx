@@ -63,6 +63,8 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
 	mille.mille(n_local_derivatives,local_derivatives,n_global_derivatives,global_derivatives,label,measured_residual,sigma);
 }
 
+//TODO Rework, make easier to understand
+//TODO Add scatterer to hits in first and last detector plane at least -> start and end point of refit!
 /**
  * List the hits used to fit the seed track from a fit predecessing the GBL fit as a @c std::vector<gbl::GblPoint>. The GblPoint objects will
  * also contain measurements after the call of this method. The GBL points are ordered by arclength, which is the distance on the track between
@@ -374,7 +376,7 @@ TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
  * @brief Linear model of the passed track
  *
  * @author Stefan Bieschke
- * @date Aug. 09, 2019
+ * @date Sep. 09, 2019
  * @version 1.0
  *
  * @param track Track that is meant to be modeled
@@ -401,6 +403,6 @@ vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& t
 	return result;
 }
 
-//TODO add at least first and last det plane as scatterer to define start and end of trackfit
+//TODO add at least first and last det plane as scatterer to define start and end of trackfit - upd. 9/9/19: Added comment at appropriate location in code
 //TODO define GLOBAL coord frame with trackpoints being offset in u and v directions (w perp to det planes - a.k.a w = z)
-//TODO ensure track being more or less straight (global u,v)
+//TODO ensure track being more or less straight (global u,v) - upd. 9/9/19: Done, needs testing and must be used, so far hit by hit of genfit track
