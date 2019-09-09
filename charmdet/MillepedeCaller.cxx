@@ -366,6 +366,41 @@ TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
 	return result;
 }
 
+/**
+ * Calculate a position and a direction vector for a linear model that models a given track from genfit. While the track
+ * from genfit might take scattering in detector material into account, this linear model doesn't consider scatterers.
+ * The way this works is to calculate and return a straight track between the first and the last hit of the passed track.
+ *
+ * @brief Linear model of the passed track
+ *
+ * @author Stefan Bieschke
+ * @date Aug. 09, 2019
+ * @version 1.0
+ *
+ * @param track Track that is meant to be modeled
+ *
+ * @return std::vector of length two, whos first entry is the position vector, second one being the direction vector
+ */
+vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& track)
+{
+	vector<TVector3> result(2);
+
+	//get first and last fitted states
+	size_t n_hits = track.getNumPointsWithMeasurement();
+	genfit::StateOnPlane first_hit = track.getFittedState(0);
+	genfit::StateOnPlane last_hit = track.getFittedState(n_hits - 1);
+
+	//position is fitted position on first hit
+	TVector3 pos = first_hit.getPos();
+
+	//direction is difference between positions at first and last hits
+	TVector3 dir = last_hit.getPos() - first_hit.getPos();
+	result[0] = pos;
+	result[1] = dir;
+
+	return result;
+}
+
 //TODO add at least first and last det plane as scatterer to define start and end of trackfit
 //TODO define GLOBAL coord frame with trackpoints being offset in u and v directions (w perp to det planes - a.k.a w = z)
 //TODO ensure track being more or less straight (global u,v)
