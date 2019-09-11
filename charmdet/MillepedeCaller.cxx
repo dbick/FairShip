@@ -279,6 +279,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 {
 	vector<gbl::GblPoint> points = list_hits(&track);
 	gbl::GblTrajectory traj(points);
+	//TODO move to constructor and store global as member variable
 	gbl::MilleBinary bin("debugging.mille_bin",true,2000);
 	traj.milleOut(bin);
 
