@@ -279,6 +279,9 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 {
 	vector<gbl::GblPoint> points = list_hits(&track);
 	gbl::GblTrajectory traj(points);
+	gbl::MilleBinary bin("debugging.mille_bin",true,2000);
+	traj.milleOut(bin);
+
 
 	//check track validity
 	if(!traj.isValid())
@@ -355,6 +358,19 @@ TRotation MillepedeCaller::calc_rotation_of_vector(const TVector3& v) const
 	return rot;
 }
 
+/**
+ * Convert a TRotation to a its 3x3 rotation matrix given as TMatrixD
+ *
+ * @brief Convert a TRotation to a (3x3) TMatrixD
+ *
+ * @author Stefan Bieschke
+ * @date Sep. 09, 2019
+ * @version 1.0
+ *
+ * @param rot TRotation object for that the rotation matrix is needed
+ *
+ * @return TMatrixD object with dimensions 3x3
+ */
 TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
 {
 	TMatrixD result(3,3);
