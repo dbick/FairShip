@@ -93,6 +93,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD* jacobian;
 		double rt_measurement;
 		TVector3 closest_approach;
+		bool first_or_last;
 	};
 
 	multimap<double,struct hit_info,less<double>> jacobians_with_arclen;
@@ -105,6 +106,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.jacobian = unity;
 	hit_zero.rt_measurement = 0.0;
 	hit_zero.closest_approach = TVector3(0,0,0);
+	hit_zero.first_or_last = true;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -129,6 +131,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.jacobian = jacobian_with_arclen.second;
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
+		hit.first_or_last = i == n_points ? true : false;
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
 
@@ -147,6 +150,13 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVectorD precision(rotated_residual);
 		precision[0] = 250 * 1e-4; //250 um in cm
 		result.back().addMeasurement(rot_mat,rotated_residual,precision);
+		if(it->second.first_or_last)
+		{
+			TVectorD zeros(2);
+			zeros[0] = 0;
+			zeros[1] = 0;
+			result.back().addScatterer(zeros,zeros);
+		}
 	}
 
 	return result;
