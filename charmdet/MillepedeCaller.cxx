@@ -150,8 +150,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVectorD precision(rotated_residual);
 		precision[0] = 250 * 1e-4; //250 um in cm
 		result.back().addMeasurement(rot_mat,rotated_residual,precision);
+
+		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
+		//see https://www.sciencedirect.com/science/article/pii/S0010465511001093 for details
 		if(it->second.first_or_last)
 		{
+			//TODO maybe zero vectors are not sufficient - doublecheck
 			TVectorD zeros(2);
 			zeros[0] = 0;
 			zeros[1] = 0;
