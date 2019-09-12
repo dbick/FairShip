@@ -19,9 +19,9 @@ using namespace std;
  * @param writeZero Flag that states if zero values should be kept or not
  */
 MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool writeZero)
-: mille(outFileName, asBinary, writeZero), m_gbl_mille_binary("debugging.mille_bin",true,2000)
+: mille(outFileName, asBinary, writeZero)
 {
-
+	m_gbl_mille_binary = new gbl::MilleBinary("debugging.mille_bin",true,2000);
 }
 
 /**
@@ -31,7 +31,7 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
  */
 MillepedeCaller::~MillepedeCaller()
 {
-
+	delete m_gbl_mille_binary;
 }
 
 /**
@@ -280,7 +280,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	vector<gbl::GblPoint> points = list_hits(&track);
 	gbl::GblTrajectory traj(points);
 
-	traj.milleOut(m_gbl_mille_binary);
+	traj.milleOut(*m_gbl_mille_binary);
 
 
 	//check track validity

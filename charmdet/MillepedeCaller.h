@@ -46,7 +46,7 @@ public:
 
 private:
 	Mille mille;
-	gbl::MilleBinary m_gbl_mille_binary;
+	gbl::MilleBinary* m_gbl_mille_binary;
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track) const;
