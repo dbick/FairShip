@@ -163,6 +163,8 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			resolution[1] = 0;
 			result.back().addScatterer(residuals,resolution);
 		}
+		//TODO check if this is allowed. Only, if GblPoint stores a copy of the jacobian
+		delete jacobian;
 	}
 
 	return result;
