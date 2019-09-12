@@ -155,11 +155,13 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		//see https://www.sciencedirect.com/science/article/pii/S0010465511001093 for details
 		if(it->second.first_or_last)
 		{
-			//TODO maybe zero vectors are not sufficient - doublecheck
-			TVectorD zeros(2);
-			zeros[0] = 0;
-			zeros[1] = 0;
-			result.back().addScatterer(zeros,zeros);
+			//TODO check if residuals and resolution can be used this way
+			TVectorD residuals(2), resolution(2);
+			residuals[0] = rotated_residual[0];
+			residuals[1] = 0;
+			resolution[0] = 250 * 1e-4;
+			resolution[1] = 0;
+			result.back().addScatterer(residuals,resolution);
 		}
 	}
 
