@@ -64,7 +64,6 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
 }
 
 //TODO Rework, make easier to understand
-//TODO Add scatterer to hits in first and last detector plane at least -> start and end point of refit!
 /**
  * List the hits used to fit the seed track from a fit predecessing the GBL fit as a @c std::vector<gbl::GblPoint>. The GblPoint objects will
  * also contain measurements after the call of this method. The GBL points are ordered by arclength, which is the distance on the track between
@@ -163,8 +162,14 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			resolution[1] = 0;
 			result.back().addScatterer(residuals,resolution);
 		}
+
+		cout << "Hit #" << it - jacobians_with_arclen.begin() "/" << jacobians_with_arclen.end() - jacobians_with_arclen.begin() << endl;
+		cout << "Jacobian before heap deletion" << endl;
+		result.back().getgetP2pJacobian().Print();
 		//TODO check if this is allowed. Only, if GblPoint stores a copy of the jacobian
 		delete jacobian;
+		cout << "Jacobian before heap deletion" << endl;
+		result.back().getgetP2pJacobian().Print();
 	}
 
 	return result;
