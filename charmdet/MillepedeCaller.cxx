@@ -165,11 +165,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 		cout << "Hit #" << it - jacobians_with_arclen.begin() "/" << jacobians_with_arclen.end() - jacobians_with_arclen.begin() << endl;
 		cout << "Jacobian before heap deletion" << endl;
-		result.back().getP2pJacobian().Print();
+		cout << result.back().getP2pJacobian() << endl;
 		//TODO check if this is allowed. Only, if GblPoint stores a copy of the jacobian
 		delete jacobian;
 		cout << "Jacobian before heap deletion" << endl;
-		result.back().getP2pJacobian().Print();
+		cout << result.back().getP2pJacobian() << endl;
 	}
 
 	return result;
