@@ -93,6 +93,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		double rt_measurement;
 		TVector3 closest_approach;
 		bool first_or_last;
+		unsigned short hit_id;
 	};
 
 	multimap<double,struct hit_info,less<double>> jacobians_with_arclen;
@@ -106,9 +107,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.rt_measurement = 0.0;
 	hit_zero.closest_approach = TVector3(0,0,0);
 	hit_zero.first_or_last = true;
-	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
+	hit_zero.hit_id = 0;
+	jacobians_with_arclen.insert(make_pair(1.0,hit_zero));
 
 
+
+	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track between two consecutive hits
 	//#pragma omp parallel for
 	for(size_t i = 1; i < n_points; i++)
 	{
@@ -131,6 +135,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
 		hit.first_or_last = i == n_points ? true : false;
+		hit.hit_id = i;
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
 
@@ -162,13 +167,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			resolution[1] = 0;
 			result.back().addScatterer(residuals,resolution);
 		}
-
-		cout << "Jacobian before heap deletion" << endl;
-		cout << result.back().getP2pJacobian() << endl;
-		//TODO check if this is allowed. Only, if GblPoint stores a copy of the jacobian
 		delete jacobian;
-		cout << "Jacobian after heap deletion" << endl;
-		cout << result.back().getP2pJacobian() << endl;
 	}
 
 	return result;
@@ -224,7 +223,6 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	//2.2) enter dx and dy to jacobian
 	(*jacobian)[3][1] = dx;
 	(*jacobian)[4][2] = dy;
-
 
 	return jacobian;
 }
