@@ -108,7 +108,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.closest_approach = TVector3(0,0,0);
 	hit_zero.first_or_last = true;
 	hit_zero.hit_id = 0;
-	jacobians_with_arclen.insert(make_pair(1.0,hit_zero));
+	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
 
@@ -142,7 +142,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); it++)
 	{
 		TMatrixD* jacobian = it->second.jacobian;
-		//TODO test if the GblPoint constructor stores a copy so that original jacobian can be deleted
 		result.push_back(gbl::GblPoint(*jacobian));
 		TRotation rot = calc_rotation_of_vector(it->second.closest_approach);
 		TMatrixD rot_mat = rot_to_matrix(rot);
@@ -225,32 +224,6 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	(*jacobian)[4][2] = dy;
 
 	return jacobian;
-}
-
-
-//TODO add doc comment
-/**
- *
- */
-multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track* track) const
-{
-	multimap<double,TMatrixD*,less<double>> result;
-
-	unsigned int n_hits = track->getNumPointsWithMeasurement();
-
-
-	//add unity matrix with zero arc length as first entry
-	TMatrixD* unity = new TMatrixD(5,5);
-	unity->UnitMatrix();
-	result.insert(make_pair(0.0,unity));
-
-	for (unsigned int hit_id = 1; hit_id < n_hits; hit_id++)
-	{
-		result.insert(single_jacobian_with_arclength(*track,hit_id));
-	}
-
-	//return a copy of the map. Since it's small it is probably better than handling memory and matrices are stored as pointers to heap
-	return result;
 }
 
 /**
