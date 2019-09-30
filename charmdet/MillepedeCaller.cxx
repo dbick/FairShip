@@ -96,6 +96,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		unsigned short hit_id;
 	};
 
+	//multimap to sort for arclength
 	multimap<double,struct hit_info,less<double>> jacobians_with_arclen;
 
 	//TODO test
@@ -130,16 +131,18 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom);
 		pair<double,TMatrixD*> jacobian_with_arclen = single_jacobian_with_arclength(*track,i);
 
-		//hit struct seems to be copied correctly into multimap
+		//fill hit struct
 		hit.jacobian = jacobian_with_arclen.second;
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
-		hit.first_or_last = i == n_points ? true : false;
+		hit.first_or_last = (i == n_points); //first set before this loop
 		hit.hit_id = i;
+		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
 
-	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); it++)
+	//loop over multimap to build std::vector of GblPoints ordered by arclength
+	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); ++it)
 	{
 		TMatrixD* jacobian = it->second.jacobian;
 		result.push_back(gbl::GblPoint(*jacobian));
@@ -216,12 +219,14 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	TVector3 pos1 = state_at_id_1.getPos();
 	TVector3 pos2 = state_at_id_2.getPos();
 
+	//TODO Divide by z (or acrlength) of hits to have proper derivatives!
 	double dx = pos2.X() - pos1.X();
 	double dy = pos2.Y() - pos1.Y();
+	double dz = pos2.Z() - pos1.Z();
 
 	//2.2) enter dx and dy to jacobian
-	(*jacobian)[3][1] = dx;
-	(*jacobian)[4][2] = dy;
+	(*jacobian)[3][1] = dx / dz;
+	(*jacobian)[4][2] = dy / dz;
 
 	return jacobian;
 }
@@ -412,6 +417,5 @@ vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& t
 	return result;
 }
 
-//TODO add at least first and last det plane as scatterer to define start and end of trackfit - upd. 9/9/19: Added comment at appropriate location in code
 //TODO define GLOBAL coord frame with trackpoints being offset in u and v directions (w perp to det planes - a.k.a w = z)
 //TODO ensure track being more or less straight (global u,v) - upd. 9/9/19: Done, needs testing and must be used, so far hit by hit of genfit track
