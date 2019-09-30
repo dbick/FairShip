@@ -167,7 +167,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		cout << result.back().getP2pJacobian() << endl;
 		//TODO check if this is allowed. Only, if GblPoint stores a copy of the jacobian
 		delete jacobian;
-		cout << "Jacobian before heap deletion" << endl;
+		cout << "Jacobian after heap deletion" << endl;
 		cout << result.back().getP2pJacobian() << endl;
 	}
 
