@@ -301,19 +301,39 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	return chi2;
 }
 
-//TODO document
 //Reimplementation of python function
 /**
+ * Calculates a vector the represents the shortest distance from the sense wire to the track. This vector is perpendicular both
+ * to the track as well as the sense wire.
  *
+ * @brief Calculates shortest distance from sense wire to track
+ *
+ * @author Stefan Bieschke
+ * @date Oct. 01, 2019
+ * @version 1.1
+ *
+ * @param wire_top Top position of the sense wire as TVector3 with x,y,z components
+ * @param wire_bot Bottom position of the sense wire as TVector3 with x,y,z components
+ * @param track_pos Some position on the track. Could be anything but must be on the (straight) track or track segment
+ * @param track_mom Momentum vector of the (straight) track or track segment
+ * @param PCA_on_wire Coordinates of point of closest approach (PCA) on the wire
+ * @param PCA_on_track Coordinates of point of closest approach (PCA) on the track
+ *
+ * @return TVector3 of shortest distance pointing from the wire to the track
  */
-TVector3 MillepedeCaller::calc_shortest_distance(const TVector3& wire_top, const TVector3& wire_bot, const TVector3& track_pos, const TVector3& track_mom) const
+TVector3 MillepedeCaller::calc_shortest_distance(const TVector3& wire_top,
+		const TVector3& wire_bot, const TVector3& track_pos,
+		const TVector3& track_mom, TVector3* PCA_on_wire = nullptr,
+		TVector3* PCA_on_track = nullptr) const
 {
 	TVector3 wire_dir = wire_top - wire_bot;
 
+	//construct a helper plane that contains one of the straights and is parallel to the other one
 	TVector3 plane_pos = track_pos - wire_bot;
 	TVector3 plane_dir_1(track_mom);
 	TVector3 plane_dir_2(-1 * wire_dir);
 
+	//Construct components of equation system M * x = c where M is the coefficient matrix, x the solution and c the const_vector below
 	TVectorD const_vector(2);
 	TMatrixD coeff_matrix(2,2);
 
@@ -329,10 +349,20 @@ TVector3 MillepedeCaller::calc_shortest_distance(const TVector3& wire_top, const
 	TVectorD result(const_vector);
 	int rc = solvable_matrix.Solve(result);
 
-	TVector3 PCA_on_track(track_pos + result[0] * track_mom);
-	TVector3 PCA_on_wire(wire_bot + result[1] * wire_dir);
+	TVector3 PCA_track(track_pos + result[0] * track_mom);
+	TVector3 PCA_wire(wire_bot + result[1] * wire_dir);
 
-	return TVector3(PCA_on_track - PCA_on_wire);
+	//if TVector3 pointers were passed as parameter the actual locations of closest approach are stored there
+	if(PCA_on_wire)
+	{
+		*(PCA_on_wire) = PCA_wire;
+	}
+	if(PCA_on_track)
+	{
+		*(PCA_on_track) = PCA_track;
+	}
+
+	return TVector3(PCA_track - PCA_wire);
 }
 
 /**
