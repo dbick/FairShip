@@ -153,7 +153,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			rotated_residual[0] = closest_approach.Mag() - measurement;
 			rotated_residual[1] = 0;
 			rotated_residual[2] = 0;
-			TVector3 v = rot * rotated_residual;
+			TVector3 v = rotated_residual.Transform(rot);
 			if(v.X() > 0)
 			{
 				cout << "Left miss" << endl;
