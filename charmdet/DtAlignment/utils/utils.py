@@ -223,7 +223,7 @@ def calculate_residuals(track,dtmodules,module_residuals):
         point = points[i]
         raw_measurement = point.getRawMeasurement()
         det_id = raw_measurement.getDetId()
-        rt_dist = raw_measurement.getRawHitCoords()[6] * u.mm #rt distance stored here
+        rt_dist = raw_measurement.getRawHitCoords()[6] #rt distance stored here
         # 2.) Parse detector id to module
         module_id = parse_det_id(det_id)
         module = dtmodules[module_id['module']]
