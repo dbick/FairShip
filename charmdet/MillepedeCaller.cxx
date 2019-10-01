@@ -156,11 +156,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			TVector3 v = rot * rotated_residual;
 			if(v.X() > 0)
 			{
-				cout << "Left miss" < endl;
+				cout << "Left miss" << endl;
 			}
 			else
 			{
-				cout << "Right miss" < endl;
+				cout << "Right miss" << endl;
 			}
 		}
 
