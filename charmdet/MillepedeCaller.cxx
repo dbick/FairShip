@@ -129,6 +129,44 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVector3 fit_pos = track->getFittedState(i).getPos();
 		TVector3 fit_mom = track->getFittedState(i).getMom();
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom);
+		/*
+		 * For debugging
+		 * Check, if track missed in + or - x direction
+		 */
+		bool isX = vbot[0] - vtop[0] < 2.0; //just a rough check if x positions don't differ too much
+		cout << "Direction of miss from fit data (roughly):" << endl;
+		if(isX)
+		{
+			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
+			if(x_track < 0)
+			{
+				cout << "Left miss: dx =" << x_track << " cm." << endl;
+			}
+			else
+			{
+				cout << "Right miss: dx =" << x_track << " cm." << endl;
+			}
+
+			cout << "Direction of miss from rotational matrix:" << endl;
+			TRotation rot = calc_rotation_of_vector(closest_approach);
+			TVectorD rotated_residual(3);
+			rotated_residual[0] = closest_approach.Mag() - measurement;
+			rotated_residual[1] = 0;
+			rotated_residual[2] = 0;
+			TVector3 v = rot * rotated_residual;
+			if(v.X() > 0)
+			{
+				cout << "Left miss" < endl;
+			}
+			else
+			{
+				cout << "Right miss" < endl;
+			}
+		}
+
+		/*
+		 * End debugging
+		 */
 		pair<double,TMatrixD*> jacobian_with_arclen = single_jacobian_with_arclength(*track,i);
 
 		//fill hit struct
