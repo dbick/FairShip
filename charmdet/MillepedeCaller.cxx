@@ -149,7 +149,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 			cout << "Direction of miss from rotational matrix:" << endl;
 			TRotation rot = calc_rotation_of_vector(closest_approach);
-			TVector3 rotated_residual(3);
+			TVector3 rotated_residual;
 			rotated_residual[0] = closest_approach.Mag() - measurement;
 			rotated_residual[1] = 0;
 			rotated_residual[2] = 0;
