@@ -316,15 +316,15 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
  * @param wire_bot Bottom position of the sense wire as TVector3 with x,y,z components
  * @param track_pos Some position on the track. Could be anything but must be on the (straight) track or track segment
  * @param track_mom Momentum vector of the (straight) track or track segment
- * @param PCA_on_wire Coordinates of point of closest approach (PCA) on the wire
- * @param PCA_on_track Coordinates of point of closest approach (PCA) on the track
+ * @param PCA_on_wire Coordinates of point of closest approach (PCA) on the wire (defaults to nullptr)
+ * @param PCA_on_track Coordinates of point of closest approach (PCA) on the track (defaults to nullptr)
  *
  * @return TVector3 of shortest distance pointing from the wire to the track
  */
 TVector3 MillepedeCaller::calc_shortest_distance(const TVector3& wire_top,
 		const TVector3& wire_bot, const TVector3& track_pos,
-		const TVector3& track_mom, TVector3* PCA_on_wire = nullptr,
-		TVector3* PCA_on_track = nullptr) const
+		const TVector3& track_mom, TVector3* PCA_on_wire,
+		TVector3* PCA_on_track) const
 {
 	TVector3 wire_dir = wire_top - wire_bot;
 
