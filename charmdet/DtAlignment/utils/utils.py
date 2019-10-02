@@ -273,7 +273,7 @@ def calculate_residuals_lr(track,dtmodules,module_residuals):
         # 6.) Calculate residual and append to correct entry in dictionary
         residual = dist.Mag() - rt_dist
         rot = TRotation()
-        rot.SetXaxis(dist)
+        rot.SetXAxis(dist)
         res_vec = TVector3(residual,0,0)
         backrot = rot * res_vec
         if backrot.X() > 0: #missed left, towards pos x
