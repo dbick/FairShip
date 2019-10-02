@@ -136,7 +136,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		 * Check, if track missed in + or - x direction
 		 */
 		bool isX = vbot[0] - vtop[0] < 2.0; //just a rough check if x positions don't differ too much
-		cout << "Direction of miss from fit data (roughly):" << endl;
 		if(isX)
 		{
 			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
@@ -147,7 +146,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			PCA_track.Print();
 			cout << "Fit pos" << endl;
 			fit_pos.Print();
+			cout << "Measurement vector:" << endl;
+			closest_approach.Print();
 
+
+			cout << "Direction of miss from fit data (roughly):" << endl;
 			if(x_track < 0)
 			{
 				cout << "Left miss: dx =" << x_track << " cm" << endl;
