@@ -2785,7 +2785,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
  module_residuals = {}
  for key in dt_modules.keys():
-  module_residuals[key] = []
+  module_residuals[key] = [{},{}] #use this if you call calculate_residuals_lr
+  #module_residuals[key] = [] #use this if you call calculate_residuals
   
  #debugging
  milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
@@ -2851,7 +2852,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        New calculation of residuals
        """
-       DtAlignment.utils.calculate_residuals(aTrack,dt_modules,module_residuals)
+       DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
        """
        End of new calculation
        """
@@ -3021,12 +3022,25 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  momDisplay()
  print "timing:",timerStats
  """ File output with new residuals"""
+ """ Case calculate_residuals
  for key in module_residuals.keys():
      residual_filename = key + "_residuals"
      ALG_f = open(residual_filename,"w")
      for res in module_residuals[key]:
          ALG_f.write("{}\n".format(res))
      ALG_f.close()
+"""
+ """ Case calculate_residuals_lr """
+ for key in module_residuals.keys():
+     residual_filename_l = key + "_residuals_l"
+     residual_filename_r = key + "_residuals_r"
+     ALG_fl = open(residual_filename_l,"w")
+     for res in module_residuals[key]['l']:
+         ALG_fl.write("{}\n".format(res))
+     ALG_fl.close()
+     ALG_fr = open(residual_filename_r,"w")
+     for res in module_residuals[key]['r']:
+         ALG_fr.write("{}\n".format(res))
      
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)
