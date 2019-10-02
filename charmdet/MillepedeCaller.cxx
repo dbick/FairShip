@@ -128,7 +128,9 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 		TVector3 fit_pos = track->getFittedState(i).getPos();
 		TVector3 fit_mom = track->getFittedState(i).getMom();
-		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom);
+		TVector3 PCA_wire;
+		TVector3 PCA_track;
+		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom,&PCA_wire,&PCA_track);
 		/*
 		 * For debugging
 		 * Check, if track missed in + or - x direction
@@ -138,13 +140,21 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		if(isX)
 		{
 			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
+			TVector3 reco_pose = PCA_wire + closest_approach;
+			cout << "Reco_pos: " << endl;
+			reco_pos.Print();
+			cout << "PCA track" << endl;
+			PCA_track.Print();
+			cout << "Fit pos" << endl;
+			fit_pos.Print();
+
 			if(x_track < 0)
 			{
-				cout << "Left miss: dx =" << x_track << " cm." << endl;
+				cout << "Left miss: dx =" << x_track << " cm" << endl;
 			}
 			else
 			{
-				cout << "Right miss: dx =" << x_track << " cm." << endl;
+				cout << "Right miss: dx =" << x_track << " cm" << endl;
 			}
 
 			cout << "Direction of miss from rotational matrix:" << endl;

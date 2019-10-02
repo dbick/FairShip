@@ -2784,11 +2784,11 @@ def printResiduals(aTrack):
 def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
  module_residuals = {}
- for key in dt_modules.keys():
-  module_residuals[key] = {} #use this if you call calculate_residuals_lr
-  module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
-  module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
-  #module_residuals[key] = [] #use this if you call calculate_residuals
+#  for key in dt_modules.keys():
+#   module_residuals[key] = {} #use this if you call calculate_residuals_lr
+#   module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
+#   module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
+#   #module_residuals[key] = [] #use this if you call calculate_residuals
   
  #debugging
  milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
@@ -2849,12 +2849,12 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        refit
        """
-       print("Testing: Processing event number", Nr)
-       chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
+       #print("Testing: Processing event number", Nr)
+       #chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
        """
        New calculation of residuals
        """
-       DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
+       #DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
        """
        End of new calculation
        """
@@ -3033,17 +3033,18 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
      ALG_f.close()
 """
  """ Case calculate_residuals_lr """
- for key in module_residuals.keys():
-     residual_filename_l = key + "_residuals_l"
-     residual_filename_r = key + "_residuals_r"
-     ALG_fl = open(residual_filename_l,"w")
-     for res in module_residuals[key]['l']:
-         ALG_fl.write("{}\n".format(res))
-     ALG_fl.close()
-     ALG_fr = open(residual_filename_r,"w")
-     for res in module_residuals[key]['r']:
-         ALG_fr.write("{}\n".format(res))
-     
+#  for key in module_residuals.keys():
+#      residual_filename_l = key + "_residuals_l"
+#      residual_filename_r = key + "_residuals_r"
+#      ALG_fl = open(residual_filename_l,"w")
+#      for res in module_residuals[key]['l']:
+#          ALG_fl.write("{}\n".format(res))
+#      ALG_fl.close()
+#      ALG_fr = open(residual_filename_r,"w")
+#      for res in module_residuals[key]['r']:
+#          ALG_fr.write("{}\n".format(res))
+#      ALG_fr.close()
+   
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)
  for tc in h['biasedResiduals'].GetListOfPrimitives():
