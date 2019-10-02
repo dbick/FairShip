@@ -135,7 +135,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		 * For debugging
 		 * Check, if track missed in + or - x direction
 		 */
-		bool isX = vbot[0] - vtop[0] < 2.0; //just a rough check if x positions don't differ too much
+		bool isX = TMath::Abs(vbot[0] - vtop[0]) < 2.0; //just a rough check if x positions don't differ too much
 		if(isX)
 		{
 			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
