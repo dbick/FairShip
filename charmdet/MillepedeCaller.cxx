@@ -140,7 +140,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		if(isX)
 		{
 			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
-			TVector3 reco_pose = PCA_wire + closest_approach;
+			TVector3 reco_pos = PCA_wire + closest_approach;
 			cout << "Reco_pos: " << endl;
 			reco_pos.Print();
 			cout << "PCA track" << endl;
