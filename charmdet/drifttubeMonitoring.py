@@ -2849,8 +2849,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        refit
        """
-       #print("Testing: Processing event number", Nr)
-       #chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
+       print("Testing: Processing event number", Nr)
+       chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
        """
        New calculation of residuals
        """
