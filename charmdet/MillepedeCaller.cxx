@@ -301,36 +301,33 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		traj.printPoints(1); //debugging
 
 		traj.milleOut(*m_gbl_mille_binary);
+		//check track validity
+		if(!traj.isValid())
+		{
+			cout << "Error, GBL trajectory is invalid." << endl;
+			cerr << "Error, GBL trajectory is invalid." << endl;
+			return -1;
+		}
+
+		int rc, ndf;
+		double chi2, lostWeight;
+
+		cout << "------------performing refit--------------" << endl;
+		cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
+
+
+		rc = traj.fit(chi2,ndf,lostWeight);
+		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
+
+		return chi2;
 	}
 	catch(const exception& e)
 	{
 		cerr << "Exception in first part" << endl;
-	}
-
-	//check track validity
-	if(!traj.isValid())
-	{
-		cout << "Error, GBL trajectory is invalid." << endl;
-		cerr << "Error, GBL trajectory is invalid." << endl;
 		return -1;
 	}
 
-	int rc, ndf;
-	double chi2, lostWeight;
 
-	cout << "------------performing refit--------------" << endl;
-	cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
-
-	try
-	{
-		rc = traj.fit(chi2,ndf,lostWeight);
-		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
-	}
-	catch(const exception& e)
-	{
-		cerr << "Exception in refit" << endl;
-	}
-	return chi2;
 }
 
 //Reimplementation of python function
