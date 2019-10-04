@@ -2858,67 +2858,71 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        End of new calculation
        """
-       for s in range(1,5):
-        for view in viewsI[s]:
-         for l in range(4):
-          for hit in spectrHitsSorted[view][s][l]:
-           ss,vv,pp,ll,vw,channelID,tdcId,nRT = stationInfo(hit)
-           vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
-           z = (vbot[2]+vtop[2])/2.
-           timer.Start()
-          # rc,pos,mom = extrapolateToPlane(aTrack,z)
-           trackLength = muflux_Reco.extrapolateToPlane(aTrack,z,pos,mom)
-           timerStats['extrapTrack']+=timer.RealTime()
-           timer.Start()
-           if not rc:
-            error =  "plotBiasedResiduals: extrapolation failed"
-            ut.reportError(error)
-            continue
-           distance = 0
-           if withTDC or MCdata:
-            distance = RT(hit,hit.GetDigi())
-          #d = (vbot[0] - vtop[0])*pos[1] - (vbot[1] - vtop[1])*pos[0] + vtop[0]*vbot[1] - vbot[0]*vtop[1]
-          #d = -d/ROOT.TMath.Sqrt( (vtop[0]-vbot[0])**2+(vtop[1]-vbot[1])**2)  # to have same sign as difference in X
-           normal = mom.Cross(vtop-vbot)
-           d = normal.Dot(pos-vbot)/normal.Mag()
-           res = abs(d) - distance
-           h['biasResDist'].Fill(distance,res)
-           h['biasResDist2'].Fill(abs(d),res)
-           hkey = str(ss)+vw+str(2*pp+ll)
-           h['biasResDist_'+hkey].Fill(distance,res)
-           m = (vtop[0]-vbot[0])/(vtop[1]-vbot[1])
-           b = vtop[0]-m*vtop[1]
-           if pos[0]<m*pos[1]+b:
-          # left of wire
-            d = -abs(d)
-           resR = d - distance
-           resL = d + distance
-           h['biasResX_'+hkey].Fill(resR,pos[0])
-           h['biasResY_'+hkey].Fill(resR,pos[1])
-           h['biasResXL_'+hkey].Fill(resR,pos[0])
-           h['biasResYL_'+hkey].Fill(resR,pos[1])
-           h['biasResX_'+hkey].Fill(resL,pos[0])
-           h['biasResY_'+hkey].Fill(resL,pos[1])
-           h['biasResXL_'+hkey].Fill(resL,pos[0])
-           h['biasResYL_'+hkey].Fill(resL,pos[1])
+       try:
+        for s in range(1,5):
+         for view in viewsI[s]:
+          for l in range(4):
+           for hit in spectrHitsSorted[view][s][l]:
+            ss,vv,pp,ll,vw,channelID,tdcId,nRT = stationInfo(hit)
+            vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
+            z = (vbot[2]+vtop[2])/2.
+            timer.Start()
+           # rc,pos,mom = extrapolateToPlane(aTrack,z)
+            trackLength = muflux_Reco.extrapolateToPlane(aTrack,z,pos,mom)
+            timerStats['extrapTrack']+=timer.RealTime()
+            timer.Start()
+            if not rc:
+             error =  "plotBiasedResiduals: extrapolation failed"
+             ut.reportError(error)
+             continue
+            distance = 0
+            if withTDC or MCdata:
+             distance = RT(hit,hit.GetDigi())
+           #d = (vbot[0] - vtop[0])*pos[1] - (vbot[1] - vtop[1])*pos[0] + vtop[0]*vbot[1] - vbot[0]*vtop[1]
+           #d = -d/ROOT.TMath.Sqrt( (vtop[0]-vbot[0])**2+(vtop[1]-vbot[1])**2)  # to have same sign as difference in X
+            normal = mom.Cross(vtop-vbot)
+            d = normal.Dot(pos-vbot)/normal.Mag()
+            res = abs(d) - distance
+            h['biasResDist'].Fill(distance,res)
+            h['biasResDist2'].Fill(abs(d),res)
+            hkey = str(ss)+vw+str(2*pp+ll)
+            h['biasResDist_'+hkey].Fill(distance,res)
+            m = (vtop[0]-vbot[0])/(vtop[1]-vbot[1])
+            b = vtop[0]-m*vtop[1]
+            if pos[0]<m*pos[1]+b:
+           # left of wire
+             d = -abs(d)
+            resR = d - distance
+            resL = d + distance
+            h['biasResX_'+hkey].Fill(resR,pos[0])
+            h['biasResY_'+hkey].Fill(resR,pos[1])
+            h['biasResXL_'+hkey].Fill(resR,pos[0])
+            h['biasResYL_'+hkey].Fill(resR,pos[1])
+            h['biasResX_'+hkey].Fill(resL,pos[0])
+            h['biasResY_'+hkey].Fill(resL,pos[1])
+            h['biasResXL_'+hkey].Fill(resL,pos[0])
+            h['biasResYL_'+hkey].Fill(resL,pos[1])
 # now for each tube
-           detID = str(hit.GetDetectorID())
-           h['biasResX_'+detID].Fill(res,pos[0])
-           h['biasResY_'+detID].Fill(res,pos[1])
-           h['biasResXL_'+detID].Fill(res,pos[0])
-           h['biasResYL_'+detID].Fill(res,pos[1])
+            detID = str(hit.GetDetectorID())
+            h['biasResX_'+detID].Fill(res,pos[0])
+            h['biasResY_'+detID].Fill(res,pos[1])
+            h['biasResXL_'+detID].Fill(res,pos[0])
+            h['biasResYL_'+detID].Fill(res,pos[1])
 # make hit and TDC plots for hits matched to tracks, within window suitable for not using TDC
-           if abs(res) < 4. :
-            t0 = 0
-            if MCdata: t0 = sTree.ShipEventHeader.GetEventTime()
-            rc = h['TDC'+str(nRT)].Fill(hit.GetDigi()-t0)
-            rc = xLayers[ss][pp][ll][vw].Fill( channelID )
-            rc = h['T0tmp'].Fill(hit.GetDigi()-t0)
-       t0 = h['T0tmp'].GetMean()
-       rc = h['T0'].Fill(t0)
-       timerStats['fillRes']+=timer.RealTime()
-       timer.Start()
-   timerStats['analysis']+=timer.RealTime()
+            if abs(res) < 4. :
+             t0 = 0
+             if MCdata: t0 = sTree.ShipEventHeader.GetEventTime()
+             rc = h['TDC'+str(nRT)].Fill(hit.GetDigi()-t0)
+             rc = xLayers[ss][pp][ll][vw].Fill( channelID )
+             rc = h['T0tmp'].Fill(hit.GetDigi()-t0)
+        t0 = h['T0tmp'].GetMean()
+        rc = h['T0'].Fill(t0)
+        timerStats['fillRes']+=timer.RealTime()
+        timer.Start()
+    except:
+        print('Track invalid, skipping')
+        continue
+    timerStats['analysis']+=timer.RealTime()
    for aTrack in trackCandidates:   aTrack.Delete()
  if not h.has_key('biasedResiduals'): 
       ut.bookCanvas(h,key='biasedResiduals',title='biasedResiduals',nx=1600,ny=1200,cx=4,cy=6)
