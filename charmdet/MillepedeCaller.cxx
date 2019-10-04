@@ -135,63 +135,54 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		 * For debugging
 		 * Check, if track missed in + or - x direction
 		 */
-		bool isX = TMath::Abs(vbot[0] - vtop[0]) < 2.0; //just a rough check if x positions don't differ too much
-		if(isX)
-		{
-			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
-			TVector3 reco_pos = PCA_wire + closest_approach;
-			cout << "Reco_pos: " << endl;
-			reco_pos.Print();
-			cout << "PCA track" << endl;
-			PCA_track.Print();
-			cout << "Fit pos" << endl;
-			fit_pos.Print();
-			cout << "Measurement vector:" << endl;
-			closest_approach.Print();
-
-
-
-			cout << "Direction of miss from rotational matrix:" << endl;
-			TRotation rot = calc_rotation_of_vector(closest_approach);
-			TVector3 rotated_residual;
-			rotated_residual[0] = closest_approach.Mag() - measurement;
-			rotated_residual[1] = 0;
-			rotated_residual[2] = 0;
-			TVector3 v = rotated_residual.Transform(rot);
-			cout << "Direction of miss from fit data: ";
-			if(x_track < 0)
-			{
-				cout << "Left miss: dx =" << x_track << " cm" << endl;
-			}
-			else
-			{
-				cout << "Right miss: dx =" << x_track << " cm" << endl;
-			}
-			cout << "Absolute residual: " << closest_approach.Mag() - measurement << endl;
-
-			if(v.X() > 0)
-			{
-				cout << "Left miss" << endl;
-			}
-			else
-			{
-				cout << "Right miss" << endl;
-			}
-			cout << "Residual vector" << endl;
-			v.Print();
-			cout << "Rotating u_axis (1,0,0)" << endl;
-			TVector3 u_axis(1,0,0);
-			TVector3 v2 = u_axis.Transform(rot);
-			if(v2.X() > 0)
-			{
-				cout << "Left miss" << endl;
-			}
-			else
-			{
-				cout << "Right miss" << endl;
-			}
-
-		}
+//		bool isX = TMath::Abs(vbot[0] - vtop[0]) < 2.0; //just a rough check if x positions don't differ too much
+//		if(isX)
+//		{
+//			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
+//			TVector3 reco_pos = PCA_wire + closest_approach;
+//			cout << "Reco_pos: " << endl;
+//			reco_pos.Print();
+//			cout << "PCA track" << endl;
+//			PCA_track.Print();
+//			cout << "Fit pos" << endl;
+//			fit_pos.Print();
+//			cout << "Measurement vector:" << endl;
+//			closest_approach.Print();
+//
+//
+//
+//			cout << "Direction of miss from rotational matrix:" << endl;
+//			TRotation rot = calc_rotation_of_vector(closest_approach);
+//			TVector3 rotated_residual;
+//			rotated_residual[0] = closest_approach.Mag() - measurement;
+//			rotated_residual[1] = 0;
+//			rotated_residual[2] = 0;
+//			TVector3 v = rotated_residual.Transform(rot);
+//			cout << "Direction of miss from fit data: ";
+//			if(x_track < 0)
+//			{
+//				cout << "Left miss: dx =" << x_track << " cm" << endl;
+//			}
+//			else
+//			{
+//				cout << "Right miss: dx =" << x_track << " cm" << endl;
+//			}
+//			cout << "Absolute residual: " << closest_approach.Mag() - measurement << endl;
+//
+//			if(v.X() > 0)
+//			{
+//				cout << "Left miss" << endl;
+//			}
+//			else
+//			{
+//				cout << "Right miss" << endl;
+//			}
+//			cout << "Residual vector" << endl;
+//			v.Print();
+//			TVector3 rt_rot(measurement,0,0);
+//			TVector3 backrot = (rotated_residual + rt_rot).Transform(rot);
+//
+//		}
 
 		/*
 		 * End debugging
@@ -214,28 +205,26 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD* jacobian = it->second.jacobian;
 		result.push_back(gbl::GblPoint(*jacobian));
 		TRotation rot = calc_rotation_of_vector(it->second.closest_approach);
-		TMatrixD rot_mat = rot_to_matrix(rot);
-		//TODO fix, fit not working
-		TVectorD rotated_residual(3);
+		TMatrixD rot_mat = rot_to_matrix(rot); //TODO fix: projection matrix needed, not the rotation matrix
+		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
-		rotated_residual[2] = 0;
 		TVectorD precision(rotated_residual);
-		precision[0] = 250 * 1e-4; //250 um in cm
+		precision[0] = 500 * 1e-4; //500 um in cm
 		result.back().addMeasurement(rot_mat,rotated_residual,precision);
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
 		//see https://www.sciencedirect.com/science/article/pii/S0010465511001093 for details
-		if(it->second.first_or_last)
-		{
-			//TODO check if residuals and resolution can be used this way
-			TVectorD residuals(2), resolution(2);
-			residuals[0] = rotated_residual[0];
-			residuals[1] = 0;
-			resolution[0] = 250 * 1e-4;
-			resolution[1] = 0;
-			result.back().addScatterer(residuals,resolution);
-		}
+//		if(it->second.first_or_last)
+//		{
+//			//TODO check if residuals and resolution can be used this way
+//			TVectorD residuals(2), resolution(2);
+//			residuals[0] = rotated_residual[0];
+//			residuals[1] = 0;
+//			resolution[0] = 250 * 1e-4;
+//			resolution[1] = 0;
+//			result.back().addScatterer(residuals,resolution);
+//		}
 		delete jacobian;
 	}
 
@@ -341,6 +330,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 {
 	vector<gbl::GblPoint> points = list_hits(&track);
 	gbl::GblTrajectory traj(points);
+	traj.printPoints(1); //debugging
 
 	traj.milleOut(*m_gbl_mille_binary);
 
