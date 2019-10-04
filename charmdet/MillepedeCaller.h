@@ -57,7 +57,7 @@ private:
 	TVector3 calc_shortest_distance(const TVector3& wire_top, const TVector3& wire_bot, const TVector3& track_pos, const TVector3& track_mom,  TVector3* PCA_on_wire = nullptr, TVector3* PCA_on_track = nullptr) const;
 	TRotation calc_rotation_of_vector(const TVector3& v) const;
 	TMatrixD rot_to_matrix(const TRotation& rot) const;
-	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track);
+	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 };
 
 #endif /* CHARMDET_MILLEPEDECALLER_H_ */
