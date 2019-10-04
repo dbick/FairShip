@@ -19,7 +19,7 @@ import rootUtils as ut
 from array import array
 
 ########
-zeroField    = False
+zeroField    = True
 DAFfitter    = True
 withMaterial = True
 MCdata = False
