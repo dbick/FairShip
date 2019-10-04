@@ -321,13 +321,11 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 
 		return chi2;
 	}
-	catch(const exception& e)
+	catch(...)
 	{
-		cerr << "Exception in first part" << endl;
+		cerr << "Exception in refit part" << endl;
 		return -1;
 	}
-
-
 }
 
 //Reimplementation of python function
