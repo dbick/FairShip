@@ -244,40 +244,44 @@ def calculate_residuals(track,dtmodules,module_residuals):
         # 6.) Calculate residual and append to correct entry in dictionary
         residual = dist - rt_dist
         module_residuals[module_id['module']].append(residual)
+
         
-def calculate_residuals_lr(track,dtmodules,module_residuals):
-    n_points = track.getNumPointsWithMeasurement()
-    points = track.getPointsWithMeasurement()
-    for i in range(n_points):
-        point = points[i]
-        raw_measurement = point.getRawMeasurement()
-        det_id = raw_measurement.getDetId()
-        rt_dist = raw_measurement.getRawHitCoords()[6] #rt distance stored here
-        # 2.) Parse detector id to module
-        module_id = parse_det_id(det_id)
-        module = dtmodules[module_id['module']]
-        # 3.) Find correct drift tube in module
-        for j in range(len(module.get_tubes())):
-            tube = module.get_tubes()[j]
-            if tube._ID == det_id:
-                break
-        tube = module.get_tubes()[j]
+def calculate_residuals_lr(track, dtmodules, module_residuals):
+    try:
+        n_points = track.getNumPointsWithMeasurement()
+        points = track.getPointsWithMeasurement()
+        for i in range(n_points):
+            point = points[i]
+            raw_measurement = point.getRawMeasurement()
+            det_id = raw_measurement.getDetId()
+            rt_dist = raw_measurement.getRawHitCoords()[6]  # rt distance stored here
+            # 2.) Parse detector id to module
+            module_id = parse_det_id(det_id)
+            module = dtmodules[module_id['module']]
+            # 3.) Find correct drift tube in module
+            for j in range(len(module.get_tubes())):
+                tube = module.get_tubes()[j]
+                if tube._ID == det_id:
+                    break
+                tube = module.get_tubes()[j]
     
-        # 4.) Read fitted position and momentum from fitted state
-        fitted_state = track.getFittedState(i)
-        mom = fitted_state.getMom()
-        pos = fitted_state.getPos()
+                # 4.) Read fitted position and momentum from fitted state
+                fitted_state = track.getFittedState(i)
+                mom = fitted_state.getMom()
+                pos = fitted_state.getPos()
         
-        # 5.) Calculate distance of track to wire
-        dist = measurement_vector(tube, mom, pos)
-        # 6.) Calculate residual and append to correct entry in dictionary
-        residual = dist.Mag() - rt_dist
-        rot = TRotation()
-        rot.SetXAxis(dist)
-        res_vec = TVector3(residual,0,0)
-        u_axis = TVector3(1,0,0)
-        backrot = rot * u_axis
-        if backrot.X() > 0: #missed left, towards pos x
-            module_residuals[module_id['module']]['l'].append(residual)
-        else:
-            module_residuals[module_id['module']]['r'].append(residual)        
+                # 5.) Calculate distance of track to wire
+                dist = measurement_vector(tube, mom, pos)
+                # 6.) Calculate residual and append to correct entry in dictionary
+                residual = dist.Mag() - rt_dist
+                rot = TRotation()
+                rot.SetXAxis(dist)
+                res_vec = TVector3(residual, 0, 0)
+                u_axis = TVector3(1, 0, 0)
+                backrot = rot * u_axis
+                if backrot.X() > 0:  # missed left, towards pos x
+                    module_residuals[module_id['module']]['l'].append(residual)
+                else:
+                    module_residuals[module_id['module']]['r'].append(residual)  
+    except:
+        print("Track invalid, skipping")
