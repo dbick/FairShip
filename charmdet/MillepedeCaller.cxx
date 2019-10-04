@@ -447,7 +447,7 @@ TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
  *
  * @return std::vector of length two, whos first entry is the position vector, second one being the direction vector
  */
-vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& track)
+vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& track) const
 {
 	vector<TVector3> result(2);
 
