@@ -2854,7 +2854,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        New calculation of residuals
        """
-       #DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
+       DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
        """
        End of new calculation
        """

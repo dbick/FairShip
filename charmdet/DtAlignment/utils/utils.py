@@ -275,7 +275,8 @@ def calculate_residuals_lr(track,dtmodules,module_residuals):
         rot = TRotation()
         rot.SetXAxis(dist)
         res_vec = TVector3(residual,0,0)
-        backrot = rot * res_vec
+        u_axis = TVector3(1,0,0)
+        backrot = rot * u_axis
         if backrot.X() > 0: #missed left, towards pos x
             module_residuals[module_id['module']]['l'].append(residual)
         else:
