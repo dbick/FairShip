@@ -81,8 +81,8 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
  */
 vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) const
 {
-	std::vector<TVector3> linear_model = linear_model_wo_scatter(*track);
-	std::vector<gbl::GblPoint> result = {};
+	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
+	vector<gbl::GblPoint> result = {};
 
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
@@ -104,6 +104,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	TMatrixD* unity = new TMatrixD(5,5);
 	unity->UnitMatrix();
 	genfit::TrackPoint* point = points[0];
+	genfit::AbsMeasurement* raw_measurement = point->getRawMeasurement();
 	TVectorD raw = raw_measurement->getRawHitCoords();
 	TVector3 vbot(raw[0], raw[1], raw[2]);
 	TVector3 vtop(raw[3], raw[4], raw[5]);
