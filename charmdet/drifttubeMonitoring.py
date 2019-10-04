@@ -2784,10 +2784,10 @@ def printResiduals(aTrack):
 def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
  module_residuals = {}
-#  for key in dt_modules.keys():
-#   module_residuals[key] = {} #use this if you call calculate_residuals_lr
-#   module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
-#   module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
+for key in dt_modules.keys():
+ module_residuals[key] = {} #use this if you call calculate_residuals_lr
+ module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
+ module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
 #   #module_residuals[key] = [] #use this if you call calculate_residuals
   
  #debugging
