@@ -150,15 +150,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			closest_approach.Print();
 
 
-			cout << "Direction of miss from fit data (roughly):" << endl;
-			if(x_track < 0)
-			{
-				cout << "Left miss: dx =" << x_track << " cm" << endl;
-			}
-			else
-			{
-				cout << "Right miss: dx =" << x_track << " cm" << endl;
-			}
 
 			cout << "Direction of miss from rotational matrix:" << endl;
 			TRotation rot = calc_rotation_of_vector(closest_approach);
@@ -167,8 +158,15 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			rotated_residual[1] = 0;
 			rotated_residual[2] = 0;
 			TVector3 v = rotated_residual.Transform(rot);
-			cout << "Residual vector" << endl;
-			v.Print();
+			cout << "Direction of miss from fit data: ";
+			if(x_track < 0)
+			{
+				cout << "Left miss: dx =" << x_track << " cm" << endl;
+			}
+			else
+			{
+				cout << "Right miss: dx =" << x_track << " cm" << endl;
+			}
 			cout << "Absolute residual: " << closest_approach.Mag() - measurement << endl;
 
 			if(v.X() > 0)
@@ -179,6 +177,20 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 			{
 				cout << "Right miss" << endl;
 			}
+			cout << "Residual vector" << endl;
+			v.Print();
+			cout << "Rotating u_axis (1,0,0)" << endl;
+			TVector3 u_axis(1,0,0);
+			TVector3 v2 = u_axis.Transform(rot);
+			if(v2.X() > 0)
+			{
+				cout << "Left miss" << endl;
+			}
+			else
+			{
+				cout << "Right miss" << endl;
+			}
+
 		}
 
 		/*
