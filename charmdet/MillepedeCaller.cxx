@@ -294,12 +294,18 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
  */
 double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 {
-	vector<gbl::GblPoint> points = list_hits(&track);
-	gbl::GblTrajectory traj(points);
-	traj.printPoints(1); //debugging
+	try
+	{
+		vector < gbl::GblPoint > points = list_hits(&track);
+		gbl::GblTrajectory traj(points);
+		traj.printPoints(1); //debugging
 
-	traj.milleOut(*m_gbl_mille_binary);
-
+		traj.milleOut(*m_gbl_mille_binary);
+	}
+	catch(const exception& e)
+	{
+		cerr << "Exception in first part" << endl;
+	}
 
 	//check track validity
 	if(!traj.isValid())
@@ -315,9 +321,15 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	cout << "------------performing refit--------------" << endl;
 	cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
 
-	rc = traj.fit(chi2,ndf,lostWeight);
-	cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
-
+	try
+	{
+		rc = traj.fit(chi2,ndf,lostWeight);
+		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
+	}
+	catch(const exception& e)
+	{
+		cerr << "Exception in refit" << endl;
+	}
 	return chi2;
 }
 
