@@ -274,14 +274,11 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	TVector3 pos1 = state_at_id_1.getPos();
 	TVector3 pos2 = state_at_id_2.getPos();
 
-	//TODO Divide by z (or acrlength) of hits to have proper derivatives!
-	double dx = pos2.X() - pos1.X();
-	double dy = pos2.Y() - pos1.Y();
 	double dz = pos2.Z() - pos1.Z();
 
 	//2.2) enter dx and dy to jacobian
-	(*jacobian)[3][1] = dx / dz;
-	(*jacobian)[4][2] = dy / dz;
+	(*jacobian)[3][1] = dz;
+	(*jacobian)[4][2] = dz;
 
 	return jacobian;
 }
