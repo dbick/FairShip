@@ -81,6 +81,7 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
  */
 vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) const
 {
+	std::vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	std::vector<gbl::GblPoint> result = {};
 
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
@@ -133,57 +134,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom,&PCA_wire,&PCA_track);
 		/*
 		 * For debugging
-		 * Check, if track missed in + or - x direction
+		 * Check, difference between vector of closest approach for linear model with genfit seed track
 		 */
-//		bool isX = TMath::Abs(vbot[0] - vtop[0]) < 2.0; //just a rough check if x positions don't differ too much
-//		if(isX)
-//		{
-//			double x_track = fit_pos[0] - (vbot[0] + vtop[0]) / 2.0;
-//			TVector3 reco_pos = PCA_wire + closest_approach;
-//			cout << "Reco_pos: " << endl;
-//			reco_pos.Print();
-//			cout << "PCA track" << endl;
-//			PCA_track.Print();
-//			cout << "Fit pos" << endl;
-//			fit_pos.Print();
-//			cout << "Measurement vector:" << endl;
-//			closest_approach.Print();
-//
-//
-//
-//			cout << "Direction of miss from rotational matrix:" << endl;
-//			TRotation rot = calc_rotation_of_vector(closest_approach);
-//			TVector3 rotated_residual;
-//			rotated_residual[0] = closest_approach.Mag() - measurement;
-//			rotated_residual[1] = 0;
-//			rotated_residual[2] = 0;
-//			TVector3 v = rotated_residual.Transform(rot);
-//			cout << "Direction of miss from fit data: ";
-//			if(x_track < 0)
-//			{
-//				cout << "Left miss: dx =" << x_track << " cm" << endl;
-//			}
-//			else
-//			{
-//				cout << "Right miss: dx =" << x_track << " cm" << endl;
-//			}
-//			cout << "Absolute residual: " << closest_approach.Mag() - measurement << endl;
-//
-//			if(v.X() > 0)
-//			{
-//				cout << "Left miss" << endl;
-//			}
-//			else
-//			{
-//				cout << "Right miss" << endl;
-//			}
-//			cout << "Residual vector" << endl;
-//			v.Print();
-//			TVector3 rt_rot(measurement,0,0);
-//			TVector3 backrot = (rotated_residual + rt_rot).Transform(rot);
-//
-//		}
-
+		TVector3 closest_approach_lin_model = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1]);
+		TVector3 diff = closest_approach - closest_approach_lin_model;
+		diff.Print();
 		/*
 		 * End debugging
 		 */
