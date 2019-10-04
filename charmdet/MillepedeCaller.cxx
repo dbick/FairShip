@@ -100,14 +100,24 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	//multimap to sort for arclength
 	multimap<double,struct hit_info,less<double>> jacobians_with_arclen;
 
-	//TODO test
 	//zero arc length GBL point for first hit
 	TMatrixD* unity = new TMatrixD(5,5);
 	unity->UnitMatrix();
+	genfit::TrackPoint* point = points[0];
+	TVectorD raw = raw_measurement->getRawHitCoords();
+	TVector3 vbot(raw[0], raw[1], raw[2]);
+	TVector3 vtop(raw[3], raw[4], raw[5]);
+	double measurement = raw[6]; //rt distance [cm]
+
+	TVector3 fit_pos = track->getFittedState(0).getPos();
+	TVector3 fit_mom = track->getFittedState(0).getMom();
+	TVector3 PCA_wire;
+	TVector3 PCA_track;
+	TVector3 closest_approach = calc_shortest_distance(vtop, vbot, fit_pos, fit_mom, &PCA_wire, &PCA_track);
 	struct hit_info hit_zero;
 	hit_zero.jacobian = unity;
 	hit_zero.rt_measurement = 0.0;
-	hit_zero.closest_approach = TVector3(0,0,0);
+	hit_zero.closest_approach = closest_approach;
 	hit_zero.first_or_last = true;
 	hit_zero.hit_id = 0;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
