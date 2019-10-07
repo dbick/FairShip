@@ -297,7 +297,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	try
 	{
 		vector < gbl::GblPoint > points = list_hits(&track);
-		gbl::GblTrajectory traj(points);
+		gbl::GblTrajectory traj(points,false);
 		traj.printPoints(1); //debugging
 
 		traj.milleOut(*m_gbl_mille_binary);
