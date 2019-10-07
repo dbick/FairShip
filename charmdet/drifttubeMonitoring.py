@@ -2784,6 +2784,8 @@ def printResiduals(aTrack):
 def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
  timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
  module_residuals = {}
+ valid_gbl_refits = 0
+ aborted_gbl_refits = 0
  for key in dt_modules.keys():
   module_residuals[key] = {} #use this if you call calculate_residuals_lr
   module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
@@ -2851,6 +2853,10 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        print("Testing: Processing event number", Nr)
        chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
+       if(chi2_gbl == -1):
+           aborted_gbl_refits += 1
+       else:
+           valid_gbl_refits += 1
        """
        New calculation of residuals
        """
@@ -3037,17 +3043,19 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
      ALG_f.close()
 """
  """ Case calculate_residuals_lr """
-#  for key in module_residuals.keys():
-#      residual_filename_l = key + "_residuals_l"
-#      residual_filename_r = key + "_residuals_r"
-#      ALG_fl = open(residual_filename_l,"w")
-#      for res in module_residuals[key]['l']:
-#          ALG_fl.write("{}\n".format(res))
-#      ALG_fl.close()
-#      ALG_fr = open(residual_filename_r,"w")
-#      for res in module_residuals[key]['r']:
-#          ALG_fr.write("{}\n".format(res))
-#      ALG_fr.close()
+ for key in module_residuals.keys():
+    residual_filename_l = key + "_residuals_l"
+    residual_filename_r = key + "_residuals_r"
+    ALG_fl = open(residual_filename_l,"w")
+    for res in module_residuals[key]['l']:
+        ALG_fl.write("{}\n".format(res))
+    ALG_fl.close()
+    ALG_fr = open(residual_filename_r,"w")
+    for res in module_residuals[key]['r']:
+        ALG_fr.write("{}\n".format(res))
+    ALG_fr.close()
+    
+ print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
    
 def plotSigmaRes():
  ut.bookHist(h,'resDistr','residuals',50,0.,0.1)

@@ -313,8 +313,6 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	}
 	catch(const genfit::Exception& e)
 	{
-		cerr << "Exception in refit part" << endl;
-		cerr << e.what() << endl;
 		return -1;
 	}
 }
