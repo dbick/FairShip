@@ -143,16 +143,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVector3 PCA_wire;
 		TVector3 PCA_track;
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,fit_pos,fit_mom,&PCA_wire,&PCA_track);
-		/*
-		 * For debugging
-		 * Check, difference between vector of closest approach for linear model with genfit seed track
-		 */
-		TVector3 closest_approach_lin_model = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1]);
-		TVector3 diff = closest_approach - closest_approach_lin_model;
-		diff.Print();
-		/*
-		 * End debugging
-		 */
+
 		pair<double,TMatrixD*> jacobian_with_arclen = single_jacobian_with_arclength(*track,i);
 
 		//fill hit struct
@@ -297,8 +288,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	try
 	{
 		vector < gbl::GblPoint > points = list_hits(&track);
-		gbl::GblTrajectory traj(points,false);
-		traj.printPoints(1); //debugging
+		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
 		//check track validity
@@ -321,9 +311,10 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 
 		return chi2;
 	}
-	catch(...)
+	catch(const genfit::Exception& e)
 	{
 		cerr << "Exception in refit part" << endl;
+		cerr << e.what() << endl;
 		return -1;
 	}
 }
@@ -474,5 +465,33 @@ vector<TVector3> MillepedeCaller::linear_model_wo_scatter(const genfit::Track& t
 	return result;
 }
 
-//TODO define GLOBAL coord frame with trackpoints being offset in u and v directions (w perp to det planes - a.k.a w = z)
-//TODO ensure track being more or less straight (global u,v) - upd. 9/9/19: Done, needs testing and must be used, so far hit by hit of genfit track
+/**
+ * Calculate the projection matrix (dimension 2x2) from the global reference frame (x,y,z) to the measurement system (u,v,w) for an
+ * individual hit.
+ *
+ * @brief Calculate projection matrix global to measumrent system
+ *
+ * @author Stefan Bieschke
+ * @date Oct. 07, 2019
+ * @version 1.0
+ *
+ * @param fit_system_base_vectors Matrix with dimensions 2x3 with the base vectors of the local fit system expressed in global system. E.g [(1., 0., 0.),(0.,1.,0.)] for x,y and track in general z direction.
+ * @param rotation_global_to_measurement Rotation matrix rotating the global frame to the measurement frame
+ *
+ * @return TMatrixD (dimension 2x2) containing the projection of the fit system (x,y) on the measurement system
+ */
+TMatrixD MillepedeCaller::calc_projection_matrix(
+		const TMatrixD& fit_system_base_vectors,
+		const TMatrixD& rotation_global_to_measurement) const
+{
+	TMatrixD result(2,2); //projection matrix has dimensions 2x2
+	TMatrixD measurement_to_global(3,3);
+	measurement_to_global.Invert(rotation_global_to_measurement); //TMatrixD methods are confusing, this stores the result of inverting rotation_global_to_measurement to measurement_to_global
+
+	result.Mult(fit_system_base_vectors,measurement_to_global);
+	result.Invert();
+	return result;
+}
+
+
+//TODO use projection matrix
