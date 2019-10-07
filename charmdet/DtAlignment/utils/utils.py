@@ -280,5 +280,7 @@ def calculate_residuals_lr(track, dtmodules, module_residuals):
                     module_residuals[module_id['module']]['l'].append(residual)
                 else:
                     module_residuals[module_id['module']]['r'].append(residual)  
+    except Exception as e:
+        print(type(e))
     except:
-        print("calculate_residuals_lr: Track invalid, skipping")
+        print("calculate_residuals_lr: Seed track invalid, skipping")
