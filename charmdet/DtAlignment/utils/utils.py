@@ -281,4 +281,4 @@ def calculate_residuals_lr(track, dtmodules, module_residuals):
                 else:
                     module_residuals[module_id['module']]['r'].append(residual)  
     except:
-        print("Track invalid, skipping")
+        print("calculate_residuals_lr: Track invalid, skipping")
