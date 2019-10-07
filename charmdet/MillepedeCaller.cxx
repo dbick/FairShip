@@ -485,9 +485,9 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 		const TMatrixD& rotation_global_to_measurement) const
 {
 	TMatrixD result(2,2); //projection matrix has dimensions 2x2
-	TMatrixD measurement_to_global(3,3);
-	measurement_to_global.Invert(rotation_global_to_measurement); //TMatrixD methods are confusing, this stores the result of inverting rotation_global_to_measurement to measurement_to_global
-
+	TMatrixD measurement_to_global(rotation_global_to_measurement); //copy rotational matrix
+	measurement_to_global.Invert(); //invert matrix in place
+	measurement_to_global.ResizeTo(3,2); //TODO check if this is correct, want to skip column normal to measurement direction
 	result.Mult(fit_system_base_vectors,measurement_to_global);
 	result.Invert();
 	return result;
