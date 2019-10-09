@@ -2861,7 +2861,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
        """
        New calculation of residuals
        """
-       DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
+       #DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
        """
        End of new calculation
        """
@@ -3044,17 +3044,17 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
      ALG_f.close()
 """
  """ Case calculate_residuals_lr """
- for key in module_residuals.keys():
-    residual_filename_l = key + "_residuals_l"
-    residual_filename_r = key + "_residuals_r"
-    ALG_fl = open(residual_filename_l,"w")
-    for res in module_residuals[key]['l']:
-        ALG_fl.write("{}\n".format(res))
-    ALG_fl.close()
-    ALG_fr = open(residual_filename_r,"w")
-    for res in module_residuals[key]['r']:
-        ALG_fr.write("{}\n".format(res))
-    ALG_fr.close()
+#  for key in module_residuals.keys():
+#     residual_filename_l = key + "_residuals_l"
+#     residual_filename_r = key + "_residuals_r"
+#     ALG_fl = open(residual_filename_l,"w")
+#     for res in module_residuals[key]['l']:
+#         ALG_fl.write("{}\n".format(res))
+#     ALG_fl.close()
+#     ALG_fr = open(residual_filename_r,"w")
+#     for res in module_residuals[key]['r']:
+#         ALG_fr.write("{}\n".format(res))
+#     ALG_fr.close()
     
  print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
    
