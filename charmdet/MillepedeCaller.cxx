@@ -84,6 +84,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
 
+	//define the global fit system: track propagates in z direction, offsets and slopes in x and y directions
+	TMatrixD fit_system_base_vectors(2,3);
+	fit_system_base_vectors.Zero();
+	fit_system_base_vectors[0][0] = 1.0;
+	fit_system_base_vectors[1][1] = 1.0;
+
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
 
@@ -162,13 +168,14 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD* jacobian = it->second.jacobian;
 		result.push_back(gbl::GblPoint(*jacobian));
 		TRotation rot = calc_rotation_of_vector(it->second.closest_approach);
-		TMatrixD rot_mat = rot_to_matrix(rot); //TODO fix: projection matrix needed, not the rotation matrix
+		TMatrixD rot_mat = rot_to_matrix(rot);
+		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
 		precision[0] = 500 * 1e-4; //500 um in cm
-		result.back().addMeasurement(rot_mat,rotated_residual,precision);
+		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
 		//see https://www.sciencedirect.com/science/article/pii/S0010465511001093 for details
@@ -492,4 +499,4 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 }
 
 
-//TODO use projection matrix
+//TODO test projection matrix
