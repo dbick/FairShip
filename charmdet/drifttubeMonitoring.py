@@ -2816,7 +2816,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False,minP=3.):
    getEvent(Nr)
 
    h['T0tmp'].Reset()
-   if Nr%1000: continue #for fast debugging
+   if Nr%100: continue #for fast debugging
    if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
    if not findSimpleEvent(sTree): continue
    timer.Start()
