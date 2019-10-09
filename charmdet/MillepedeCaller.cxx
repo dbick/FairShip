@@ -321,7 +321,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		for(unsigned short i = 0; i < traj.getNumPoints(); ++i)
 		{
 			TVectorD residuals, measErrors, resErrors, downWeights;
-			int numRes;
+			unsigned int numRes;
 			traj.getMeasResults(i,numRes,residuals,measErrors,resErrors,downWeights);
 			cout << "numRes:" << numRes << endl;
 			cout << "residuals" << endl;
