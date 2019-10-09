@@ -317,6 +317,23 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		rc = traj.fit(chi2,ndf,lostWeight);
 		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
 
+		//TODO remove after debugging
+		for(unsigned short i = 0; i < traj.getNumPoints(); ++i)
+		{
+			TVectorD residuals, measErrors, resErrors, downWeights;
+			int numRes;
+			traj.getMeasResults(i,numRes,residuals,measErrors,resErrors,downWeights);
+			cout << "numRes:" << numRes << endl;
+			cout << "residuals" << endl;
+			residuals.Print();
+			cout << "measErrors" << endl;
+			measErrors.Print();
+			cout << "resErrors" << endl;
+			resErrors.Print();
+			cout << "downWeights" << endl;
+			downWeights.Print();
+		}
+
 		return chi2;
 	}
 	catch(const genfit::Exception& e)
