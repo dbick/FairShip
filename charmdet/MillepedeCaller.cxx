@@ -172,7 +172,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
-		cout << "Absolute residual: " << rotated_residual[0] << " cm" << endl;
+		cout << "Absolute residual: " << rotated_residual[0] << " cm" << endl; //TODO remove after debugging
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
 		precision[0] = 500 * 1e-4; //500 um in cm

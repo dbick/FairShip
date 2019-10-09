@@ -274,8 +274,6 @@ def calculate_residuals_lr(track, dtmodules, module_residuals):
                 dist = measurement_vector(tube, mom, pos)
                 # 6.) Calculate residual and append to correct entry in dictionary
                 residual = dist.Mag() - rt_dist
-                rot = TRotation()
-                rot.SetXAxis(dist)
                 if dist.X() > 0:  # missed left, towards pos x
                     module_residuals[module_id['module']]['l'].append(residual)
                 else:
