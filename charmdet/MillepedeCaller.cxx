@@ -313,9 +313,8 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 
 		rc = traj.fit(chi2,ndf,lostWeight);
 		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
+		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 
-		unsigned int traj_numPoints = traj.getNumPoints();
-		cout << "Points on trajectory: " << traj_numPoints << endl;
 		traj.printTrajectory(1);
 
 		return chi2;
