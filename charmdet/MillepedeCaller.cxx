@@ -83,6 +83,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 {
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
+	print_model_parameters(linear_model);
 
 	//define the global fit system: track propagates in z direction, offsets and slopes in x and y directions
 	TMatrixD fit_system_base_vectors(2,3);
@@ -503,5 +504,25 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 	return result;
 }
 
+
+void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model) const
+{
+	double slope_x = 0.0;
+	double slope_y = 0.0;
+
+	TVector3 x_axis(1., 0., 0.);
+	TVector3 x_axis(0., 1., 0.);
+	double angle_x = TMath::Pi() - model[0].Angle(x_axis); //Not intereseted in angle to x but to z axis
+	double angle_y = TMath::Pi() - model[0].Angle(y_axis); //Not intereseted in angle to y but to z axis
+	cout << "Printing linear track model parameters" << endl;
+	cout << "Initial fit position:" << endl;
+	model[0].Print();
+	cout << "Track momentum (GeV):" << endl;
+	model[1].Print();
+	cout << "Angle of x-projection to z axis: " << angle_x * 180.0 / TMath::Pi() << " deg = " << angle_x << endl;
+	cout << "Angle of y-projection to z axis: " << angle_y * 180.0 / TMath::Pi() << " deg = " << angle_y << endl;
+	cout << "Model parameters: x0, y0, slope x, slope y" << endl;
+	cout << "(" << model[0].X() << ", " << model[0].Y() << ", " << TMath::Tan(angle_x)  << ", " << TMath::Tan(angle_y) <<")" << endl;
+}
 
 //TODO test projection matrix

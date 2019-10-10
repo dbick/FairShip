@@ -59,6 +59,7 @@ private:
 	TMatrixD rot_to_matrix(const TRotation& rot) const;
 	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 	TMatrixD calc_projection_matrix(const TMatrixD& fit_system_base_vectors, const TMatrixD& rotation_global_to_measurement) const;
+	void print_model_parameters(const std::vector<TVector3>& model) const;
 };
 
 #endif /* CHARMDET_MILLEPEDECALLER_H_ */
