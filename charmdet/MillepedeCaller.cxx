@@ -172,7 +172,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		cout << "Absolute residual: " << rotated_residual[0] << " cm" << endl; //TODO remove after debugging
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (500 * 1e-4 * 500 * 1e-4); //500 um in cm.  This is 1 / sigma^2
+		precision[0] = 1.0 / (0.25 * 0.25); //0.25 as in Kalman fit. This is 1 / sigma^2
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
