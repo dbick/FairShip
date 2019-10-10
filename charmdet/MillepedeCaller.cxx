@@ -323,9 +323,13 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		for(unsigned short i = 0; i < traj.getNumPoints(); ++i)
 		{
 			cout << "Residuals for point " << i << ":" << endl;
-			TVectorD residuals(20), measErrors(20), resErrors(20), downWeights(20);
+			TVectorD* residuals, measErrors, resErrors, downWeights;
+			residuals = new TVectorD(20);
+			measErrors = new TVectorD(20);
+			resErrors = new TVectorD(20);
+			downWeights = new TVectorD(20);
 			unsigned int numRes;
-			traj.getMeasResults(i,numRes,residuals,measErrors,resErrors,downWeights);
+			traj.getMeasResults(i,numRes,*residuals,*measErrors,*resErrors,*downWeights);
 			cout << "numRes: " << numRes << endl;
 			cout << "residuals" << endl;
 			residuals.Print();
@@ -335,6 +339,11 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 			resErrors.Print();
 			cout << "downWeights" << endl;
 			downWeights.Print();
+
+			delete residuals;
+			delete measErrors;
+			delete resErrors;
+			delete downWeights;
 		}
 
 		return chi2;
