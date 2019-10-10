@@ -511,7 +511,7 @@ void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model)
 	double slope_y = 0.0;
 
 	TVector3 x_axis(1., 0., 0.);
-	TVector3 x_axis(0., 1., 0.);
+	TVector3 y_axis(0., 1., 0.);
 	double angle_x = TMath::Pi() - model[0].Angle(x_axis); //Not intereseted in angle to x but to z axis
 	double angle_y = TMath::Pi() - model[0].Angle(y_axis); //Not intereseted in angle to y but to z axis
 	cout << "Printing linear track model parameters" << endl;
