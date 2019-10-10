@@ -592,7 +592,9 @@ unsigned int GblTrajectory::getMeasResults(unsigned int aLabel,
 
 	unsigned int firstData = measDataIndex[aLabel - 1]; // first data block with measurement
 	numData = measDataIndex[aLabel] - firstData; // number of data blocks
+	std::cout << "GBL: numData is " << numData << endl;
 	for (unsigned int i = 0; i < numData; ++i) {
+		std::cout << "Accessing member: " << i << endl;
 		getResAndErr(firstData + i, aResiduals[i], aMeasErrors[i],
 				aResErrors[i], aDownWeights[i]);
 	}
