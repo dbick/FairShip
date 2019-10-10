@@ -512,8 +512,8 @@ void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model)
 
 	TVector3 x_axis(1., 0., 0.);
 	TVector3 y_axis(0., 1., 0.);
-	double angle_x = TMath::Pi() - model[0].Angle(x_axis); //Not intereseted in angle to x but to z axis
-	double angle_y = TMath::Pi() - model[0].Angle(y_axis); //Not intereseted in angle to y but to z axis
+	double angle_x = TMath::Pi() - model[1].Angle(x_axis); //Not intereseted in angle to x but to z axis
+	double angle_y = TMath::Pi() - model[1].Angle(y_axis); //Not intereseted in angle to y but to z axis
 	cout << "Printing linear track model parameters" << endl;
 	cout << "Initial fit position:" << endl;
 	model[0].Print();
@@ -523,6 +523,8 @@ void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model)
 	cout << "Angle of y-projection to z axis: " << angle_y * 180.0 / TMath::Pi() << " deg = " << angle_y << endl;
 	cout << "Model parameters: x0, y0, slope x, slope y" << endl;
 	cout << "(" << model[0].X() << ", " << model[0].Y() << ", " << TMath::Tan(angle_x)  << ", " << TMath::Tan(angle_y) <<")" << endl;
+	cout << "px / pz = " << model[1].X() / model[1].Z() << endl;
+	cout << "py / pz = " << model[1].Y() / model[1].Z() << endl;
 }
 
 //TODO test projection matrix
