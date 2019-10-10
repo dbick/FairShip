@@ -317,13 +317,16 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		rc = traj.fit(chi2,ndf,lostWeight);
 		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
 
+		unsigned int traj_numPoints = traj.getNumPoints();
+		cout << "Points on trajectory: " << traj_numPoints << endl;
 		//TODO remove after debugging
 		for(unsigned short i = 0; i < traj.getNumPoints(); ++i)
 		{
+			cout << "Residuals for point " << i << ":" << endl;
 			TVectorD residuals(20), measErrors(20), resErrors(20), downWeights(20);
 			unsigned int numRes;
 			traj.getMeasResults(i,numRes,residuals,measErrors,resErrors,downWeights);
-			cout << "numRes:" << numRes << endl;
+			cout << "numRes: " << numRes << endl;
 			cout << "residuals" << endl;
 			residuals.Print();
 			cout << "measErrors" << endl;
