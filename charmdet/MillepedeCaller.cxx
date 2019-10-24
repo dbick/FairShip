@@ -85,12 +85,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	vector<gbl::GblPoint> result = {};
 	print_model_parameters(linear_model);
 
-	//define the global fit system: track propagates in z direction, offsets and slopes in x and y directions
-	TMatrixD fit_system_base_vectors(2,3);
-	fit_system_base_vectors.Zero();
-	fit_system_base_vectors[0][0] = 1.0;
-	fit_system_base_vectors[1][2] = 1.0;
-
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
 
@@ -102,6 +96,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVector3 closest_approach;
 		bool first_or_last;
 		unsigned short hit_id;
+		TVector3 wire_dir;
 	};
 
 	//multimap to sort for arclength
@@ -126,6 +121,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.first_or_last = true;
 	hit_zero.hit_id = 0;
+	hit_zero.wire_dir = vtop - vbot;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -155,6 +151,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.rt_measurement = measurement;
 		hit.first_or_last = (i == n_points); //first set before this loop
 		hit.hit_id = i;
+		hit.wire_dir = vtop - vbot;
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -162,6 +159,20 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	//loop over multimap to build std::vector of GblPoints ordered by arclength
 	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); ++it)
 	{
+		//define projection of measurement system to the fit system
+		TMatrixD fit_system_base_vectors(2,3);
+		fit_system_base_vectors.Zero();
+		for(unsigned short i = 0; i < 3; ++i)
+		{
+			//TODO check if need to normalize
+			fit_system_base_vectors[0][i] = it->second.closest_approach[i];
+		}
+		for(unsigned short i = 0; i < 3; ++i)
+		{
+			//TODO check if need to normalize
+			fit_system_base_vectors[1][i] = it->second.wire_dir[i];
+		}
+
 		TMatrixD* jacobian = it->second.jacobian;
 		result.push_back(gbl::GblPoint(*jacobian));
 		TRotation rot = calc_rotation_of_vector(it->second.closest_approach);
@@ -492,7 +503,7 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 {
 	TMatrixD result(2,2); //projection matrix has dimensions 2x2
 	TMatrixD measurement_to_global(rotation_global_to_measurement); //copy rotational matrix
-	measurement_to_global.Invert(); //invert matrix in place
+//	measurement_to_global.Invert(); //invert matrix in place
 	measurement_to_global.ResizeTo(3,2); //TODO check if this is correct, want to skip column normal to measurement direction
 	result.Mult(fit_system_base_vectors,measurement_to_global);
 	result.Invert();
