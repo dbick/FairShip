@@ -85,6 +85,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	vector<gbl::GblPoint> result = {};
 	print_model_parameters(linear_model);
 
+	//define projection of measurement system to the fit system
+	TMatrixD fit_system_base_vectors(2,3);
+	fit_system_base_vectors.Zero();
+	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
+	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
+
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
 
@@ -159,20 +165,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	//loop over multimap to build std::vector of GblPoints ordered by arclength
 	for(auto it = jacobians_with_arclen.begin(); it != jacobians_with_arclen.end(); ++it)
 	{
-		//define projection of measurement system to the fit system
-		TMatrixD fit_system_base_vectors(2,3);
-		fit_system_base_vectors.Zero();
-		for(unsigned short i = 0; i < 3; ++i)
-		{
-			//TODO check if need to normalize
-			fit_system_base_vectors[0][i] = it->second.closest_approach[i];
-		}
-		for(unsigned short i = 0; i < 3; ++i)
-		{
-			//TODO check if need to normalize
-			fit_system_base_vectors[1][i] = it->second.wire_dir[i];
-		}
-
 		TMatrixD* jacobian = it->second.jacobian;
 		result.push_back(gbl::GblPoint(*jacobian));
 		TRotation rot = calc_rotation_of_vector(it->second.closest_approach);
@@ -183,7 +175,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		cout << "Absolute residual: " << rotated_residual[0] << " cm" << endl; //TODO remove after debugging
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (0.1 * 0.1); //1 mm, really bad resolution
+		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
