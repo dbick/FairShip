@@ -1,6 +1,5 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
-from DtAlignment.testing.TEST_id_parsing import dt_modules
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
 
 from decorators import *
