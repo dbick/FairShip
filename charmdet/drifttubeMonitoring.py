@@ -939,10 +939,8 @@ def print_layers(dt_modules_dict):
             centerpos = tube.get_center_position()
             dx_top = top[0] - centerpos[0]
             dy_top = top[1] - centerpos[1]
-            if(dx_top == 0.0):
-                angle = 0.0
-            else:
-                angle = np.arctan(dy_top / dx_top)  * 180.0 / np.pi
+
+            angle = np.arctan(dx_top / dy_top)  * 180.0 / np.pi #angle w.r.t y axis
             print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle))
                   
 print_layers(dt_modules)
