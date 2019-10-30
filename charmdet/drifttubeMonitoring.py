@@ -7,6 +7,7 @@ import __builtin__ as builtin
 import DtAlignment.DriftTube as DriftTube
 import DtAlignment.DtModule as DtModule
 import DtAlignment.utils
+import numpy as np
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
 # -----Timer--------------------------------------------------------
@@ -928,6 +929,19 @@ if debug:
 #rpc
 rpc={}
 DT={}
+
+def print_layers(dt_modules_dict):
+    for key in dt_modules_dict.keys():
+        mod = dt_modules_dict[key]
+        print("Module: {}".format(key))
+        for tube in mod.get_tubes():
+            top, bot = tube.wire_end_positions()
+            centerpos = tube.get_center_position()
+            dx_top = top[0] - centerpos[0]
+            dy_top = top[1] - centerpos[1]
+            angle = np.arctan(dy_top / dx_top)  * 180.0 / np.pi
+            print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle)
+            
 
 def compareAlignment():
  ut.bookHist(h,'alignCompare','compare Alignments',100,-120.,120.,100,-120.,120.)
