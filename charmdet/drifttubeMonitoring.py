@@ -1,5 +1,6 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
+from DtAlignment.testing.TEST_id_parsing import dt_modules
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
 
 from decorators import *
@@ -940,8 +941,10 @@ def print_layers(dt_modules_dict):
             dx_top = top[0] - centerpos[0]
             dy_top = top[1] - centerpos[1]
             angle = np.arctan(dy_top / dx_top)  * 180.0 / np.pi
-            print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle)
-            
+            print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle))
+                  
+print_layers(dt_modules)
+        
 
 def compareAlignment():
  ut.bookHist(h,'alignCompare','compare Alignments',100,-120.,120.,100,-120.,120.)
