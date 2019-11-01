@@ -83,7 +83,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 {
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
-	print_model_parameters(linear_model);
+//	print_model_parameters(linear_model);
 
 	//define projection of measurement system to the fit system
 	TMatrixD fit_system_base_vectors(2,3);
@@ -100,9 +100,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD* jacobian;
 		double rt_measurement;
 		TVector3 closest_approach;
-		bool first_or_last;
 		unsigned short hit_id;
-		TVector3 wire_dir;
 	};
 
 	//multimap to sort for arclength
@@ -125,14 +123,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.jacobian = unity;
 	hit_zero.rt_measurement = 0.0;
 	hit_zero.closest_approach = closest_approach;
-	hit_zero.first_or_last = true;
 	hit_zero.hit_id = 0;
-	hit_zero.wire_dir = vtop - vbot;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
-
-	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track between two consecutive hits
+	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track (from very first hit)
 	//#pragma omp parallel for
 	for(size_t i = 1; i < n_points; i++)
 	{
@@ -155,9 +150,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.jacobian = jacobian_with_arclen.second;
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
-		hit.first_or_last = (i == n_points); //first set before this loop
 		hit.hit_id = i;
-		hit.wire_dir = vtop - vbot;
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -172,7 +165,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
-		cout << "Absolute residual: " << rotated_residual[0] << " cm" << endl; //TODO remove after debugging
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
@@ -275,8 +267,8 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
  */
 pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const genfit::Track& track, const unsigned int hit_id) const
 {
-
-	TVector3 fitted_pos_1 = track.getFittedState(hit_id - 1).getPos();
+	//arc length is distance from very first point on the track
+	TVector3 fitted_pos_1 = track.getFittedState(0).getPos();
 	TVector3 fitted_pos_2 = track.getFittedState(hit_id).getPos();
 	TVector3 between_hits = fitted_pos_2 - fitted_pos_1;
 
