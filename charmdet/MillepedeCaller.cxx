@@ -64,6 +64,7 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
 }
 
 //TODO Rework, make easier to understand
+//TODO can be shortened since genfit tracks are ordered by arc length
 /**
  * List the hits used to fit the seed track from a fit predecessing the GBL fit as a @c std::vector<gbl::GblPoint>. The GblPoint objects will
  * also contain measurements after the call of this method. The GBL points are ordered by arclength, which is the distance on the track between
@@ -128,14 +129,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 
 	bool is_ordered = check_ordered_by_arclen(*track);
-	if(is_ordered)
+	if(!is_ordered)
 	{
-		std::cout << "Track is ordered" << std::endl;
+		print_seed_hits(*track);
 	}
-	else
-	{
-		std::cout << "Track NOT ordered" << std::endl;
-	}
+
 
 	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track (from very first hit)
 	//#pragma omp parallel for
@@ -251,6 +249,11 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	return jacobian;
 }
 
+std::multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track* track) const
+{
+
+}
+
 /**
  * Calculate the jacobian matrix for the transport of track parameters from the previous hit to a hit labelled by @c hit_id. Alongside
  * the jacobian matrix, an arclength is calculated, which is the distance on the track between the previous hit and the hit specified by
@@ -273,6 +276,7 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
  *
  * @return std::pair<double,TMatrixD*> containing the the arclength and the jacobian matrix
  *
+ * @note Only needed, when hits on seed track are not ordered correctly by arclength, ca be checked with method check_ordered_by_arclen(const genfit::Track&)
  * @warning TMatrixD* is heap memory and undeleted. Must be deleted by caller when no longer needed.
  */
 pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const genfit::Track& track, const unsigned int hit_id) const
@@ -555,6 +559,18 @@ bool MillepedeCaller::check_ordered_by_arclen(const genfit::Track& track) const
 	}
 
 	return true;
+}
+
+void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
+{
+	size_t n_hits = track.getNumPointsWithMeasurement();
+	const std::vector< genfit::TrackPoint* > points = track.getPoints();
+
+	for(size_t i = 0; i < n_hits; ++i)
+	{
+		int det_id = points[i]->getRawMeasurement()->getDetId();
+		cout << "Hit: " << i << "\t" << "ID: " << det_id << endl;
+	}
 }
 
 //TODO test projection matrix

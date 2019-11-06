@@ -62,6 +62,7 @@ private:
 	void print_model_parameters(const std::vector<TVector3>& model) const;
 
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
+	void print_seed_hits(const genfit::Track& track) const;
 
 };
 
