@@ -129,7 +129,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track (from very first hit)
 	//#pragma omp parallel for
-	for(size_t i = 1; i < n_points; i++)
+	for(size_t i = 1; i < n_points; ++i)
 	{
 		struct hit_info hit;
 		genfit::TrackPoint* point = points[i];
@@ -421,9 +421,9 @@ TRotation MillepedeCaller::calc_rotation_of_vector(const TVector3& v) const
 TMatrixD MillepedeCaller::rot_to_matrix(const TRotation& rot) const
 {
 	TMatrixD result(3,3);
-	for(uint8_t i = 0; i < 3; i++)
+	for(uint8_t i = 0; i < 3; ++i)
 	{
-		for(uint8_t j = 0; j < 3; j++)
+		for(uint8_t j = 0; j < 3; ++j)
 		{
 			result[i][j] = rot[i][j];
 		}
