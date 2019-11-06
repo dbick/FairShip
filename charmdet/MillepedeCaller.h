@@ -60,6 +60,9 @@ private:
 	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 	TMatrixD calc_projection_matrix(const TMatrixD& fit_system_base_vectors, const TMatrixD& rotation_global_to_measurement) const;
 	void print_model_parameters(const std::vector<TVector3>& model) const;
+
+	bool check_ordered_by_arclen(const genfit::Track& track) const;
+
 };
 
 #endif /* CHARMDET_MILLEPEDECALLER_H_ */

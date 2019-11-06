@@ -127,6 +127,16 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
+	bool is_ordered = check_ordered_by_arclen(*track);
+	if(is_ordered)
+	{
+		std::cout << "Track is ordered" << std::endl;
+	}
+	else
+	{
+		std::cout << "Track NOT ordered" << std::endl;
+	}
+
 	//Fill multimap jacobians_with_arclen, which holds the jacobians ordered by arclength on track (from very first hit)
 	//#pragma omp parallel for
 	for(size_t i = 1; i < n_points; ++i)
@@ -308,9 +318,9 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 
 		rc = traj.fit(chi2,ndf,lostWeight);
 		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
-		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+//		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 
-		traj.printTrajectory(1);
+//		traj.printTrajectory(1);
 
 		return chi2;
 	}
@@ -507,6 +517,44 @@ void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model)
 	model[1].Print();
 	cout << "Model parameters: x0, y0, slope x, slope y" << endl;
 	cout << "(" << model[0].X() << ", " << model[0].Y() << ", " << slope_x  << ", " << slope_y <<")" << endl;
+}
+
+/**
+ * Checks, if the points on a genfit seed track are ordered by arc length. The arc length
+ * is the distance from an early point on the track, e.g the vertex or the very first hit.
+ * This doesn't matter if the arc length itself is not used but the GblPoints must only
+ * be ordered correctly.
+ *
+ * @brief Checks if points on seed track are ordered by arc length
+ *
+ * @author Stefan Bieschke
+ * @date Nov. 6, 2019
+ * @version 1.0
+ *
+ * @param track genfit seed track
+ * @return true if points are correctly ordered, false else
+ *
+ * @note This is mainly for debugging and maintenance purposes, not recommended to be called in productive code
+ */
+bool MillepedeCaller::check_ordered_by_arclen(const genfit::Track& track) const
+{
+	size_t n_points = track.getNumPointsWithMeasurement();
+	double z = 0.0;
+
+	for(size_t i = 0; i < n_points; ++i)
+	{
+		double z_next = track.getFittedState(i).getPos().Z();
+		if(z_next > z)
+		{
+			z = z_next;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 //TODO test projection matrix
