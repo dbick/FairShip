@@ -3430,7 +3430,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
 #          ALG_fr.write("{}\n".format(res))
 #      ALG_fr.close()
     
-   print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
    
 def investigateActiveArea():
     r = 1.815
