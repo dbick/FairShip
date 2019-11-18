@@ -56,7 +56,11 @@ public:
    TVector3 findMCMomentum(int mctr);
 
 private:
-  protected:
+   //two vectors often needed, only helpers so that they don't need to be recreated everytime they are needed
+   TVector3 m_new_position;
+   const TVector3 m_parallelToZ;
+
+protected:
     Bool_t MCdata;
     TTreeReader* xSHiP;
     std::vector<int> noisyChannels;
@@ -68,6 +72,7 @@ private:
     TClonesArray    *MCTrack;
     TClonesArray    *FitTracks;
     TClonesArray    *TrackInfos;
+    FairEventHeader *EventHeader;
     TClonesArray    *RPCTrackY;
     TClonesArray    *RPCTrackX;
     TClonesArray    *Digi_MuonTaggerHits;
@@ -80,11 +85,12 @@ private:
     TBranch        *b_TrackInfos;   //!
     TBranch        *b_RPCTrackY;   //!
     TBranch        *b_RPCTrackX;   //!
+    TBranch        *b_EventHeader;   //!
     TBranch        *b_Digi_MuonTaggerHits;   //!
     TBranch        *b_MuonTaggerPoint; //!
     TBranch        *b_Digi_MufluxSpectrometerHits;   //!
     TBranch        *b_MufluxSpectrometerPoints;   //!
-   ClassDef(MufluxReco,7);
+   ClassDef(MufluxReco,8);
 };
 
 #endif

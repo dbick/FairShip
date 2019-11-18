@@ -76,8 +76,10 @@ parser.add_argument("-e", "--eos", dest="onEOS", help="files on EOS", default=Fa
 parser.add_argument("-u", "--update", dest="updateFile", help="update file", default=False)
 parser.add_argument("-i", "--input", dest="inputFile", help="input histo file", default='residuals.root')
 parser.add_argument("-g", "--geofile", dest="geoFile", help="input geofile", default='')
+parser.add_argument("-s", "--smearing", dest="MCsmearing", help="additional MC smearing", default=MCsmearing)
 
 options = parser.parse_args()
+MCsmearing = options.MCsmearing
 fnames = []
 if options.catalog:
     tmp = open(options.listOfFiles)
@@ -4273,7 +4275,7 @@ def mergeHistosForMomResol(withFitPoints=False):
     # 1GeV charm,     10.2 Billion PoT,  10 files
     # 10GeV MC,         65 Billion PoT 
     # 10GeV charm    153.3 Billion PoT 
-    versions = ['-withDeadChannels',"-0","-multHits"]  # "-noDeadChannels"
+    versions = ['-repro',"-0"]  # ","-multHits" -noDeadChannels -withDeadChannels"
     MCStats   = 1.806E9
     MC10Stats = 66.02E9
     sim10fact = MCStats/(MC10Stats) # normalize 10GeV to 1GeV stats 
@@ -4287,9 +4289,14 @@ def mergeHistosForMomResol(withFitPoints=False):
             for source in sources:  interestingHistos.append(a+source)
         for v in versions: 
             h[v]={'1GeV':{},'1GeVCharm':{},'10GeV':{}}
-            ut.readHists(h[v]['1GeV'],       'momDistributions-1GeV-mbias'+v+'.root',interestingHistos)
-            ut.readHists(h[v]['1GeVCharm'],  'momDistributions-1GeV-charm'+v+'.root',interestingHistos)
-            ut.readHists(h[v]['10GeV'],      'momDistributions-10GeV-mbias'+v+'.root',interestingHistos)
+            if v.find('repro')<0:
+             ut.readHists(h[v]['1GeV'],       'momDistributions-1GeV-mbias'+v+'.root',interestingHistos)
+             ut.readHists(h[v]['1GeVCharm'],  'momDistributions-1GeV-charm'+v+'.root',interestingHistos)
+             ut.readHists(h[v]['10GeV'],      'momDistributions-10GeV-mbias'+v+'.root',interestingHistos)
+            else:
+             ut.readHists(h[v]['1GeV'],       'sumHistos--simulation1GeV'+v+'.root',interestingHistos)
+             ut.readHists(h[v]['1GeVCharm'],  'sumHistos--simulation1GeV'+v+'-charm.root',interestingHistos)
+             ut.readHists(h[v]['10GeV'],      'sumHistos--simulation10GeV'+v+'.root',interestingHistos)
         for res in versions:
             for a in ['trueMom','recoMom','Fitpoints_u1','Fitpoints_v2','Fitpoints_x1','Fitpoints_x2','Fitpoints_x3','Fitpoints_x4']:
                 if a.find('Fit')==0 and not withFitPoints: continue
@@ -4324,7 +4331,7 @@ def mergeHistosForMomResol(withFitPoints=False):
     if not h.has_key(t): ut.bookCanvas(h,t,'true and reco momentum',900,600,1,1)
     tc=h[t].cd(1)
     tc.SetLogy()
-    v = '-withDeadChannels'
+    v = '-repro'
 #
     h['I--0trueMom'].Draw()
     h['I--0recoMom'].Draw('same')
@@ -4333,7 +4340,7 @@ def mergeHistosForMomResol(withFitPoints=False):
     h['leg'+t]=ROOT.TLegend(0.31,0.67,0.85,0.85)
     h['leg'+t].AddEntry(h['I--0trueMom'],'true momentum ','PL')
     h['leg'+t].AddEntry(h['I--0recoMom'],'reconstructed momentum 270#mum','PL')
-    h['leg'+t].AddEntry(h['I-'+v+'recoMom'],'reconstructed momentum 500#mum','PL')
+    h['leg'+t].AddEntry(h['I-'+v+'recoMom'],'reconstructed momentum 350#mum','PL')
     h['leg'+t].Draw()
     myPrint(h[t],'True-Reco')
 #
@@ -4382,14 +4389,16 @@ def mergeHistosForMomResol(withFitPoints=False):
         p0 = "%4.3F"%(100*fSqrt.GetParameter(0))
         p1 = "%4.3F"%(100*fSqrt.GetParameter(1))
         if res != '-0': 
-            h['text'+res] = ROOT.TLatex(20.,0.09,'#sigmaP/P = ('+p0+' #oplus '+p1+' #times p)%')
+            h['text'+res] = ROOT.TLatex(21.,0.073,'#sigmaP/P = ('+p0+' #oplus '+p1+' #times p)%')
             h[hname+'P'].Draw('same')
             h[hname+'P'].SetLineColor(ROOT.kMagenta)
             h['text'+res].SetTextColor(ROOT.kMagenta)
-            h['leg'+t].AddEntry(h[hname+'P'],'adjusted 500#mum','PL')
+            h['leg'+t].AddEntry(h[hname+'P'],'adjusted 350#mum','PL')
         else:
             h['text'+res] = ROOT.TLatex(120.,0.01,'#sigmaP/P = ('+p0+' #oplus '+p1+' #times p)%')
             h['text'+res].SetTextColor(ROOT.kBlue)
+            h[hname+'P'].GetXaxis().SetRangeUser(0.,330)
+            h[hname+'P'].SetMaximum(max(h[hname+'P'].GetMaximum(),h['momResol-0P'].GetMaximum()))
             h[hname+'P'].Draw()
             h['leg'+t].AddEntry(h[hname+'P'],'default  270#mum ','PL')
         h['text'+res].Draw('same')
@@ -4508,7 +4517,7 @@ def plotRPCExtrap(nEvent=-1,nTot=1000,PR=1,onlyPlotting=False):
         ut.bookHist(h,'RPC_p', 'momentum of tracks pointing to RPC',100,0.,100.)
         for k in range(2,20):
             ut.bookHist(h, 'RPC<'+str(k)+'_p', '  < '+str(k)+' RPC hits p',100,0.,100.)
-        if PR==1:  
+        if PR==1 or PR==3:
             muflux_Reco.RPCextrap()
             return
         for Nr in range(eventRange[0],eventRange[1]):
@@ -5708,8 +5717,8 @@ def init(database='muflux_RTrelations.pkl',remake=False,withReco=False):
         for s in h['tMinAndTmax']: h['rt'+s] = RTrelations[rname]['rt'+s]
     withTDC = True
     if withReco:
-        plotBiasedResiduals(PR=11)
-        plotRPCExtrap(PR=11)
+        plotBiasedResiduals(PR=13)
+        plotRPCExtrap(PR=13)
         ut.writeHists(h,'histos-'+rname,plusCanvas=True)
 #
 def monitorMasterTrigger():
@@ -6149,8 +6158,7 @@ def ghostSuppression(hname = "sumHistos--simulation10GeV-withDeadChannels.root")
             if c=='': continue
             print "%s efficiency=%5.3F"%(c,ntracks[c]/ntracks[''])
 
-def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,eric=False,version="-final",withOverFlow=False,withDisplay=True,cuts=''):
-    ptMax = 4.
+def MCcomparison(pot = -1, pMin = 5.,pMax=300.,ptMax = 4.,simpleEffCor=0.023,effCor=False,eric=False,version="-repro",withOverFlow=False,withDisplay=True,cuts=''):
     # possible cuts: '', 'All', 'Chi2<', 'Delx<', 'Dely<'
     # efficiency MC larger than data, 0.105 for cuts = All, but only for muon tagged!
     # otherwise only Chi2 cut, 0.034 
@@ -6313,8 +6321,8 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
               'MCDi-muon P8':['same',ROOT.kCyan,'Dimuon from decays P8'],
               'MC10Di-muon P8':['same',ROOT.kCyan,'Dimuon from decays P8'] }
     ptMaxBin = h['p/pt'].GetYaxis().FindBin(ptMax)
-    ptInterval =        [ [pMin,10.],[10.,25.],[25.,50.],[50.,75.],[75.,100.],[100.,125.],[125.,150.],[150.,200.],[200.,250.],[250.,300.] ]
-    ptIntervalRebin =   [ 1,            1,         1,        1,        1,         1,          2,          2,          4,           4 ]
+    ptInterval =        [ [pMin,10.],[10.,25.],[25.,50.],[50.,75.],[75.,100.],[100.,125.],[125.,150.],[150.,200.],[200.,250.],[250.,300.] ,[300.,400.] ]
+    ptIntervalRebin =   [ 1,            1,         1,        1,        1,         1,          2,          2,          4,           4,          4 ]
     for x in ['','mu']:
         for a in ['p/pt','pz/Abspx','p1/p2']:
             if a=='p1/p2' and x=='mu': continue
@@ -6813,14 +6821,20 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
                 else: print       "=== all tracks  ===="
                 for P in [5.,10.,50.,100.,150.,200.,300.]:
                     nbin = h[Aproj+x+'_x'].FindBin(P)
-                    print "data/MC Pz>%5i GeV: %5.2F"%(int(P),h['I-'+Aproj+x+'_x'].GetBinContent(nbin)/h['I-MC'+Aproj+x+'_x'].GetBinContent(nbin))
+                    print "data/MC P>%5i GeV: %5.2F"%(int(P),h['I-'+Aproj+x+'_x'].GetBinContent(nbin-1)/h['I-MC'+Aproj+x+'_x'].GetBinContent(nbin-1))
                 n5 = h[Aproj+x+'_x'].FindBin(5.)
                 n300 = h[Aproj+x+'_x'].FindBin(300.)
+                n450 = h[Aproj+x+'_x'].FindBin(450.)
                 n480 = h[Aproj+x+'_x'].FindBin(480.)
                 n500 = h[Aproj+x+'_x'].FindBin(500.)
-                ghostRateMC = h['MCtot'+Aproj+x+'_xoriginal'].Integral(n480,n500)/20.*295./h['MCtot'+Aproj+x+'_xoriginal'].Integral(n5,n300)
-                ghostRateData = h[Aproj+x+'_xoriginal'].Integral(n480,n500)/20.*295./h[Aproj+x+'_xoriginal'].Integral(n5,n300)
-                print "ghostRate MC: %5.2F%%  ghostRate Data: %5.2F%%"%(ghostRateMC*100,ghostRateData*100)
+                ghostRateMC   = h['MCtot'+Aproj+x+'_xoriginal'].Integral(n450,n500-1)/20.*295./h['MCtot'+Aproj+x+'_xoriginal'].Integral(n5,n300)
+                ghostRateData = h[Aproj+x+'_xoriginal'].Integral(n450,n500-1)/20.*295./h[Aproj+x+'_xoriginal'].Integral(n5,n300)
+                print "ghostRate MC: %5.2FperMille  ghostRate Data: %5.2FperMille"%(ghostRateMC*1000,ghostRateData*1000)
+# as in the note, n500 includes overflow
+                ratioGhostsMC   =  h['MCtot'+Aproj+x+'_xoriginal'].Integral(n450,n500-1)/h['MCtot'+Aproj+x+'_xoriginal'].Integral(n450,n500)
+                ratioGhostsData =          h[Aproj+x+'_xoriginal'].Integral(n450,n500-1)/h[Aproj+x+'_xoriginal'].Integral(n450,n500)
+                ratioGhostsDataMC =  h[Aproj+x+'_xoriginal'].Integral(n450,n500-1)/h['MCtot'+Aproj+x+'_xoriginal'].Integral(n450,n500-1)
+                print "tracks [450-500]/[>450] = MC: %5.2F, data: %5.2F. Absolute data/MC=%5.2F"%(ratioGhostsMC,ratioGhostsData,ratioGhostsDataMC)
 # make ratio plots
             proj = Aproj
             for xx in [x+'_x',x+'_y']:
@@ -6847,7 +6861,7 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
                 h['I-'+proj+xx+'Ratio'].SetLineColor(ROOT.kBlue)
                 h['I-'+proj+xx+'Ratio'].SetMaximum(3.)
                 if xx.find('_x')<0: 
-                    h['I-'+proj+xx+'Ratio'].GetXaxis().SetRangeUser(0.,4.0)
+                    h['I-'+proj+xx+'Ratio'].GetXaxis().SetRangeUser(0.,ptMax)
                 else:               
                     h['I-'+proj+xx+'Ratio'].GetXaxis().SetRangeUser(pMin,pMax)
                 h['I-'+proj+xx+'Ratio'].SetMinimum(0.0)
@@ -6917,7 +6931,7 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
             h[proj+x+'Ratio'].SetMinimum(-1.)
             h[proj+x+'Ratio'].SetMaximum(+1.)
             h[proj+x+'Ratio'].GetXaxis().SetRangeUser(pMin,pMax)
-            h[proj+x+'Ratio'].GetYaxis().SetRangeUser(0.,4.0)
+            h[proj+x+'Ratio'].GetYaxis().SetRangeUser(0.,ptMax)
             h[proj+x+'Ratio'].SetStats(0)
             h[proj+x+'Ratio'].SetMarkerSize(1.2)
             h[proj+x+'Ratio'].Draw('texte')
@@ -6937,9 +6951,12 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
 
 # pt in slices of P
     for t in ['MC-Comparison Pt']:
-        if not h.has_key(t): ut.bookCanvas(h,key=t,title=' MC / Data '+t.split(' ')[1],nx=1800,ny=900,cx=5,cy=2)
+        if not h.has_key(t): 
+            if pMax > 310: ut.bookCanvas(h,key=t,title=' MC / Data '+t.split(' ')[1],nx=1800,ny=900,cx=6,cy=2)
+            else:          ut.bookCanvas(h,key=t,title=' MC / Data '+t.split(' ')[1],nx=1800,ny=900,cx=5,cy=2)
         y = 1
         for pInterval in ptInterval:
+            if pInterval[1] > pMax: continue
             if pInterval[1]<11: x = ''
             else: x = 'mu'
             interval = '_y'+str(pInterval[0])+'-'+str(pInterval[1])
@@ -6967,7 +6984,7 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
                 if rebinValue>1: 
                   h[hname].Rebin(rebinValue)
                   h[hname].Scale(1./rebinValue)
-                h[hname].GetXaxis().SetRangeUser(0.,4.)
+                h[hname].GetXaxis().SetRangeUser(0.,ptMax)
                 h[hname].SetMaximum(hMaPx*1.1)
                 h[hname].SetMinimum(0.)
                 h[hname].SetStats(0)
@@ -6988,13 +7005,13 @@ def MCcomparison(pot = -1, pMin = 5.,pMax=300.,simpleEffCor=0.023,effCor=False,e
         proj = 'p/pt'
         hname = proj+x+interval
         err=ROOT.Double()
-        data = h[hname].IntegralAndError(0,h[hname].FindBin(4.),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
+        data = h[hname].IntegralAndError(0,h[hname].FindBin(ptMax),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
         sig_data=err/POTdata/(pInterval[1]-pInterval[0])*1E9
         sig_data = ROOT.TMath.Sqrt(sig_data**2+(data*daSysError)**2)
-        mc   = h['MC'+hname].IntegralAndError(0,h[hname].FindBin(4.),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
+        mc   = h['MC'+hname].IntegralAndError(0,h[hname].FindBin(ptMax),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
         sig_MC  = err/POTdata/(pInterval[1]-pInterval[0])*1E9
         sig_MC = ROOT.TMath.Sqrt(sig_MC**2+(mc*mcSysError)**2)
-        mcCharm = h['MC'+hname.replace('_y','charm_y')].IntegralAndError(0,h[hname].FindBin(4.),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
+        mcCharm = h['MC'+hname.replace('_y','charm_y')].IntegralAndError(0,h[hname].FindBin(ptMax),err)/POTdata/(pInterval[1]-pInterval[0])*1E9
         ratio = data/mc
         sig_ratio = ROOT.TMath.Sqrt( (ratio/data*sig_data)**2+(ratio/mc*sig_MC)**2)
         sig_Charm=err/POTdata/(pInterval[1]-pInterval[0])*1E9
@@ -7156,6 +7173,19 @@ def MCchecks():
             if not mult[p].has_key(N): mult[p][N]=0
             mult[p][N]+=1
     return mult
+def countTracks():
+    NfitTracks = [0,0]
+    NfitTracks_refitted = [0,0]
+    for event in sTree:
+        NfitTracks[0]         +=event.FitTracks.GetEntries()
+        NfitTracks_refitted[0]+=event.FitTracks_refitted.GetEntries()
+        for atrack in sTree.FitTracks:
+           fst = atrack.getFitStatus()
+           if fst.isFitConverged(): NfitTracks[1]+=1
+        for atrack in sTree.FitTracks_refitted:
+           fst = atrack.getFitStatus()
+           if fst.isFitConverged(): NfitTracks_refitted[1]+=1
+    print "run, number of original tracks",sTree.GetCurrentFile(),NfitTracks, " number of refitted tracks",NfitTracks_refitted
 hruns={}
 def compareRuns(runs=[]):
     # runs = [2307,2357,2359,2360,2361,2365,2366,2395,2396]
@@ -7380,7 +7410,7 @@ def plotResidualExample():
           myPrint(h['Residualsexample'],hname)
     hname = 'theResidualPlot'
     h[hname].SetTitle(';[cm]')
-    fitFunction = h['biasRes_1_x1'].GetFunction('gauss')
+    fitFunction = h['biasRes_1_x0'].GetFunction('gauss').Clone()
     fitResult = h[hname].Fit(fitFunction,'S','',-0.5,0.5)
     h[hname].Draw()
     h['Residualsexample'].Update()
@@ -7399,8 +7429,29 @@ def plotResidualExample():
     h[hname].SetTitle(';[cm]')
     fitFunction = h['biasRes_1_x1'].GetFunction('gauss')
     fitFunction.ReleaseParameter(3)
-    fitResult = h[hname].Fit(fitFunction,'SQ','',-0.3,0.3)
+    rc = h[hname].Fit(fitFunction,'SQ','',-0.3,0.3)
+    fitResult=rc.Get()
+    for n in range(4):
+     myGauss2.SetParameter(n,fitResult.Parameter(n))
+    myGauss2.FixParameter(4,0)
+    myGauss2.FixParameter(5,0.04)
+    rc = h[hname].Fit(myGauss2,'S','',-0.3,0.3)
+    myGauss2.ReleaseParameter(4)
+    rc = h[hname].Fit(myGauss2,'S','',-0.3,0.3)
+    myGauss2.ReleaseParameter(5)
+    rc = h[hname].Fit(myGauss2,'S','',-0.3,0.3)
+    fitResult=rc.Get()
+    n1 = fitResult.Parameter(0)
+    n2 = fitResult.Parameter(4)
+    s1 = fitResult.Parameter(1)
+    s2 = fitResult.Parameter(5)
+    w = 1./n1**2+1./n2**2
+    a = s1/n1**2+s2/n2**2/w
+    txt = ROOT.TLatex(-0.45,70E6,"mean sigma = %5.2F#mum"%(a*10*1000))
+    h[hname].SetTitle('')
     h[hname].Draw()
+    txt.Draw()
+    h['Residualsexample'].Update()
     stats = h['Residualsexample'].GetPrimitive('stats')
     stats.SetOptFit(10111)
     stats.SetFitFormat('5.4g')
@@ -7497,7 +7548,7 @@ def plotRPC3Example():
     myPrint(h['Residualsexample'],"XRPChighMom")
 
 
-def mergeGoodRuns(excludeRPC=False,path='.'):
+def mergeGoodRuns(excludeRPC=False,path='.',fromEOS=True):
     #path = '/media/truf/disk2/home/truf/ShipSoft/ship-ubuntu-1710-64'
     noField           = [2199,2200,2201]
     intermediateField = [2383,2388,2389,2390,2392,2395,2396]
@@ -7509,14 +7560,18 @@ def mergeGoodRuns(excludeRPC=False,path='.'):
     cmd = 'hadd -f momDistributions.root '
     for x in temp:
         if x.find(keyword)<0: continue
-        if not os.path.isdir(path+'/'+x): continue
-        r = int(x[x.rfind('/')+1:].split('_')[2])
-        if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
-        if excludeRPC and (r in RPCbad or (r>2198 and r < 2275)) : continue
-        test = path+'/'+x+'/momDistributions.root '
-        if not os.path.isfile(test.replace(' ','')):
+        if not fromEOS:
+          if not os.path.isdir(path+'/'+x): continue
+          r = int(x[x.rfind('/')+1:].split('_')[2])
+          if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
+          if excludeRPC and (r in RPCbad or (r>2198 and r < 2275)) : continue
+          test = path+'/'+x+'/momDistributions.root '
+          if not os.path.isfile(test.replace(' ','')):
             print "no file found, skip run:",x,test
             continue
+        else:
+          if x.find("momDistributions-RUN_8000_2")!=0: continue
+          test = x+" "
         cmd += test
     os.system(cmd)
 def findHighMomEvents():
@@ -7822,10 +7877,10 @@ def anaResiduals():
         MCchecks()
     else:
         printScalers()
-        plotRPCExtrap(PR)
-        norm = h['TrackMult'].GetEntries()
-        print '*** Track Stats ***',norm
-        ut.writeHists(h,'histos-analysis-'+rname)
+    plotRPCExtrap(PR)
+    norm = h['TrackMult'].GetEntries()
+    print '*** Track Stats ***',norm
+    ut.writeHists(h,'histos-analysis-'+rname)
 if options.command == "":
     print "existing methods"
     print " --- plotHitMaps(): hitmaps / layer, TDC / layer, together with list of noisy channels"
@@ -7940,6 +7995,7 @@ elif options.command == "momResolution":
     importAlignmentConstants()
     momResolution(PR=1,onlyPlotting=False)
 elif options.command == "splitOffBoostedEvents": splitOffBoostedEvents()
+elif options.command == "countTracks": countTracks()
 elif options.command == "plotDTPoints":   plotDTPoints()
 elif options.command == "DTeffWithRPCTracks":
     withCorrections = False

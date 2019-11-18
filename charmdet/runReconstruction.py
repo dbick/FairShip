@@ -355,7 +355,7 @@ def exportNtupleToEos(dlist=[],key='ntuple',eosLocation="/eos/experiment/ship/us
              if rc == 0:  os.system('rm '+run+"/"+f)
 
 
-def makeMomDistributions(run=0,refit=True):
+def makeMomDistributions(command='anaResiduals',run=0,refit=True):
     if run==0: fileList = checkFilesWithTracks(D='.')
     else:
         eospathRecoR = eospathReco[refit]+run
@@ -367,9 +367,13 @@ def makeMomDistributions(run=0,refit=True):
     # all RT files with tracks
     for fname in fileList:
         if not fname.find('sys')<0: continue
-        if os.path.isfile('histos-analysis-'+fname[fname.rfind('/')+1:]): continue
-        cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c anaResiduals -f "+fname+' &'
-        print 'momentum analysis:', cmd
+        if command=='anaResiduals':
+         if os.path.isfile('histos-analysis-'+fname[fname.rfind('/')+1:]): continue
+         cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c anaResiduals -f "+fname+' &'
+         print 'momentum analysis:', cmd
+        elif command=='countTracks':
+         cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c countTracks -f "+fname+' > countTracks_'+fname[fname.rfind('/')+1:]+'.log  &'
+         print 'count tracks:', cmd
         os.system(cmd)
         time.sleep(10)
         while 1>0:
@@ -379,7 +383,7 @@ def makeMomDistributions(run=0,refit=True):
 
 zeroField = ['2199','2200','2201']
 noRPC = ['2144','2154','2192','2210','2217','2218','2235','2236','2237','2240','2241','2243','2291','2345','2359']
-def massProduction(keyword = 'RUN_8000_23',fnames=[],merge=False,refit=True):
+def massProduction(command='anaResiduals',keyword = 'RUN_8000_23',fnames=[],merge=False,refit=True):
     if merge:
         for run in os.listdir('.'):
             if run.find(keyword)!=0: continue
@@ -399,7 +403,7 @@ def massProduction(keyword = 'RUN_8000_23',fnames=[],merge=False,refit=True):
             if temp2.find('.root')<0: continue
             os.chdir(run)
             print "go for",run
-            makeMomDistributions(run)
+            makeMomDistributions(command=command,run=run)
             os.chdir('../')
 def massProductionAlignment(keyword = 'RUN_8000_2395',fnames=[],merge=False,refit=True):
     if merge:
@@ -504,7 +508,7 @@ def makeDTEfficiency(eos=False,merge=False,refit=True):
         if merge: os.system(cmd)
     print "finished all the tasks."
 
-def runMufluxReco(path = '.',merge=False,refit=True):
+def runMufluxReco(path = "/eos/experiment/ship/user/truf/muflux-reco",merge=False,refit=True):
     sumHistos=[]
     for d in os.listdir(path):
         if d.find('RUN_8000')==0:
@@ -513,12 +517,13 @@ def runMufluxReco(path = '.',merge=False,refit=True):
             if os.path.isfile(hname):
                 r = int(d.split('_')[2])
                 if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
-                sumHistos.append(d)
+                sumHistos.append(hname)
             elif merge:
                 print "run ",d," not processed successfully"
             else:
                 if os.path.isdir(d):
-                    cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -t '' -d "+d+" -c MufluxReco -p "+path+" &"
+                    if refit: cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -t '' -A False -B False -C False -d "+d+" -c MufluxReco -p "+path+" &"
+                    else:     cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py    -t '' -A False -B False -C False -d "+d+" -c MufluxReco -p "+path+" &"
                     os.system(cmd)
                     time.sleep(10)
                     while 1>0:
@@ -529,7 +534,7 @@ def runMufluxReco(path = '.',merge=False,refit=True):
         if refit: hname = "sumHistos_refit.root "
         cmd = 'hadd -f '+hname
         for d in sumHistos:
-            cmd += hname+d+".root "
+            cmd += d+' '
         os.system(cmd)
 
 def checkNtuples(path = '.'):
@@ -549,15 +554,19 @@ def invMass(path = '.',merge=False,refit=True):
         cmd = 'hadd -f sum'+hname+'.root '
         cmd2 = 'hadd -f ntuple-'+hname+'.root '
         for d in os.listdir(path):
-            if d.find(hname)==0:
+            if refit and d.find('refit')<0: continue
+            if d.find('invMass')==0:
+                r = int(d.split('_')[2])
+                if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
                 cmd += d+" "
                 cmd2 += 'ntuple-'+d+" "
         os.system(cmd)
         os.system(cmd2)
     else:
         for d in os.listdir(path):
-            if d.find('RUN_8000')==0 and os.path.isdir(path+'/'+d):
-                cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -c invMass -d "+d+" -p /eos/experiment/ship/user/truf/muflux-reco &"
+            if d.find('RUN_8000')==0 and os.path.isdir(path+'/'+d):              
+                if refit: cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -c invMass -A False -B False -C False -d "+d+" -p /eos/experiment/ship/user/truf/muflux-reco &"
+                else:     cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -c invMass -A False -B False -C False -d "+d+" -p /eos/experiment/ship/user/truf/muflux-reco &"
                 os.system(cmd)
                 time.sleep(10)
                 while 1>0:
@@ -613,7 +622,7 @@ def mergeGoodRuns(command="anaResiduals",refit=True,excludeRPC=False):
    os.system(cmd)
 
 mufluxRecoDir = "/eos/experiment/ship/user/truf/muflux-reco/"
-def massProductionHTCondor(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",merge=False,refit=True):
+def massProductionHTCondor(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",merge=False,refit=True,overWrite=False):
     commandToHist = {"alignment":"histos-residuals-","anaResiduals":"histos-analysis-","momResolution":"histos-momentumResolution-","plotDTPoints":"histos-DTPoints-","hitmaps":"histos-HitmapsFromFittedTracks-"}
     commandToSum  = {"anaResiduals":"momDistributions","momResolution":"momentumResolution","plotDTPoints":"DTPoints","alignment":"residuals","hitmaps":"HitmapsFromFittedTracks"}
     if merge:
@@ -630,7 +639,7 @@ def massProductionHTCondor(keyword = 'RUN_8000_23',fnames=[],command="anaResidua
             badFiles = []
             N=0
             for x in temp.split('\n'):
-               if refit and x.find('refit')<0 or x.find('refit')>0 and not option.refit: continue
+               if refit and x.find('refit')<0 or x.find('refit')>0 and not refit: continue
                if not x.find(tag)<0 :
                  size = x.split(' ')[7]
                  hname = x.split(' ')[8]
@@ -666,7 +675,14 @@ def massProductionHTCondor(keyword = 'RUN_8000_23',fnames=[],command="anaResidua
               hfile = commandToHist[command]+fname[fname.rfind('/')+1:]
               nfile = 'ntuple-'+fname[fname.rfind('/')+1:]
               if command == "alignment": nfile = "histos-HitmapsFromFittedTracks-"+fname[fname.rfind('/')+1:]
-              if os.path.isfile(mufluxRecoDir+run+'/'+hfile):  continue
+              if not overWrite and os.path.isfile(mufluxRecoDir+run+'/'+hfile):
+    # check that ntuple is ok 
+                  ntupleOK = True
+                  if  command == "anaResiduals":
+                      if os.path.isfile(mufluxRecoDir+run+'/'+nfile):
+                          test = ROOT.TFile.Open(os.environ['EOSSHIP']+mufluxRecoDir+run+'/'+nfile)
+                          if not test.Get('tmuflux'): ntupleOK=False
+                  if ntupleOK :continue
     # create condor sub
               fc = open('condorX.sub','w')
               fc.write('executable            = batchScript.sh\n')
@@ -677,11 +693,11 @@ def massProductionHTCondor(keyword = 'RUN_8000_23',fnames=[],command="anaResidua
               fc.write('output                = output/'+x+'.out\n')
               fc.write('error                 = error/'+x+'.err\n')
               fc.write('log                   = log/'+x+'.log\n')
-              fc.write('+JobFlavour = "microcentury"\n')
+              fc.write('+JobFlavour = "workday"\n')  #"microcentury"
               fc.write('queue\n')
               fc.close()
               os.system('condor_submit condorX.sub')
-              time.sleep(0.1)
+              #time.sleep(0.1)
 
 def importFromEos(source="/eos/experiment/ship/user/truf/muflux-reco",tag="root",update=False):
     remote = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls -l "+source,shell=True).split('\n')
@@ -722,10 +738,35 @@ def HTCondorStats(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",refit
               if not temp2.find(hfile)<0:
                    stats[run]['histoFiles'].append(hfile)
     total = [0,0]
+    goodTotal = [0,0]
+    noField           = [2199,2200,2201]
+    intermediateField = [2383,2388,2389,2390,2392,2395,2396]
+    noTracks          = [2334, 2335, 2336, 2337, 2345, 2389, 2390]
+    RPCbad = [2144,2154,2183,2192,2210,2211,2217,2218,2235,2236,2237,2240,2241,2243,2291,2345,2359]
+    badRuns = [2142, 2143, 2144, 2149]
     for x in stats:
       print x,len(stats[x]['recoFiles']),len(stats[x]['histoFiles']),'missing:',len(stats[x]['recoFiles'])-len(stats[x]['histoFiles'])
+      z = int(x.split('_')[2])
+      if not z in badRuns and not z in noTracks  and not z in noField and not z in intermediateField:
+       goodTotal[0]+=len(stats[x]['recoFiles'])
+       goodTotal[1]+=len(stats[x]['histoFiles'])
       total[0]+=len(stats[x]['recoFiles'])
       total[1]+=len(stats[x]['histoFiles'])
     print "summary total reco",total[0],' histos',total[1],' missing',total[0]-total[1]
+    print "summary total reco good runs",goodTotal[0],' histos',goodTotal[1],' missing',goodTotal[0]-goodTotal[1]
     return stats
+def listMissingSpills(stats,runs=None):
+   if not runs: runs = stats.keys()
+   missingFiles = {}
+   for r in runs:
+       missingFiles[r]=[]
+       for rfile in stats[r]['recoFiles']:
+          found = False
+          for hfile in stats[r]['histoFiles']:
+             if hfile == 'histos-analysis-'+rfile.split('/')[11]:
+                found = True
+                break
+          if not found: missingFiles[r].append(rfile)
+   return missingFiles
+  
 
