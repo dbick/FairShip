@@ -198,15 +198,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 
 //TODO implement
-std::vector<int> MillepedeCaller::labels(const alignment_mode mode, const int channel_id) const
+vector<int> MillepedeCaller::labels(const alignment_mode mode, const int channel_id) const
 {
-	vector<int> labels(6);
-	int station = -1;
-	int layer = -1;
-	int view = -1;
 	switch(mode)
 	{
 	case MODULE:
+		return labels_case_module(channel_id);
 		break;
 	case SINGLE_TUBE:
 		break;
@@ -216,6 +213,46 @@ std::vector<int> MillepedeCaller::labels(const alignment_mode mode, const int ch
 		break;
 	}
 
+
+	return labels;
+}
+
+vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
+{
+	int station = -1;
+	int layer = -1;
+	int view = -1;
+	int tube = -1;
+	int pnb = -1; //TODO check what this is
+
+	MufluxSpectrometer::TubeDecode(channel_id, station, view, pnb, layer, tube);
+	vector<int> labels(6);
+	int base_label = 1000 * station;
+	if(station > 2)
+	{
+		//TODO make modules close to beam axis first in if checks
+		if(tube >= 37 && tube <= 48)
+		{
+			base_label += 10;
+		}
+		else if(tube >= 25 && tube <= 36)
+		{
+			base_label += 20;
+		}
+		else if(tube >= 13 && tube <= 24)
+		{
+			base_label += 30;
+		}
+	}
+	else
+	{
+		base_label =+ 100 * view;
+	}
+
+	for(uint8_t i = 0; i < labels.size(); ++i)
+	{
+		labels[i] = base_label + i;
+	}
 
 	return labels;
 }

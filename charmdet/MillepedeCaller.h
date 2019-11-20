@@ -48,7 +48,6 @@ public:
 					float measured_residual,
 					float sigma);
 
-	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	double perform_GBL_refit(const genfit::Track& track) const;
 
 	ClassDef(MillepedeCaller,3);
@@ -78,6 +77,13 @@ private:
 	 */
 	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 	void print_model_parameters(const std::vector<TVector3>& model) const;
+
+	/*
+	 * Pede parameter optimization
+	 */
+	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
+	std::vector<int> labels_case_module(const int channel_id) const;
+
 
 	/*
 	 * Checks for consistency and debugging
