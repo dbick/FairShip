@@ -198,9 +198,26 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 
 //TODO implement
-const int* MillepedeCaller::labels() const
+std::vector<int> MillepedeCaller::labels(const alignment_mode mode, const int channel_id) const
 {
-	return new int[100];
+	vector<int> labels(6);
+	int station = -1;
+	int layer = -1;
+	int view = -1;
+	switch(mode)
+	{
+	case MODULE:
+		break;
+	case SINGLE_TUBE:
+		break;
+	case LAYER:
+		break;
+	default:
+		break;
+	}
+
+
+	return labels;
 }
 
 
@@ -247,11 +264,6 @@ TMatrixD* MillepedeCaller::calc_jacobian(const genfit::Track* track, const unsig
 	(*jacobian)[4][2] = dz;
 
 	return jacobian;
-}
-
-std::multimap<double,TMatrixD*> MillepedeCaller::jacobians_with_arclength(const genfit::Track* track) const
-{
-
 }
 
 /**

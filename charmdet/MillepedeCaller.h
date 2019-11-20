@@ -17,7 +17,15 @@
 #include "TRotation.h"
 #include "TMath.h"
 #include <cstdint>
+#include "MufluxSpectrometer.h"
 
+
+typedef enum
+{
+	MODULE,
+	SINGLE_TUBE,
+	LAYER
+} alignment_mode;
 
 /**
  * A class for wrapping the millepede function call such that it can be called from
@@ -40,7 +48,7 @@ public:
 					float measured_residual,
 					float sigma);
 
-	const int* labels() const;
+	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	double perform_GBL_refit(const genfit::Track& track) const;
 
 	ClassDef(MillepedeCaller,3);
@@ -51,16 +59,29 @@ private:
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track) const;
+	/*
+	 * Helpers for jacobian calculation
+	 */
 	TMatrixD* calc_jacobian(const genfit::Track* track, const unsigned int hit_id_1, const unsigned int hit_id_2) const;
 	std::pair<double,TMatrixD*> single_jacobian_with_arclength(const genfit::Track& track, const unsigned int hit_id) const;
-	std::multimap<double,TMatrixD*> jacobians_with_arclength(const genfit::Track* track) const;
+
+	/*
+	 * Helpers for projection and residuals
+	 */
 	TVector3 calc_shortest_distance(const TVector3& wire_top, const TVector3& wire_bot, const TVector3& track_pos, const TVector3& track_mom,  TVector3* PCA_on_wire = nullptr, TVector3* PCA_on_track = nullptr) const;
 	TRotation calc_rotation_of_vector(const TVector3& v) const;
 	TMatrixD rot_to_matrix(const TRotation& rot) const;
-	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 	TMatrixD calc_projection_matrix(const TMatrixD& fit_system_base_vectors, const TMatrixD& rotation_global_to_measurement) const;
+
+	/*
+	 * GBL model methods
+	 */
+	std::vector<TVector3> linear_model_wo_scatter(const genfit::Track& track) const;
 	void print_model_parameters(const std::vector<TVector3>& model) const;
 
+	/*
+	 * Checks for consistency and debugging
+	 */
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
 	void print_seed_hits(const genfit::Track& track) const;
 
