@@ -206,15 +206,15 @@ vector<int> MillepedeCaller::labels(const alignment_mode mode, const int channel
 		return labels_case_module(channel_id);
 		break;
 	case SINGLE_TUBE:
+		return {0,0,0,0,0,0};
 		break;
 	case LAYER:
+		return {0,0,0,0,0,0};
 		break;
 	default:
+		return {0,0,0,0,0,0};
 		break;
 	}
-
-
-	return labels;
 }
 
 vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
