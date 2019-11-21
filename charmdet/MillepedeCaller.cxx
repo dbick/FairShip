@@ -804,7 +804,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(element2.second, wire_end_top, wire_end_bottom);
 		double z2 = wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5).Z();
 		return z1 < z2;
-		})
+		});
 
 	return result;
 }
@@ -818,7 +818,7 @@ TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& 
 
 	//2.) enter non-zero partial differentials
 	//2.1) get the two points on track where reconstruction happened
-	double dz = PCA_2 - PCA_1;
+	double dz = PCA_2.Z() - PCA_1.Z();
 
 	//2.2) enter dx and dy to jacobian
 	(*jacobian)[3][1] = dz;
