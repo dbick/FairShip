@@ -27,6 +27,9 @@ MCdata = False
 ########
 # before RT correction: MCsmearing=0.04  #  + 0.027**2 -> 0.05  
 MCsmearing=0.022  #  + 0.027**2 -> 0.035
+
+milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
+milleCaller.MC_GBL_refit(100)
 ####### 
 cuts={}
 cuts['Ndf'] = 9

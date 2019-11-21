@@ -19,9 +19,45 @@ using namespace std;
  * @param writeZero Flag that states if zero values should be kept or not
  */
 MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool writeZero)
-: mille(outFileName, asBinary, writeZero)
+: mille(outFileName, asBinary, writeZero), m_mersenne_twister()
 {
 	m_gbl_mille_binary = new gbl::MilleBinary("debugging.mille_bin",true,2000);
+
+	m_tube_ids.resize(0);
+	//generate list of tube ids
+	//T1 and T2
+	for (char station = 1; station < 3; ++station)
+	{
+		for (char view = 0; view < 2; ++view)
+		{
+			for (char plane = 0; plane < 2; ++plane)
+			{
+				for (char layer = 0; layer < 2; ++layer)
+				{
+					for (char tube = 1; tube < 13; ++tube)
+					{
+						m_tube_ids.push_back(station*10000000+view*1000000+plane*100000+layer*10000+2000+tube);
+					}
+				}
+			}
+		}
+
+	}
+
+	//T3 and T4
+	for (char station = 3; station < 5; ++station)
+	{
+		for (char plane = 0; plane < 2; ++plane)
+		{
+			for (char layer = 0; layer < 2; ++layer)
+			{
+				for (char tube = 1; tube < 49; ++tube)
+				{
+					m_tube_ids.push_back(station*10000000+plane*100000+layer*10000+2000+tube);
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -122,7 +158,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,linear_model[0],linear_model[1], &PCA_wire, &PCA_track);
 	struct hit_info hit_zero;
 	hit_zero.jacobian = unity;
-	hit_zero.rt_measurement = 0.0;
+	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
@@ -384,13 +420,23 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 }
 double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks) const
 {
+	double chi2, lostweight;
+	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		tracks[i] = MC_gen_track();
 	}
 
+	for(auto track : tracks)
+	{
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track);
+		gbl::GblTrajectory traj(hitlist, false);
+		traj.fit(chi2, ndf, lostweight);
+		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
+	}
 
+	return 0.0;
 }
 
 //Reimplementation of python function
@@ -636,16 +682,147 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 
 vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model) const
 {
-	return {};
+	//apply gaussian smearing of measured hit
+	normal_distribution<double> gaussian_smear(0.0,350e-4); //mean 0, sigma 350um in cm
+
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+	vector<gbl::GblPoint> gbl_hits(0);
+
+	TMatrixD fit_system_base_vectors(2,3);
+	fit_system_base_vectors.Zero();
+	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
+	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
+
+
+
+	//zero arc length GBL point for first hit
+	TMatrixD* unity = new TMatrixD(5,5);
+	unity->UnitMatrix();
+
+	TVector3 vbot, vtop;
+	MufluxSpectrometer::TubeEndPoints(hits[0].first, vtop, vbot);
+	TVector3 PCA_wire;
+	TVector3 PCA_track;
+	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,mc_track_model[0],mc_track_model[1], &PCA_wire, &PCA_track);
+
+	gbl_hits.push_back(gbl::GblPoint(*unity));
+	TRotation rot = calc_rotation_of_vector(closest_approach);
+	TMatrixD rot_mat = rot_to_matrix(rot);
+	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
+	TVectorD rotated_residual(2);
+	rotated_residual[0] = closest_approach.Mag() - (hits[0].second + gaussian_smear(m_mersenne_twister));
+	rotated_residual[1] = 0;
+	TVectorD precision(rotated_residual);
+	precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
+
+
+	for(size_t i = 1; i < hits.size(); ++i)
+	{
+		TVector3 PCA_track_old = PCA_track;
+		MufluxSpectrometer::TubeEndPoints(hits[i].first, vtop, vbot);
+		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,mc_track_model[0],mc_track_model[1],&PCA_wire,&PCA_track);
+		TMatrixD* jacobian = calc_jacobian(PCA_track_old, PCA_track);
+		gbl_hits.push_back(gbl::GblPoint(*jacobian));
+		TRotation rot = calc_rotation_of_vector(closest_approach);
+		TMatrixD rot_mat = rot_to_matrix(rot);
+		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
+		TVectorD rotated_residual(2);
+		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + gaussian_smear(m_mersenne_twister));
+		rotated_residual[1] = 0;
+		TVectorD precision(rotated_residual);
+		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
+		delete jacobian;
+	}
+
+	return gbl_hits;
 }
 
 vector<TVector3> MillepedeCaller::MC_gen_track() const
 {
-	TRandom3 rng();
-	return {};
+	/*
+	 * Track locations uniformly distributed in front of first plane and in front of first plane of T4.
+	 *
+	 * area for x and y is calculated as follows:
+	 * allowed x area is centerpos +- 21 cm for T1, (centerpos T4d - 21cm) to (centerpos T4a + 21cm) for T4
+	 * allowed y area is centerpos +- 21 cm for T1, centerpos +- 75 cm for T4
+	 *
+	 * Positions below calculated with: https://github.com/StBies/FairShip/blob/a7ead53a260a1b796371eb09ec406421c027ad18/charmdet/drifttubeMonitoring.py#L955
+     * Module: T1X Centerpos = 1.8225      -1.995  24.99
+     * Module: T1U Centerpos = 1.33890796894       0.782207722399  56.20825
+     * Module: T2V Centerpos = 1.71329088596       0.663508489501  93.68275
+     * Module: T2X Centerpos = 1.03        -2.0875 125.082
+     * Module: T3aX Centerpos = 76.9353333333       10.512  583.19
+	 * Module: T3bX Centerpos = 25.987      10.289  585.065
+     * Module: T3cX Centerpos = -24.539     10.28075        585.1175
+     * Module: T3dX Centerpos = -75.0575    10.23975        585.315
+     * Module: T4aX Centerpos = 76.74       10.163  748.2675
+     * Module: T4bX Centerpos = 26.3425     9.939   748.1975
+     * Module: T4cX Centerpos = -24.0075    9.8685  748.27
+	 * Module: T4dX Centerpos = -74.48      9.92025 748.4325
+	 */
+	uniform_real_distribution<double> uniform(0.0, 1.0);
+	double offset_x_beginning = -19.1775 + 42.0 * uniform(m_mersenne_twister);
+	double offset_y_beginning = -22.995 + 42.0 * uniform(m_mersenne_twister);
+	double offset_x_end = -95.48 + 193.22 * uniform(m_mersenne_twister);
+	double offset_y_end = -65.0 + 150.0 * uniform(m_mersenne_twister);
+
+	double z_beginning = 17.0;
+	double z_end = 739.0;
+
+	TVector3 beginning = TVector3(offset_x_beginning, offset_y_beginning, z_beginning);
+	TVector3 end = TVector3(offset_x_end, offset_y_end, z_end);
+	TVector3 direction = end - beginning;
+	vector<TVector3> result = {beginning, direction}
+
+	return result;
 }
 
 vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction) const
 {
-	return {};
+	vector<pair<int,double>> result(0);
+	TVector3 wire_end_top;
+	TVector3 wire_end_bottom;
+	TVector3 wire_to_track;
+
+	//check distance to every tube
+	for(int id : m_tube_ids)
+	{
+		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
+		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
+		if(wire_to_track.Mag() < 1.815)
+		{
+			result.push_back(pair<int,double>(id,wire_to_track.Mag()));
+		}
+	}
+
+	//sort with lambda comparison
+	sort(result.begin(), result.end(), [&](pair<int,double> element1, pair<int,double> element2){
+		MufluxSpectrometer::TubeEndPoints(element1.second, wire_end_top, wire_end_bottom);
+		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
+		MufluxSpectrometer::TubeEndPoints(element2.second, wire_end_top, wire_end_bottom);
+		double z2 = wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5).Z();
+		return z1 < z2;
+		})
+
+	return result;
+}
+
+TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const
+{
+	TMatrixD* jacobian = new TMatrixD(5,5);
+
+	// 1.) init unity matrix
+	jacobian->UnitMatrix();
+
+	//2.) enter non-zero partial differentials
+	//2.1) get the two points on track where reconstruction happened
+	double dz = PCA_2 - PCA_1;
+
+	//2.2) enter dx and dy to jacobian
+	(*jacobian)[3][1] = dz;
+	(*jacobian)[4][2] = dz;
+
+	return jacobian;
 }

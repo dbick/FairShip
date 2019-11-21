@@ -20,7 +20,7 @@
 #include "MufluxSpectrometer.h"
 
 //includes for MC testing
-#include "TRandom3.h"
+#include <random>
 
 typedef enum
 {
@@ -58,6 +58,10 @@ public:
 private:
 	Mille mille;
 	gbl::MilleBinary* m_gbl_mille_binary;
+
+	//random generator
+	std::mt19937 m_mersenne_twister;
+	std::vector<int> m_tube_ids;
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track) const;
@@ -101,6 +105,7 @@ private:
 	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model) const;
 	std::vector<TVector3> MC_gen_track() const;
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction) const;
+	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 
 };
 
