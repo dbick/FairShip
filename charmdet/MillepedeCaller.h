@@ -100,7 +100,7 @@ private:
 	 */
 	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model) const;
 	std::vector<TVector3> MC_gen_track() const;
-	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction) const
+	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction) const;
 
 };
 
