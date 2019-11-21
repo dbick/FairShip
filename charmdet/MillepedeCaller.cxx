@@ -382,6 +382,16 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		return -1;
 	}
 }
+double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks) const
+{
+	vector<vector<TVector3>> tracks(n_tracks);
+	for(unsigned int i = 0; i < n_tracks; ++i)
+	{
+		tracks[i] = MC_gen_track();
+	}
+
+
+}
 
 //Reimplementation of python function
 /**
@@ -623,3 +633,19 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 }
 
 //TODO test projection matrix
+
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model) const
+{
+	return {};
+}
+
+vector<TVector3> MillepedeCaller::MC_gen_track() const
+{
+	TRandom3 rng();
+	return {};
+}
+
+vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction) const
+{
+	return {};
+}

@@ -943,8 +943,16 @@ def print_layers(dt_modules_dict):
 
             angle = np.arctan(dx_top / dy_top)  * 180.0 / np.pi #angle w.r.t y axis
             print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle))
+            
+def print_modules(dt_modules_dict):
+    for key in dt_modules_dict.keys():
+        mod = dt_modules_dict[key]
+        print("Module: {}".format(key))
+        center = mod.get_center_position()
+        print("Centerpos = {}\t{}\t{}".format(center[0],center[1],center[2]))
                   
 print_layers(dt_modules)
+print_modules(dt_modules)
         
 
 def compareAlignment():

@@ -19,6 +19,8 @@
 #include <cstdint>
 #include "MufluxSpectrometer.h"
 
+//includes for MC testing
+#include "TRandom3.h"
 
 typedef enum
 {
@@ -49,6 +51,7 @@ public:
 					float sigma);
 
 	double perform_GBL_refit(const genfit::Track& track) const;
+	double MC_GBL_refit(unsigned int n_tracks) const;
 
 	ClassDef(MillepedeCaller,3);
 
@@ -90,6 +93,14 @@ private:
 	 */
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
 	void print_seed_hits(const genfit::Track& track) const;
+
+
+	/*
+	 * Monte-Carlo Tracks for testing
+	 */
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model) const;
+	std::vector<TVector3> MC_gen_track() const;
+	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction) const
 
 };
 
