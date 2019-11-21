@@ -122,7 +122,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,linear_model[0],linear_model[1], &PCA_wire, &PCA_track);
 	struct hit_info hit_zero;
 	hit_zero.jacobian = unity;
-	hit_zero.rt_measurement = 0.0;
+	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
