@@ -774,7 +774,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track() const
 	TVector3 beginning = TVector3(offset_x_beginning, offset_y_beginning, z_beginning);
 	TVector3 end = TVector3(offset_x_end, offset_y_end, z_end);
 	TVector3 direction = end - beginning;
-	vector<TVector3> result = {beginning, direction}
+	vector<TVector3> result = {beginning, direction};
 
 	return result;
 }
@@ -802,7 +802,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(element1.second, wire_end_top, wire_end_bottom);
 		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		MufluxSpectrometer::TubeEndPoints(element2.second, wire_end_top, wire_end_bottom);
-		double z2 = wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5).Z();
+		double z2 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		return z1 < z2;
 		});
 
