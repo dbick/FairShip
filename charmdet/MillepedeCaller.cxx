@@ -686,7 +686,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	normal_distribution<double> gaussian_smear(0.0,350e-4); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
-	vector<gbl::GblPoint> gbl_hits(0);
+	vector<gbl::GblPoint> gbl_hits = {};
 
 	TMatrixD fit_system_base_vectors(2,3);
 	fit_system_base_vectors.Zero();
