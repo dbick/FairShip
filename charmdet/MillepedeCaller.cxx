@@ -427,7 +427,8 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		return -1;
 	}
 }
-double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3)
+
+double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits)
 {
 	double chi2, lostweight;
 	int ndf;
