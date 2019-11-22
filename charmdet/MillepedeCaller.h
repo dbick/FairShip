@@ -19,6 +19,9 @@
 #include <cstdint>
 #include "MufluxSpectrometer.h"
 
+//includes for MC testing
+#include <random>
+#include <fstream>
 
 typedef enum
 {
@@ -38,7 +41,7 @@ class MillepedeCaller//: public TObject
 {
 public:
 	MillepedeCaller(const char *outFileName, bool asBinary = true, bool writeZero = false);
-	~MillepedeCaller();
+	virtual ~MillepedeCaller();
 
 	void call_mille(int n_local_derivatives,
 					const float *local_derivatives,
@@ -49,12 +52,17 @@ public:
 					float sigma);
 
 	double perform_GBL_refit(const genfit::Track& track) const;
+	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
 
 	ClassDef(MillepedeCaller,3);
 
 private:
 	Mille mille;
 	gbl::MilleBinary* m_gbl_mille_binary;
+
+	//random generator
+	std::mt19937 m_mersenne_twister;
+	std::vector<int> m_tube_ids;
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track) const;
@@ -90,6 +98,15 @@ private:
 	 */
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
 	void print_seed_hits(const genfit::Track& track) const;
+
+
+	/*
+	 * Monte-Carlo Tracks for testing
+	 */
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits);
+	std::vector<TVector3> MC_gen_track();
+	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction);
+	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
 
 };
 

@@ -27,6 +27,7 @@ MCdata = False
 ########
 # before RT correction: MCsmearing=0.04  #  + 0.027**2 -> 0.05  
 MCsmearing=0.022  #  + 0.027**2 -> 0.035
+
 ####### 
 cuts={}
 cuts['Ndf'] = 9
@@ -943,8 +944,19 @@ def print_layers(dt_modules_dict):
 
             angle = np.arctan(dx_top / dy_top)  * 180.0 / np.pi #angle w.r.t y axis
             print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle))
+            
+def print_modules(dt_modules_dict):
+    for key in dt_modules_dict.keys():
+        mod = dt_modules_dict[key]
+        print("Module: {}".format(key))
+        center = mod.get_center_position()
+        print("Centerpos = {}\t{}\t{}".format(center[0],center[1],center[2]))
                   
 print_layers(dt_modules)
+print_modules(dt_modules)
+
+milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
+milleCaller.MC_GBL_refit(1000,350e-4)
         
 
 def compareAlignment():
