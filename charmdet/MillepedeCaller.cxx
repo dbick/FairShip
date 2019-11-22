@@ -427,7 +427,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		return -1;
 	}
 }
-double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma)
+double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3)
 {
 	double chi2, lostweight;
 	int ndf;
@@ -449,8 +449,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,fitted,smearing_sigma);
-		if(hitlist.size() < 24)
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,fitted,smearing_sigma,min_hits);
+		if(hitlist.size() < min_hits)
 		{
 			continue;
 		}
@@ -707,13 +707,13 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 
 //TODO test projection matrix
 
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, int event_id, double smearing_sigma)
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits)
 {
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
-	if(hits.size() < 24)
+	if(hits.size() < min_hits)
 	{
 		return {};
 	}
