@@ -419,7 +419,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 		return -1;
 	}
 }
-double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks) const
+double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 {
 	double chi2, lostweight;
 	int ndf;
@@ -681,10 +681,10 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 
 //TODO test projection matrix
 
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model) const
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model)
 {
 	//apply gaussian smearing of measured hit
-	normal_distribution<double> gaussian_smear(0.0,350e-4); //mean 0, sigma 350um in cm
+	normal_distribution<double> gaussian_smear(0,350e-4); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	vector<gbl::GblPoint> gbl_hits = {};
@@ -711,7 +711,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	TMatrixD rot_mat = rot_to_matrix(rot);
 	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 	TVectorD rotated_residual(2);
-	rotated_residual[0] = closest_approach.Mag() - (hits[0].second + gaussian_smear(m_mersenne_twister));
+	double smear = gaussian_smear(m_mersenne_twister);
+	rotated_residual[0] = closest_approach.Mag() - (hits[0].second + smear);
 	rotated_residual[1] = 0;
 	TVectorD precision(rotated_residual);
 	precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
@@ -729,7 +730,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		TMatrixD rot_mat = rot_to_matrix(rot);
 		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 		TVectorD rotated_residual(2);
-		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + gaussian_smear(m_mersenne_twister));
+		smear = gaussian_smear(m_mersenne_twister);
+		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
@@ -740,7 +742,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	return gbl_hits;
 }
 
-vector<TVector3> MillepedeCaller::MC_gen_track() const
+vector<TVector3> MillepedeCaller::MC_gen_track()
 {
 	/*
 	 * Track locations uniformly distributed in front of first plane and in front of first plane of T4.
@@ -780,7 +782,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track() const
 	return result;
 }
 
-vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction) const
+vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction)
 {
 	vector<pair<int,double>> result(0);
 	TVector3 wire_end_top;
@@ -810,7 +812,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 	return result;
 }
 
-TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const
+TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2)
 {
 	TMatrixD* jacobian = new TMatrixD(5,5);
 
