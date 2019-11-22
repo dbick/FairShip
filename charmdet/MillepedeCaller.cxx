@@ -432,7 +432,6 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
-	traj.milleOut(*m_gbl_mille_binary);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		tracks[i] = MC_gen_track();
@@ -450,6 +449,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 	{
 		vector<gbl::GblPoint> hitlist = MC_list_hits(track);
 		gbl::GblTrajectory traj(hitlist, false);
+		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
