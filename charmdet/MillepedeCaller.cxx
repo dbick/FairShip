@@ -432,6 +432,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
+	traj.milleOut(*m_gbl_mille_binary);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		tracks[i] = MC_gen_track();
