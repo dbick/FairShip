@@ -433,14 +433,6 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		tracks[i] = MC_gen_track();
 	}
 
-	cout << tracks.size() <<" tracks generated. Printing:" << endl;
-	for(auto track : tracks)
-	{
-		TVector3 pos = track[0];
-		TVector3 mom = track[1];
-		cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + (" << mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
-	}
-
 	unsigned int fitted = 0;
 	for(int i = 0; i < tracks.size(); ++i)
 	{
@@ -732,20 +724,6 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		return {};
 	}
 
-	ofstream trackhits("hits.ascii",ios::app);
-
-//	cout << "Hits generated for track: " << endl;
-//	TVector3 pos = mc_track_model[0];
-//	TVector3 mom = mc_track_model[1];
-//	cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + ("
-//			<< mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
-//	cout <<"MC hitlist:" << endl;
-//	for(auto hit : hits)
-//	{
-//		cout << "ID = " << hit.first << " rt (unsmeared) = " << hit.second << endl;
-//	}
-
-
 	vector<gbl::GblPoint> gbl_hits = {};
 
 	TMatrixD fit_system_base_vectors(2,3);
@@ -778,8 +756,6 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
-	trackhits << event_id << "\t" << PCA_track[2] << "\t" << (hits[0].second + smear) << endl;
-
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
 		TVector3 PCA_track_old = PCA_track;
@@ -794,14 +770,11 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		smear = gaussian_smear(m_mersenne_twister);
 		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
 		rotated_residual[1] = 0;
-		trackhits << event_id << "\t" << PCA_track[2] << "\t" << (hits[0].second + smear) << endl;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 		delete jacobian;
 	}
-	trackhits << endl;
-	trackhits.close();
 
 	return gbl_hits;
 }
