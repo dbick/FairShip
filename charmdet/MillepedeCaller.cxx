@@ -445,9 +445,10 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 		cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + (" << mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
 	}
 
-	for(auto track : tracks)
+	for(int i = 0; i < tracks.size(); ++i)
 	{
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track);
+		auto track = tracks[i];
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,i);
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
@@ -699,23 +700,26 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 
 //TODO test projection matrix
 
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model)
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, int event_id)
 {
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,350e-4); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 
-	cout << "Hits generated for track: " << endl;
-	TVector3 pos = mc_track_model[0];
-	TVector3 mom = mc_track_model[1];
-	cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + ("
-			<< mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
-	cout <<"MC hitlist:" << endl;
-	for(auto hit : hits)
-	{
-		cout << "ID = " << hit.first << " rt (unsmeared) = " << hit.second << endl;
-	}
+	ofstream trackhits("hits.ascii",ios::app);
+
+//	cout << "Hits generated for track: " << endl;
+//	TVector3 pos = mc_track_model[0];
+//	TVector3 mom = mc_track_model[1];
+//	cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + ("
+//			<< mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
+//	cout <<"MC hitlist:" << endl;
+//	for(auto hit : hits)
+//	{
+//		cout << "ID = " << hit.first << " rt (unsmeared) = " << hit.second << endl;
+//	}
+
 
 	vector<gbl::GblPoint> gbl_hits = {};
 
@@ -736,6 +740,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	TVector3 PCA_track;
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,mc_track_model[0],mc_track_model[1], &PCA_wire, &PCA_track);
 
+
 	gbl_hits.push_back(gbl::GblPoint(*unity));
 	TRotation rot = calc_rotation_of_vector(closest_approach);
 	TMatrixD rot_mat = rot_to_matrix(rot);
@@ -748,6 +753,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	precision[0] = 1.0 / (0.035 * 0.035); //1 mm, really bad resolution
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
+	trackhits << event_id << "\t" << PCA_track[2] << "\t" << (hits[0].second + smear) << endl;
 
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
@@ -763,11 +769,14 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		smear = gaussian_smear(m_mersenne_twister);
 		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
 		rotated_residual[1] = 0;
+		trackhits << event_id << "\t" << PCA_track[2] << "\t" << (hits[0].second + smear) << endl;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.035 * 0.035); //1 mm, really bad resolution
 		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 		delete jacobian;
 	}
+	trackhits << endl:
+	trackhits.close();
 
 	return gbl_hits;
 }

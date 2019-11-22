@@ -21,6 +21,7 @@
 
 //includes for MC testing
 #include <random>
+#include <fstream>
 
 typedef enum
 {
@@ -102,7 +103,7 @@ private:
 	/*
 	 * Monte-Carlo Tracks for testing
 	 */
-	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model);
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
