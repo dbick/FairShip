@@ -445,16 +445,23 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 		cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + (" << mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
 	}
 
+	unsigned int fitted = 0;
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
 		vector<gbl::GblPoint> hitlist = MC_list_hits(track,i);
+		if(hitlist.size() < 24)
+		{
+			continue;
+		}
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+		++fitted;
 	}
+	cout << "Fitted " << fitted << " out of " << n_tracks << " tracks." << endl;
 
 	return 0.0;
 }
@@ -706,6 +713,10 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	normal_distribution<double> gaussian_smear(0,350e-4); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+	if(hits.size() < 24)
+	{
+		return {};
+	}
 
 	ofstream trackhits("hits.ascii",ios::app);
 
@@ -775,7 +786,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 		delete jacobian;
 	}
-	trackhits << endl:
+	trackhits << endl;
 	trackhits.close();
 
 	return gbl_hits;
