@@ -437,7 +437,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 		tracks[i] = MC_gen_track();
 	}
 
-	cout << tracks.size() <<" track generated. Printing:" << endl;
+	cout << tracks.size() <<" tracks generated. Printing:" << endl;
 	for(auto track : tracks)
 	{
 		TVector3 pos = track[0];
@@ -703,6 +703,18 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	normal_distribution<double> gaussian_smear(0,350e-4); //mean 0, sigma 350um in cm
 
 	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+
+	cout << "Hits generated for track: " << endl;
+	TVector3 pos = mc_track_model[0];
+	TVector3 mom = mc_track_model[1];
+	cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + ("
+			<< mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
+	cout <<"MC hitlist:" << endl;
+	for(auto hit : hits)
+	{
+		cout << "ID = " << hit.first << " rt (unsmeared) = " << hit.second << endl;
+	}
+
 	vector<gbl::GblPoint> gbl_hits = {};
 
 	TMatrixD fit_system_base_vectors(2,3);
@@ -808,12 +820,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 	//check distance to every tube
 	for(int id : m_tube_ids)
 	{
-		cout << "Decoding id" << id << endl;
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
-		cout << "Top point: " << endl;
-		wire_end_top.Print();
-		cout << "Bottom point: " << endl;
-		wire_end_bottom.Print();
 		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
 		if(wire_to_track.Mag() < 1.815)
 		{
