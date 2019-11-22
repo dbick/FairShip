@@ -823,9 +823,9 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 
 	//sort with lambda comparison
 	sort(result.begin(), result.end(), [&](pair<int,double> element1, pair<int,double> element2){
-		MufluxSpectrometer::TubeEndPoints(element1.second, wire_end_top, wire_end_bottom);
+		MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_top, wire_end_bottom);
 		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
-		MufluxSpectrometer::TubeEndPoints(element2.second, wire_end_top, wire_end_bottom);
+		MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_top, wire_end_bottom);
 		double z2 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		return z1 < z2;
 		});
