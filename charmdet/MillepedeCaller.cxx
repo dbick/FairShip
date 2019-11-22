@@ -21,7 +21,7 @@ using namespace std;
 MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool writeZero)
 : mille(outFileName, asBinary, writeZero)
 {
-	m_mersenne_twister = mt19937();
+	m_mersenne_twister = mt19937(19937);
 	m_gbl_mille_binary = new gbl::MilleBinary("debugging.mille_bin",true,2000);
 
 	m_tube_ids.resize(0);
