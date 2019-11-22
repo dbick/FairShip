@@ -59,12 +59,6 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 			}
 		}
 	}
-
-	cout << "Generated detector IDs, printing:" << endl;
-	for(int id : m_tube_ids)
-	{
-		cout << id << endl;
-	}
 }
 
 
@@ -428,6 +422,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
 	}
 }
 
+//TODO document
 double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits)
 {
 	double chi2, lostweight;
@@ -708,6 +703,24 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 
 //TODO test projection matrix
 
+/**
+ * Produce a list of GblPoint objects from which a GblTrajectory can be constructed. It is passed a simple MC track, an event id,
+ * the sigma of a gaussian smearing of the hits as well as (optionally) the minimum number of hits required. If the track has
+ * too few hits, an empty list will be returned.
+ *
+ * @brief Produce a sorted list of GblPoint objects from which a GblTrajectory can be built
+ *
+ * @author Stefan Bieschke
+ * @date Nov. 22, 2019
+ * @version 1.0
+ *
+ * @param mc_track_model Simple MC track (for example generated with @c MC_gen_track()
+ * @param event id Number identifying the track
+ * @param smearing_sigma Sigma of a gaussian distribution (mu = 0) with which the hits are smeared
+ * @param min_hits minimum number of hits required. If track has less hits, returned list will be empty
+ *
+ * @return std::vector<gbl::GblPoint> containing all hits, except track has less than @c min_hits hits, then it will be empty
+ */
 vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits)
 {
 	//apply gaussian smearing of measured hit
@@ -793,6 +806,19 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	return gbl_hits;
 }
 
+/**
+ * Generates a very simple toy MC track. There is no physics involved, this is just meant to test the GBL refit. The
+ * MC tracks return a vector<TVector3> containing two TVector3 objects. The first being a position in front of T1, the second
+ * one a direction, the track propagates from there. These are only straight lines, no scattering or any physics involved.
+ *
+ * @brief Generate a very simple toy MC track
+ *
+ * @author Stefan Bieschke
+ * @date Nov. 22, 2019
+ * @version 1.0
+ *
+ * @return std::vector<TVector3> two element vector with first element position (e.g vertex) and second element direction
+ */
 vector<TVector3> MillepedeCaller::MC_gen_track()
 {
 	/*
@@ -833,6 +859,25 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 	return result;
 }
 
+/**
+ * Generate unsmeared hits for a given MC track. The track is passed with its startpoint and direction to this method.
+ * When generating hits the closest distance to the wire is calculated for every wire in the detector to this track. If the
+ * distance is smaller 18.15mm, a hit is written. The hits are stored in a vector<pair<int,double>>. The vector is as long as
+ * the number of hits that were found. Each element is a pair of int and double, the int being the hit detectorID, the double
+ * being the unsmeared hit distance (drift distance). The hits are sorted by arc length (which is the distance from the very
+ * first hit).
+ *
+ * @brief Generate MC hits for a given track
+ *
+ * @author Stefan Bieschke
+ * @date Nov. 22, 2019
+ * @version 1.0
+ *
+ * @param start Starting point (like vertex) of MC track
+ * @param direction Direction of the MC track
+ *
+ * @return std::vector<std::pair<int,double>> list of pairs of int and double, the first one being the detectorID, the second one the rt distance
+ */
 vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction)
 {
 	vector<pair<int,double>> result(0);
@@ -863,6 +908,22 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 	return result;
 }
 
+/**
+ * Calculate the jacobi matrix for a linear model from the points of closest approach on the track for two consecutive hits.
+ *
+ * @brief Calculate jacobian between two consecutive hits
+ *
+ * @author Stefan Bieschke
+ * @date November 22, 2019
+ * @version 1.0
+ *
+ * @param PCA_1 Point of closest approach on the track for the first hit
+ * @param PCA_2 Point of closest approach on the track for the second hit
+ *
+ * @return Pointer to a heap object of TMatrixD type with dimensions 5x5
+ *
+ * @warning Heap object without auto deletion
+ */
 TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2)
 {
 	TMatrixD* jacobian = new TMatrixD(5,5);
