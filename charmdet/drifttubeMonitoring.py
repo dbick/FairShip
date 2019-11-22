@@ -955,8 +955,8 @@ def print_modules(dt_modules_dict):
 print_layers(dt_modules)
 print_modules(dt_modules)
 
-milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
-milleCaller.MC_GBL_refit(1000,350e-4)
+# milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
+# milleCaller.MC_GBL_refit(1000,350e-4)
         
 
 def compareAlignment():
