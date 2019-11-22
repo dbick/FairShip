@@ -451,6 +451,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.fit(chi2, ndf, lostweight);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
+		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 	}
 
 	return 0.0;
@@ -743,7 +744,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	rotated_residual[0] = closest_approach.Mag() - (hits[0].second + smear);
 	rotated_residual[1] = 0;
 	TVectorD precision(rotated_residual);
-	precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+	precision[0] = 1.0 / (0.035 * 0.035); //1 mm, really bad resolution
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 
@@ -762,7 +763,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+		precision[0] = 1.0 / (0.035 * 0.035); //1 mm, really bad resolution
 		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 		delete jacobian;
 	}
