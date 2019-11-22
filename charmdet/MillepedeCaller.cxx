@@ -449,7 +449,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,i);
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,fitted);
 		if(hitlist.size() < 24)
 		{
 			continue;
