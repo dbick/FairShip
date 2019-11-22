@@ -218,7 +218,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
-		resolutionfunction << closest_approach.Mag() << "\t" << rotated_residual[0] << endl;
+		resolutionfunction << it->second.closest_approach.Mag() << "\t" << rotated_residual[0] << endl;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
