@@ -808,7 +808,12 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 	//check distance to every tube
 	for(int id : m_tube_ids)
 	{
+		cout << "Decoding id" << id << endl;
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
+		cout << "Top point: " << endl;
+		wire_end_top.Print();
+		cout << "Bottom point: " << endl;
+		wire_end_bottom.Print();
 		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
 		if(wire_to_track.Mag() < 1.815)
 		{
