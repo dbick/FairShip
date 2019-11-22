@@ -52,7 +52,7 @@ public:
 					float sigma);
 
 	double perform_GBL_refit(const genfit::Track& track) const;
-	double MC_GBL_refit(unsigned int n_tracks);
+	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma);
 
 	ClassDef(MillepedeCaller,3);
 
@@ -103,7 +103,7 @@ private:
 	/*
 	 * Monte-Carlo Tracks for testing
 	 */
-	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id);
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id, double smearing_sigma);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
