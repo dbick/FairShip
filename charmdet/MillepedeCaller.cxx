@@ -59,7 +59,15 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 			}
 		}
 	}
+
+	cout << "Generated detector IDs, printing:" << endl;
+	for(int id : m_tube_ids)
+	{
+		cout << id << endl;
+	}
 }
+
+
 
 /**
  * Default destructor. Tears down the object
@@ -427,6 +435,14 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks)
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		tracks[i] = MC_gen_track();
+	}
+
+	cout << tracks.size() <<" track generated. Printing:" << endl;
+	for(auto track : tracks)
+	{
+		TVector3 pos = track[0];
+		TVector3 mom = track[1];
+		cout << "(" << pos[0] << "," << pos[1] << "," << pos[2] << ") + (" << mom[0] << "," << mom[1] << "," << mom[2] << ")" << endl;
 	}
 
 	for(auto track : tracks)
