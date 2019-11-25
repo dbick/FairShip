@@ -3165,11 +3165,11 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
         timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
         for Nr in range(eventRange[0],eventRange[1]):
             getEvent(Nr)
-            nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
-            for hit in range(nHits):
-                spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
-                tot = spectHit.GetTimeOverThreshold()
-                print("Hit: {}\ttot: {} ns".format(hit,tot))
+#             nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
+#             for hit in range(nHits):
+#                 spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
+#                 tot = spectHit.GetTimeOverThreshold()
+#                 print("Hit: {}\ttot: {} ns".format(hit,tot))
             h['T0tmp'].Reset()
             if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
             if not findSimpleEvent(sTree): continue
@@ -3219,8 +3219,13 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
                     """
                     refit
                     """
+                    nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
+                    time_over_threshold = [0] * nHits
+                    for hit in range(nHits):
+                        spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
+                        time_over_threshold[hit] = spectHit.GetTimeOverThreshold()
                     print("Testing: Processing event number", Nr)
-                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
+                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,time_over_threshold)
                     if(chi2_gbl == -1):
                         aborted_gbl_refits += 1
                     else:
