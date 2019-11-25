@@ -392,7 +392,7 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, float* time_over_threshold) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, std::vector<float>* time_over_threshold) const
 {
 	try
 	{
