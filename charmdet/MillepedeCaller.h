@@ -52,7 +52,7 @@ public:
 					float measured_residual,
 					float sigma);
 
-	double perform_GBL_refit(const genfit::Track& track, std::vector<MufluxSpectrometerHit*>* time_over_threshold = nullptr) const;
+	double perform_GBL_refit(const genfit::Track& track, std::vector<MufluxSpectrometerHit>* time_over_threshold = nullptr) const;
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
 
 	ClassDef(MillepedeCaller,3);
@@ -66,7 +66,7 @@ private:
 	std::vector<int> m_tube_ids;
 
 	//helper methods
-	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const std::vector<MufluxSpectrometerHit*>* raw_hits = nullptr) const;
+	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 	/*
 	 * Helpers for jacobian calculation
 	 */

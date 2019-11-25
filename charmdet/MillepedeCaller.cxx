@@ -119,7 +119,7 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
  *
  * @return std::vector<gbl::GblPoint> containing the hits ordered by arclen with measurement added
  */
-vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, const vector<MufluxSpectrometerHit*>* raw_hits) const
+vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, const vector<MufluxSpectrometerHit>* raw_hits) const
 {
 	/*
 	 * File output of distance(track-wire) vs. residuals
@@ -143,7 +143,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	{
 		for(int i = 0; i < raw_hits->size(); ++i)
 		{
-			cout << i << "\tID:" << (*raw_hits)[i]->GetDetectorID() << "\ttot:" << (*raw_hits)[i]->GetTimeOverThreshold() << endl;
+			cout << i << "\tID:" << (*raw_hits)[i].GetDetectorID() << "\ttot:" << (*raw_hits)[i].GetTimeOverThreshold() << endl;
 		}
 	}
 
@@ -400,7 +400,7 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, vector<MufluxSpectrometerHit*>* raw_hits) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, vector<MufluxSpectrometerHit>* raw_hits) const
 {
 	try
 	{

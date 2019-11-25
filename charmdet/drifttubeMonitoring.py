@@ -1,7 +1,7 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
-ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit*> muflux_hitlist;')
+ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit> muflux_hitlist;')
 
 from decorators import *
 import __builtin__ as builtin
