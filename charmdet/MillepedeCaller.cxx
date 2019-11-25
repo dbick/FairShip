@@ -398,7 +398,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, std::vecto
 	{
 		for(int i = 0; i < time_over_threshold->size(); ++i)
 		{
-			cout << i << "\t" << time_over_threshold[i] << endl;
+			cout << i << "\t" << (*time_over_threshold)[i] << endl;
 		}
 	}
 	try
