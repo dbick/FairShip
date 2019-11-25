@@ -1,7 +1,7 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
-ROOT.gROOT.ProcessLine('typedef std::vector<float> tot_list;')
+ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit> muflux_hitlist;')
 
 from decorators import *
 import __builtin__ as builtin
@@ -3166,11 +3166,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
         timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
         for Nr in range(eventRange[0],eventRange[1]):
             getEvent(Nr)
-#             nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
-#             for hit in range(nHits):
-#                 spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
-#                 tot = spectHit.GetTimeOverThreshold()
-#                 print("Hit: {}\ttot: {} ns".format(hit,tot))
             h['T0tmp'].Reset()
             if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
             if not findSimpleEvent(sTree): continue
@@ -3221,13 +3216,14 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
                     refit
                     """
                     nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
-                    time_over_threshold = ROOT.tot_list()
-                    time_over_threshold.resize(nHits)
+                    raw_hits = ROOT.muflux_hitlist()
+                    raw_hits.resize(nHits)
                     for hit in range(nHits):
                         spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
-                        time_over_threshold[hit] = spectHit.GetTimeOverThreshold()
+                        raw_hits[hit] = spectHit.GetTimeOverThreshold()
                     print("Testing: Processing event number", Nr)
-                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,time_over_threshold)
+                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,raw_hits)
+                    del(raw_hits)
                     if(chi2_gbl == -1):
                         aborted_gbl_refits += 1
                     else:
