@@ -51,7 +51,7 @@ public:
 					float measured_residual,
 					float sigma);
 
-	double perform_GBL_refit(const genfit::Track& track) const;
+	double perform_GBL_refit(const genfit::Track& track, float* time_over_threshold = nullptr) const;
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
 
 	ClassDef(MillepedeCaller,3);

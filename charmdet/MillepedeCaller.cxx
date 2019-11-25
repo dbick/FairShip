@@ -220,7 +220,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		rotated_residual[1] = 0;
 		resolutionfunction << it->second.closest_approach.Mag() << "\t" << rotated_residual[0] << endl;
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+		precision[0] = 1.0 / (0.06 * 0.06);
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
@@ -392,7 +392,7 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, float* time_over_threshold) const
 {
 	try
 	{
