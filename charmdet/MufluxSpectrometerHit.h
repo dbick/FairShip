@@ -19,6 +19,8 @@ public:
    MufluxSpectrometerHit(Int_t detID, Float_t ftdc);
    MufluxSpectrometerHit(Int_t detID, Float_t ftdc, Float_t signal_width, uint16_t flag, uint16_t ch);
    MufluxSpectrometerHit(MufluxSpectrometerPoint *p, Double_t t0);
+   /** Copy constructor **/
+   MufluxSpectrometerHit(const MufluxSpectrometerHit &point);
    void MufluxSpectrometerEndPoints(TVector3 &vbot, TVector3 &vtop);
    /** Destructor **/
    virtual ~MufluxSpectrometerHit();
@@ -44,9 +46,8 @@ public:
    std::vector<int> StationInfo();
 
    MufluxSpectrometerHit& operator=(const MufluxSpectrometerHit &point);
+
 private:
-   /** Copy constructor **/
-   MufluxSpectrometerHit(const MufluxSpectrometerHit &point);
 
    Float_t time_over_threshold;
    uint16_t flags;
