@@ -39,6 +39,16 @@ MufluxSpectrometerHit::MufluxSpectrometerHit(MufluxSpectrometerPoint* p, Double_
      time_over_threshold = 167.2;
 } 
 
+/** Copy constructor **/
+MufluxSpectrometerHit::MufluxSpectrometerHit(const MufluxSpectrometerHit &point)
+{
+	time_over_threshold = point.time_over_threshold;
+	flags = point.flags;
+	channel = point.flags;
+	fDetectorID = point.fDetectorID;
+	fdigi = point.fdigi;
+}
+
 void MufluxSpectrometerHit::MufluxSpectrometerEndPoints(TVector3 &vbot, TVector3 &vtop)
 { 
      Int_t statnb = fDetectorID/10000000; 
