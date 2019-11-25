@@ -1,6 +1,7 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
+ROOT.gROOT.ProcessLine('typedef std::vector<float> tot_list;')
 
 from decorators import *
 import __builtin__ as builtin
@@ -3220,12 +3221,13 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
                     refit
                     """
                     nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
-                    time_over_threshold = [0] * nHits
+                    time_over_threshold = ROOT.tot_list()
+                    time_over_threshold.resize(nHits)
                     for hit in range(nHits):
                         spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
                         time_over_threshold[hit] = spectHit.GetTimeOverThreshold()
                     print("Testing: Processing event number", Nr)
-                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,time_over_threshold,len(time_over_threshold))
+                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,time_over_threshold)
                     if(chi2_gbl == -1):
                         aborted_gbl_refits += 1
                     else:
