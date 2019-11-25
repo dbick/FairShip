@@ -3219,8 +3219,7 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
                     raw_hits = ROOT.muflux_hitlist()
                     raw_hits.resize(nHits)
                     for hit in range(nHits):
-                        spectHit = sTree.Digi_MufluxSpectrometerHits[hit]
-                        raw_hits[hit] = spectHit.GetTimeOverThreshold()
+                        raw_hits[hit] = sTree.Digi_MufluxSpectrometerHits[hit]
                     print("Testing: Processing event number", Nr)
                     chi2_gbl = milleCaller.perform_GBL_refit(aTrack,raw_hits)
                     del(raw_hits)
