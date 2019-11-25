@@ -155,5 +155,16 @@ void MufluxSpectrometerHit::Print() const
 } 
 // ------------------------------------------------------------------------- 
 
+MufluxSpectrometerHit& MufluxSpectrometerHit::operator=(const MufluxSpectrometerHit &point)
+{
+	time_over_threshold = point.time_over_threshold;
+	flags = point.flags;
+	channel = point.flags;
+	fDetectorID = point.fDetectorID;
+	fdigi = point.fdigi;
+
+	return *this;
+}
+
  
  ClassImp(MufluxSpectrometerHit) 

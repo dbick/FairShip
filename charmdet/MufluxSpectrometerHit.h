@@ -42,10 +42,11 @@ public:
    bool hasTimeOverThreshold() const { return !((flags & DriftTubes::NoWidth) == DriftTubes::NoWidth); }
    Float_t GetTimeOverThreshold() const { return time_over_threshold; }
    std::vector<int> StationInfo();
+
+   MufluxSpectrometerHit& operator=(const MufluxSpectrometerHit &point);
 private:
    /** Copy constructor **/
    MufluxSpectrometerHit(const MufluxSpectrometerHit &point);
-   MufluxSpectrometerHit operator=(const MufluxSpectrometerHit &point);
 
    Float_t time_over_threshold;
    uint16_t flags;
