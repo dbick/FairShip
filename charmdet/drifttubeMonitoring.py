@@ -3138,6 +3138,11 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
         module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
 #   #module_residuals[key] = [] #use this if you call calculate_residuals
     
+    
+    tot = sTree.Digi_MufluxSpectrometerHits.time_over_threshold
+    for time in tot:
+        print("ToT: ".format(time))
+    
     #debugging
     milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
     if not onlyPlotting:
