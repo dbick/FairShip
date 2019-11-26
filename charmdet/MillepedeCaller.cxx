@@ -138,13 +138,32 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
-	cout << "Raw hits:" << endl;
-	if(raw_hits)
+
+
+	vector<MufluxSpectrometerHit*>* fitted = nullptr;
+	if (raw_hits)
 	{
-		for(int i = 0; i < raw_hits->size(); ++i)
+		fitted = new vector<MufluxSpectrometerHit*>(0);
+		for (unsigned int i = 0; i < points.size(); ++i)
 		{
-			cout << i << "\tID:" << (*raw_hits)[i].GetDetectorID() << "\ttot:" << (*raw_hits)[i].GetTimeOverThreshold() << endl;
+			genfit::TrackPoint* point = points[i];
+			int id = point->getRawMeasurement()->getDetId();
+			for (unsigned int j = 0; j < raw_hits->size(); ++j)
+			{
+				MufluxSpectrometerHit raw = raw_hits->at(j);
+//				cout << "Address of raw hit: " << &raw << " in arr: "<< &(raw_hits->at(j)) << endl;
+				if (raw.GetDetectorID() == id)
+				{
+//					cout << "Adding to fitted vector: " << &(raw_hits->at(j)) << endl;
+					fitted->push_back((MufluxSpectrometerHit*)&(raw_hits->at(j)));
+				}
+			}
 		}
+	}
+
+	for(MufluxSpectrometerHit* hit : *fitted)
+	{
+		cout << hit << endl;
 	}
 
 	//define a struct to handle track parameters at a certain point as well as measurement and residual
@@ -154,6 +173,8 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		double rt_measurement;
 		TVector3 closest_approach;
 		unsigned short hit_id;
+		float time_over_threshold;
+
 	};
 
 	//multimap to sort for arclength
@@ -177,6 +198,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
+	hit_zero.time_over_threshold = (*fitted)[0]->GetTimeOverThreshold();
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -211,6 +233,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
 		hit.hit_id = i;
+		hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -226,7 +249,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
-		resolutionfunction << it->second.closest_approach.Mag() << "\t" << rotated_residual[0] << endl;
+		resolutionfunction << it->second.closest_approach.Mag() << "\t" << rotated_residual[0] << "\t" <<it->second.time_over_threshold << endl;
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.06 * 0.06);
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
@@ -246,6 +269,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		delete jacobian;
 	}
 	resolutionfunction.close();
+	if(fitted) delete fitted;
 
 	return result;
 }
