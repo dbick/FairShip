@@ -41,12 +41,11 @@ MufluxSpectrometerHit::MufluxSpectrometerHit(MufluxSpectrometerPoint* p, Double_
 
 /** Copy constructor **/
 MufluxSpectrometerHit::MufluxSpectrometerHit(const MufluxSpectrometerHit &point)
+: ShipHit(point)
 {
 	time_over_threshold = point.time_over_threshold;
 	flags = point.flags;
 	channel = point.flags;
-	fDetectorID = point.fDetectorID;
-	fdigi = point.fdigi;
 }
 
 void MufluxSpectrometerHit::MufluxSpectrometerEndPoints(TVector3 &vbot, TVector3 &vtop)
@@ -170,8 +169,7 @@ MufluxSpectrometerHit& MufluxSpectrometerHit::operator=(const MufluxSpectrometer
 	time_over_threshold = point.time_over_threshold;
 	flags = point.flags;
 	channel = point.flags;
-	fDetectorID = point.fDetectorID;
-	fdigi = point.fdigi;
+	ShipHit::operator=(point);
 
 	return *this;
 }

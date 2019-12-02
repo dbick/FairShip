@@ -156,6 +156,8 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 				{
 //					cout << "Adding to fitted vector: " << &(raw_hits->at(j)) << endl;
 					fitted->push_back((MufluxSpectrometerHit*)&(raw_hits->at(j)));
+
+					//TODO check, if now the copy ctor and operator= of MufluxSpectrometerHit work
 				}
 			}
 		}
@@ -198,7 +200,10 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
-	hit_zero.time_over_threshold = (*fitted)[0]->GetTimeOverThreshold();
+	if(fitted)
+	{
+		hit_zero.time_over_threshold = (*fitted)[0]->GetTimeOverThreshold();
+	}
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -233,7 +238,10 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
 		hit.hit_id = i;
-		hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
+		if(fitted)
+		{
+			hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
+		}
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
