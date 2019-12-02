@@ -64,6 +64,7 @@ private:
 	//random generator
 	std::mt19937 m_mersenne_twister;
 	std::vector<int> m_tube_ids;
+	std::unordered_map<std::string, std::vector<int>> m_modules;
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
@@ -92,6 +93,7 @@ private:
 	 */
 	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	std::vector<int> labels_case_module(const int channel_id) const;
+	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction) const;
 
 
 	/*
@@ -106,7 +108,7 @@ private:
 	 */
 	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits);
 	std::vector<TVector3> MC_gen_track();
-	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction);
+	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
 
 };

@@ -1,7 +1,6 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
-ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit> muflux_hitlist;')
 
 from decorators import *
 import __builtin__ as builtin
@@ -956,8 +955,8 @@ def print_modules(dt_modules_dict):
 print_layers(dt_modules)
 print_modules(dt_modules)
 
-# milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
-# milleCaller.MC_GBL_refit(1000,350e-4)
+milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
+milleCaller.MC_GBL_refit(10000,350e-4)
         
 
 def compareAlignment():
@@ -3139,7 +3138,6 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
         module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
 #   #module_residuals[key] = [] #use this if you call calculate_residuals
     
-    
     #debugging
     milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
     if not onlyPlotting:
@@ -3215,14 +3213,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
                     """
                     refit
                     """
-                    nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
-                    raw_hits = ROOT.muflux_hitlist()
-                    raw_hits.resize(nHits)
-                    for hit in range(nHits):
-                        raw_hits[hit] = sTree.Digi_MufluxSpectrometerHits[hit]
                     print("Testing: Processing event number", Nr)
-                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,raw_hits)
-                    del(raw_hits)
+                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack)
                     if(chi2_gbl == -1):
                         aborted_gbl_refits += 1
                     else:
