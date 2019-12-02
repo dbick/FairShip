@@ -562,11 +562,11 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, vector<MufluxSpectrometerHit>* raw_hits) const
 {
 	try
 	{
-		vector < gbl::GblPoint > points = list_hits(&track);
+		vector < gbl::GblPoint > points = list_hits(&track, raw_hits);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
