@@ -141,6 +141,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		double rt_measurement;
 		TVector3 closest_approach;
 		unsigned short hit_id;
+		int det_id;
 	};
 
 	//multimap to sort for arclength
@@ -164,6 +165,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
+	hit_zero.det_id = raw_measurement->getDetId();
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -198,6 +200,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.closest_approach = closest_approach;
 		hit.rt_measurement = measurement;
 		hit.hit_id = i;
+		hit.det_id = raw_measurement->getDetId();
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -216,6 +219,13 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
+
+		//calculate labels and global derivatives for hit
+		vector<int> label = labels(MODULE,it->second.det_id);
+		TMatrixD* globals = calc_global_parameters(it->second.closest_approach);
+		result.back().addGlobals(label, *globals);
+		globals->Print();
+		delete globals;
 
 		//Add scatterers to the GblPoints for first and last layer to mark start and end of fit for refit.
 		//see https://www.sciencedirect.com/science/article/pii/S0010465511001093 for details
@@ -294,6 +304,50 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
 	}
 
 	return labels;
+}
+
+/**
+ * Calculate the global parameters for pede alignment. This is a matrix with dimensions 3x6 for a rigid body alignment.
+ * A measurement \f$m\f$ (being a three dimensional vector, e.g x,y,z), the distorted measurement \f$\tilde{m}\f$ depends on the six\
+ * (global - thus affecting ALL measurements) parameters \f$ g = {\Delta x, \Delta y, \Delta z, \alpha, \beta, \gamma}\f$.
+ * Then it can be expressed as:
+ * \f[
+ * \tilde{m} = m + \begin{pmatrix}
+ * \Delta x \\ \Delta y \\ \Delta z
+ * \end{pmatrix} + \alpha \begin{pmatrix}
+ *	0 \\ -z_p \\ y_p
+ * \end{pmatrix} + \beta \begin{pmatrix}
+ *	z_p \\ 0 \\ -x_p
+ * \end{pmatrix} + \gamma \begin{pmatrix}
+ * -y_p \\ x_p \\ 0
+ * \end{pmatrix}
+ * \f]
+ *
+ * @brief Calculate the global parameters for alignment
+ *
+ * @author Stefan Bieschke
+ * @date Dec. 2, 2019
+ * @version 1.0
+ *
+ * @param measurement_prediction predicted vector from the wire to the seed track
+ *
+ * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
+ */
+TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction) const
+{
+	TMatrixD* result = new TMatrixD(3,6);
+
+	result->Zero();
+
+	(*result)[0][0] = (*result)[1][1] = (*result)[2][2] = 1;
+	(*result)[0][4] = measurement_prediction[2];
+	(*result)[0][5] = - measurement_prediction[1];
+	(*result)[1][3] = - measurement_prediction[2];
+	(*result)[1][5] = measurement_prediction[0];
+	(*result)[2][3] = measurement_prediction[1];
+	(*result)[2][4] = -measurement_prediction[0];
+
+	return result;
 }
 
 

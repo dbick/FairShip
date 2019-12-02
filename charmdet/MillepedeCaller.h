@@ -91,6 +91,7 @@ private:
 	 */
 	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	std::vector<int> labels_case_module(const int channel_id) const;
+	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction) const;
 
 
 	/*
