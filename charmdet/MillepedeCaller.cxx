@@ -880,6 +880,12 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
+	//add labels and derivatives for first hit
+	vector<int> label = labels(MODULE,hits[0].first);
+	TMatrixD* globals = calc_global_parameters(closest_approach);
+	gbl_hits.back().addGlobals(label, *globals);
+	delete globals;
+
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
 		TVector3 PCA_track_old = PCA_track;
