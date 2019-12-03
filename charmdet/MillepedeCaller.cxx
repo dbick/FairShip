@@ -1001,7 +1001,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(-0.02, 0.01, 0.1);
+			TVector3 translation(-0.5, 0.45, 0.1);
 //			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
 			if(shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id))
 			{
