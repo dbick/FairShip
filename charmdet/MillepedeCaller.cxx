@@ -25,8 +25,6 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 	m_gbl_mille_binary = new gbl::MilleBinary("debugging.mille_bin",true,2000);
 
 	m_tube_ids.resize(0);
-	//generate list of tube ids
-	//T1 and T2
 
 	m_modules["T1U"] = {};
 	m_modules["T2V"] = {};
@@ -43,6 +41,8 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 		vec.second.reserve(48);
 	}
 
+	//generate list of tube ids
+	//T1 and T2
 	for (char station = 1; station < 3; ++station)
 	{
 		for (char view = 0; view < 2; ++view)
@@ -89,8 +89,9 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 						module_key << "aX";
 					}
 					string key = module_key.str();
-					m_modules[key].push_back(station*10000000+plane*100000+layer*10000+2000+tube);
-					m_tube_ids.push_back(station*10000000+plane*100000+layer*10000+2000+tube);
+					int id = station*10000000+plane*100000+layer*10000+2000+tube;
+					m_modules[key].push_back(id);
+					m_tube_ids.push_back(id);
 				}
 			}
 		}
@@ -342,7 +343,7 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
 	int layer = -1;
 	int view = -1;
 	int tube = -1;
-	int pnb = -1; //TODO check what this is
+	int pnb = -1;
 
 	MufluxSpectrometer::TubeDecode(channel_id, station, view, pnb, layer, tube);
 	vector<int> labels(6);
@@ -879,6 +880,12 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	TVectorD precision(rotated_residual);
 	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
+
+	//add labels and derivatives for first hit
+	vector<int> label = labels(MODULE,hits[0].first);
+	TMatrixD* globals = calc_global_parameters(closest_approach);
+	gbl_hits.back().addGlobals(label, *globals);
+	delete globals;
 
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
