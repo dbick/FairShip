@@ -294,6 +294,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,it->second.det_id);
+		//TODO change parameter, this needs to be absolute coordinate in alignment system
 		TMatrixD* globals = calc_global_parameters(it->second.closest_approach);
 		result.back().addGlobals(label, *globals);
 		delete globals;
@@ -883,7 +884,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
-	TMatrixD* globals = calc_global_parameters(closest_approach);
+	TMatrixD* globals = calc_global_parameters(PCA_track);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
 
@@ -908,7 +909,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
-		TMatrixD* globals = calc_global_parameters(closest_approach);
+		TMatrixD* globals = calc_global_parameters(PCA_track);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
