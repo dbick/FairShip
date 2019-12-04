@@ -754,7 +754,7 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 }
 
 
-void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model) const
+void MillepedeCaller::print_model_parameters(const vector<TVector3>& model) const
 {
 	double slope_x = model[1].X() / model[1].Z();
 	double slope_y = model[1].Y() / model[1].Z();
@@ -809,7 +809,7 @@ bool MillepedeCaller::check_ordered_by_arclen(const genfit::Track& track) const
 void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 {
 	size_t n_hits = track.getNumPointsWithMeasurement();
-	const std::vector< genfit::TrackPoint* > points = track.getPoints();
+	const vector< genfit::TrackPoint* > points = track.getPoints();
 
 	for(size_t i = 0; i < n_hits; ++i)
 	{
@@ -988,7 +988,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
  *
  * @return std::vector<std::pair<int,double>> list of pairs of int and double, the first one being the detectorID, the second one the rt distance
  */
-vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids)
+vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const vector<int>* shifted_det_ids)
 {
 	vector<pair<int,double>> result(0);
 	TVector3 wire_end_top;
