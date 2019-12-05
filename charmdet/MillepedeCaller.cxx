@@ -213,6 +213,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		double rt_measurement;
 		TVector3 closest_approach;
 		unsigned short hit_id;
+		TVector3 PCA_track;
 		int det_id;
 	};
 
@@ -237,6 +238,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
+	hit_zero.PCA_track = PCA_track;
 	hit_zero.det_id = raw_measurement->getDetId();
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
@@ -273,6 +275,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.rt_measurement = measurement;
 		hit.hit_id = i;
 		hit.det_id = raw_measurement->getDetId();
+		hit.PCA_track = PCA_track;
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -289,13 +292,13 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (0.05 * 0.05); //1 mm, really bad resolution
+		precision[0] = 1.0 / (6 * 6 * 0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,it->second.det_id);
 		//TODO change parameter, this needs to be absolute coordinate in alignment system
-		TMatrixD* globals = calc_global_parameters(it->second.closest_approach);
+		TMatrixD* globals = calc_global_parameters(it->second.PCA_track,linear_model);
 		result.back().addGlobals(label, *globals);
 		delete globals;
 
@@ -867,7 +870,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
 		return {};
@@ -907,7 +911,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
-	TMatrixD* globals = calc_global_parameters(PCA_track);
+	TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
 
@@ -932,7 +936,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
-		TMatrixD* globals = calc_global_parameters(PCA_track);
+		TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
@@ -1025,7 +1029,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(-0.5, 0.45, 0.1);
+			TVector3 translation(-0.07, 0.01, 0.08);
 //			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
 			if(shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id))
 			{
