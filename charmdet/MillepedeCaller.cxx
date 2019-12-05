@@ -115,21 +115,21 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 	vector<int> t1u = {};
 
 
-	//debugging
-	cout << "Printing labels: " << endl;
-	for(auto element : m_modules)
-	{
-		cout << "Module " << element.first << endl;
-		for(int id : element.second)
-		{
-			vector<int> l = labels(MODULE,id);
-			for(auto la : l)
-			{
-				cout << la << "\t";
-			}
-			cout << endl;
-		}
-	}
+//	//debugging
+//	cout << "Printing labels: " << endl;
+//	for(auto element : m_modules)
+//	{
+//		cout << "Module " << element.first << endl;
+//		for(int id : element.second)
+//		{
+//			vector<int> l = labels(MODULE,id);
+//			for(auto la : l)
+//			{
+//				cout << la << "\t";
+//			}
+//			cout << endl;
+//		}
+//	}
 
 }
 
@@ -405,19 +405,42 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
  *
  * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
  */
-TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction) const
+TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model) const
 {
+	TMatrixD dmdg(3,6);
 	TMatrixD* result = new TMatrixD(3,6);
+	TMatrixD drdm(3,3);
+	drdm.UnitMatrix();
+	TVector3 track_direction = linear_model[1];
+	TVector3 nominal_measurementplane_normal(0,0,1);
+	double scalar_prod = track_direction.Dot(nominal_measurementplane_normal);
 
+	for(short i = 0; i < drdm.GetNrows(); ++i)
+	{
+		for(short j = 0; j < drdm.GetNcols(); ++j)
+		{
+			drdm[i][j] -= track_direction[i] * nominal_measurementplane_normal[j] / scalar_prod;
+		}
+	}
+
+//	cout << "Matrix dr/dm:" << endl;
+//	drdm.Print();
+
+	dmdg.Zero();
 	result->Zero();
 
-	(*result)[0][0] = (*result)[1][1] = (*result)[2][2] = 1;
-	(*result)[0][4] = measurement_prediction[2];
-	(*result)[0][5] = - measurement_prediction[1];
-	(*result)[1][3] = - measurement_prediction[2];
-	(*result)[1][5] = measurement_prediction[0];
-	(*result)[2][3] = measurement_prediction[1];
-	(*result)[2][4] = -measurement_prediction[0];
+	dmdg[0][0] = dmdg[1][1] = dmdg[2][2] = 1;
+	dmdg[0][4] = measurement_prediction[2];
+	dmdg[0][5] = - measurement_prediction[1];
+	dmdg[1][3] = - measurement_prediction[2];
+	dmdg[1][5] = measurement_prediction[0];
+	dmdg[2][3] = measurement_prediction[1];
+	dmdg[2][4] = -measurement_prediction[0];
+
+//	dmdg.Print();
+
+	result->Mult(drdm, dmdg);
+//	result->Print();
 
 	return result;
 }
