@@ -191,8 +191,13 @@ void MillepedeCaller::call_mille(int n_local_derivatives,
  *
  * @return std::vector<gbl::GblPoint> containing the hits ordered by arclen with measurement added
  */
-vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) const
+vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, const vector<MufluxSpectrometerHit>* raw_hits) const
 {
+	/*
+	 * File output of distance(track-wire) vs. residuals
+	 */
+	ofstream resolutionfunction("resolution.ascii",ios::app);
+
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
 //	print_model_parameters(linear_model);
@@ -206,6 +211,35 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
 
+
+	vector<MufluxSpectrometerHit*>* fitted = nullptr;
+	if (raw_hits)
+	{
+		fitted = new vector<MufluxSpectrometerHit*>(0);
+		for (unsigned int i = 0; i < points.size(); ++i)
+		{
+			genfit::TrackPoint* point = points[i];
+			int id = point->getRawMeasurement()->getDetId();
+			for (unsigned int j = 0; j < raw_hits->size(); ++j)
+			{
+				MufluxSpectrometerHit raw = raw_hits->at(j);
+//				cout << "Address of raw hit: " << &raw << " in arr: "<< &(raw_hits->at(j)) << endl;
+				if (raw.GetDetectorID() == id)
+				{
+//					cout << "Adding to fitted vector: " << &(raw_hits->at(j)) << endl;
+					fitted->push_back((MufluxSpectrometerHit*)&(raw_hits->at(j)));
+
+					//TODO check, if now the copy ctor and operator= of MufluxSpectrometerHit work
+				}
+			}
+		}
+	}
+
+	for(MufluxSpectrometerHit* hit : *fitted)
+	{
+		cout << hit << endl;
+	}
+
 	//define a struct to handle track parameters at a certain point as well as measurement and residual
 	struct hit_info
 	{
@@ -215,6 +249,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		unsigned short hit_id;
 		TVector3 PCA_track;
 		int det_id;
+		float time_over_threshold;
 	};
 
 	//multimap to sort for arclength
@@ -240,6 +275,10 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 	hit_zero.hit_id = 0;
 	hit_zero.PCA_track = PCA_track;
 	hit_zero.det_id = raw_measurement->getDetId();
+	if(fitted)
+	{
+		hit_zero.time_over_threshold = (*fitted)[0]->GetTimeOverThreshold();
+	}
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -276,6 +315,10 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		hit.hit_id = i;
 		hit.det_id = raw_measurement->getDetId();
 		hit.PCA_track = PCA_track;
+		if(fitted)
+		{
+			hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
+		}
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
@@ -291,6 +334,14 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 		TVectorD rotated_residual(2);
 		rotated_residual[0] = it->second.closest_approach.Mag() - it->second.rt_measurement;
 		rotated_residual[1] = 0;
+		//write ascii output for testing
+		resolutionfunction << it->second.closest_approach.Mag() << "\t" << rotated_residual[0];
+		if(raw_hits)
+		{
+			resolutionfunction << "\t" <<it->second.time_over_threshold;
+		}
+		resolutionfunction << endl;
+
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (6 * 6 * 0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
@@ -316,6 +367,8 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track) con
 //		}
 		delete jacobian;
 	}
+	resolutionfunction.close();
+	if(fitted) delete fitted;
 
 	return result;
 }
@@ -537,11 +590,11 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, vector<MufluxSpectrometerHit>* raw_hits) const
 {
 	try
 	{
-		vector < gbl::GblPoint > points = list_hits(&track);
+		vector < gbl::GblPoint > points = list_hits(&track, raw_hits);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
