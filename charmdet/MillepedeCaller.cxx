@@ -221,10 +221,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	hit_zero.hit_id = 0;
 	hit_zero.PCA_track = PCA_track;
 	hit_zero.det_id = raw_measurement->getDetId();
-	if(fitted)
-	{
-		hit_zero.time_over_threshold = (*fitted)[0]->GetTimeOverThreshold();
-	}
+	hit_zero.time_over_threshold = fitted ? (*fitted)[0]->GetTimeOverThreshold() : -1;
 	jacobians_with_arclen.insert(make_pair(0.0,hit_zero));
 
 
@@ -261,10 +258,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		hit.hit_id = i;
 		hit.det_id = raw_measurement->getDetId();
 		hit.PCA_track = PCA_track;
-		if(fitted)
-		{
-			hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
-		}
+		hit.time_over_threshold = fitted ? (*fitted)[i]->GetTimeOverThreshold() : -1;
 		//insert pair of arclength and hit struct to multimap
 		jacobians_with_arclen.insert(make_pair(jacobian_with_arclen.first,hit));
 	}
