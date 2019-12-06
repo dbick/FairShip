@@ -2,7 +2,6 @@
 #define CHARMDET_MILLEPEDECALLER_H_
 
 #include "TObject.h"
-#include "Mille.h"
 //includes for GBL fitter from genfit
 #include <vector>
 #include "GblPoint.h"
@@ -43,16 +42,8 @@ typedef enum
 class MillepedeCaller//: public TObject
 {
 public:
-	MillepedeCaller(const char *outFileName, bool asBinary = true, bool writeZero = false);
+	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
-
-	void call_mille(int n_local_derivatives,
-					const float *local_derivatives,
-					int n_global_derivatives,
-					const float *global_derivatives,
-					const int *label,
-					float measured_residual,
-					float sigma);
 
 	double perform_GBL_refit(const genfit::Track& track, std::vector<MufluxSpectrometerHit>* time_over_threshold = nullptr) const;
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
@@ -60,7 +51,6 @@ public:
 	ClassDef(MillepedeCaller,3);
 
 private:
-	Mille mille;
 	gbl::MilleBinary* m_gbl_mille_binary;
 
 	//random generator
