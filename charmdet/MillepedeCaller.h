@@ -45,8 +45,9 @@ public:
 	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
 
-	double perform_GBL_refit(const genfit::Track& track, std::vector<MufluxSpectrometerHit>* time_over_threshold = nullptr) const;
+	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial) const;
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
+	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
 	ClassDef(MillepedeCaller,3);
 
@@ -59,7 +60,7 @@ private:
 	std::unordered_map<std::string, std::vector<int>> m_modules;
 
 	//helper methods
-	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
+	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, double sigma_spatial) const;
 	/*
 	 * Helpers for jacobian calculation
 	 */
@@ -101,7 +102,7 @@ private:
 	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
-	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
+	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 
 };
 
