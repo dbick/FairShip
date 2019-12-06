@@ -1,5 +1,4 @@
 #include "MillepedeCaller.h"
-#include <iostream>
 
 using namespace std;
 
@@ -113,24 +112,6 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 
 	m_modules["T1X"] = t1x;
 	vector<int> t1u = {};
-
-
-//	//debugging
-//	cout << "Printing labels: " << endl;
-//	for(auto element : m_modules)
-//	{
-//		cout << "Module " << element.first << endl;
-//		for(int id : element.second)
-//		{
-//			vector<int> l = labels(MODULE,id);
-//			for(auto la : l)
-//			{
-//				cout << la << "\t";
-//			}
-//			cout << endl;
-//		}
-//	}
-
 }
 
 
@@ -233,11 +214,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 				}
 			}
 		}
-	}
-
-	for(MufluxSpectrometerHit* hit : *fitted)
-	{
-		cout << hit << endl;
 	}
 
 	//define a struct to handle track parameters at a certain point as well as measurement and residual
@@ -479,9 +455,6 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 		}
 	}
 
-//	cout << "Matrix dr/dm:" << endl;
-//	drdm.Print();
-
 	dmdg.Zero();
 	result->Zero();
 
@@ -493,10 +466,7 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	dmdg[2][3] = measurement_prediction[1];
 	dmdg[2][4] = -measurement_prediction[0];
 
-//	dmdg.Print();
-
 	result->Mult(drdm, dmdg);
-//	result->Print();
 
 	return result;
 }

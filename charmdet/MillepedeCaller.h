@@ -20,6 +20,7 @@
 #include <cstdint>
 #include "MufluxSpectrometer.h"
 #include "MufluxSpectrometerHit.h"
+#include <iostream>
 
 //includes for MC testing
 #include <random>
