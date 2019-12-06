@@ -12,6 +12,7 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 #include <map>
+#include <unordered_map>
 #include "TVector3.h"
 #include "TDecompLU.h"
 #include "TRotation.h"
@@ -93,7 +94,7 @@ private:
 	 */
 	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	std::vector<int> labels_case_module(const int channel_id) const;
-	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction) const;
+	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction, const std::vector<TVector3>& linear_model) const;
 
 
 	/*

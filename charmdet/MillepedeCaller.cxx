@@ -25,8 +25,6 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 	m_gbl_mille_binary = new gbl::MilleBinary("debugging.mille_bin",true,2000);
 
 	m_tube_ids.resize(0);
-	//generate list of tube ids
-	//T1 and T2
 
 	m_modules["T1U"] = {};
 	m_modules["T2V"] = {};
@@ -43,6 +41,8 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 		vec.second.reserve(48);
 	}
 
+	//generate list of tube ids
+	//T1 and T2
 	for (char station = 1; station < 3; ++station)
 	{
 		for (char view = 0; view < 2; ++view)
@@ -89,8 +89,9 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 						module_key << "aX";
 					}
 					string key = module_key.str();
-					m_modules[key].push_back(station*10000000+plane*100000+layer*10000+2000+tube);
-					m_tube_ids.push_back(station*10000000+plane*100000+layer*10000+2000+tube);
+					int id = station*10000000+plane*100000+layer*10000+2000+tube;
+					m_modules[key].push_back(id);
+					m_tube_ids.push_back(id);
 				}
 			}
 		}
@@ -114,21 +115,21 @@ MillepedeCaller::MillepedeCaller(const char *outFileName, bool asBinary, bool wr
 	vector<int> t1u = {};
 
 
-	//debugging
-	cout << "Printing labels: " << endl;
-	for(auto element : m_modules)
-	{
-		cout << "Module " << element.first << endl;
-		for(int id : element.second)
-		{
-			vector<int> l = labels(MODULE,id);
-			for(auto la : l)
-			{
-				cout << la << "\t";
-			}
-			cout << endl;
-		}
-	}
+//	//debugging
+//	cout << "Printing labels: " << endl;
+//	for(auto element : m_modules)
+//	{
+//		cout << "Module " << element.first << endl;
+//		for(int id : element.second)
+//		{
+//			vector<int> l = labels(MODULE,id);
+//			for(auto la : l)
+//			{
+//				cout << la << "\t";
+//			}
+//			cout << endl;
+//		}
+//	}
 
 }
 
@@ -246,6 +247,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		double rt_measurement;
 		TVector3 closest_approach;
 		unsigned short hit_id;
+		TVector3 PCA_track;
 		int det_id;
 		float time_over_threshold;
 	};
@@ -271,6 +273,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	hit_zero.rt_measurement = measurement;
 	hit_zero.closest_approach = closest_approach;
 	hit_zero.hit_id = 0;
+	hit_zero.PCA_track = PCA_track;
 	hit_zero.det_id = raw_measurement->getDetId();
 	if(fitted)
 	{
@@ -311,6 +314,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		hit.rt_measurement = measurement;
 		hit.hit_id = i;
 		hit.det_id = raw_measurement->getDetId();
+		hit.PCA_track = PCA_track;
 		if(fitted)
 		{
 			hit.time_over_threshold = (*fitted)[i]->GetTimeOverThreshold();
@@ -339,12 +343,13 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		resolutionfunction << endl;
 
 		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (0.06 * 0.06);
+		precision[0] = 1.0 / (6 * 6 * 0.05 * 0.05); //1 mm, really bad resolution
 		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,it->second.det_id);
-		TMatrixD* globals = calc_global_parameters(it->second.closest_approach);
+		//TODO change parameter, this needs to be absolute coordinate in alignment system
+		TMatrixD* globals = calc_global_parameters(it->second.PCA_track,linear_model);
 		result.back().addGlobals(label, *globals);
 		delete globals;
 
@@ -395,7 +400,7 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
 	int layer = -1;
 	int view = -1;
 	int tube = -1;
-	int pnb = -1; //TODO check what this is
+	int pnb = -1;
 
 	MufluxSpectrometer::TubeDecode(channel_id, station, view, pnb, layer, tube);
 	vector<int> labels(6);
@@ -456,19 +461,42 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
  *
  * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
  */
-TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction) const
+TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model) const
 {
+	TMatrixD dmdg(3,6);
 	TMatrixD* result = new TMatrixD(3,6);
+	TMatrixD drdm(3,3);
+	drdm.UnitMatrix();
+	TVector3 track_direction = linear_model[1];
+	TVector3 nominal_measurementplane_normal(0,0,1);
+	double scalar_prod = track_direction.Dot(nominal_measurementplane_normal);
 
+	for(short i = 0; i < drdm.GetNrows(); ++i)
+	{
+		for(short j = 0; j < drdm.GetNcols(); ++j)
+		{
+			drdm[i][j] -= track_direction[i] * nominal_measurementplane_normal[j] / scalar_prod;
+		}
+	}
+
+//	cout << "Matrix dr/dm:" << endl;
+//	drdm.Print();
+
+	dmdg.Zero();
 	result->Zero();
 
-	(*result)[0][0] = (*result)[1][1] = (*result)[2][2] = 1;
-	(*result)[0][4] = measurement_prediction[2];
-	(*result)[0][5] = - measurement_prediction[1];
-	(*result)[1][3] = - measurement_prediction[2];
-	(*result)[1][5] = measurement_prediction[0];
-	(*result)[2][3] = measurement_prediction[1];
-	(*result)[2][4] = -measurement_prediction[0];
+	dmdg[0][0] = dmdg[1][1] = dmdg[2][2] = 1;
+	dmdg[0][4] = measurement_prediction[2];
+	dmdg[0][5] = - measurement_prediction[1];
+	dmdg[1][3] = - measurement_prediction[2];
+	dmdg[1][5] = measurement_prediction[0];
+	dmdg[2][3] = measurement_prediction[1];
+	dmdg[2][4] = -measurement_prediction[0];
+
+//	dmdg.Print();
+
+	result->Mult(drdm, dmdg);
+//	result->Print();
 
 	return result;
 }
@@ -806,7 +834,7 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 }
 
 
-void MillepedeCaller::print_model_parameters(const std::vector<TVector3>& model) const
+void MillepedeCaller::print_model_parameters(const vector<TVector3>& model) const
 {
 	double slope_x = model[1].X() / model[1].Z();
 	double slope_y = model[1].Y() / model[1].Z();
@@ -861,7 +889,7 @@ bool MillepedeCaller::check_ordered_by_arclen(const genfit::Track& track) const
 void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 {
 	size_t n_hits = track.getNumPointsWithMeasurement();
-	const std::vector< genfit::TrackPoint* > points = track.getPoints();
+	const vector< genfit::TrackPoint* > points = track.getPoints();
 
 	for(size_t i = 0; i < n_hits; ++i)
 	{
@@ -895,7 +923,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
 		return {};
@@ -933,6 +962,12 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
+	//add labels and derivatives for first hit
+	vector<int> label = labels(MODULE,hits[0].first);
+	TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
+	gbl_hits.back().addGlobals(label, *globals);
+	delete globals;
+
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
 		TVector3 PCA_track_old = PCA_track;
@@ -954,7 +989,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
-		TMatrixD* globals = calc_global_parameters(closest_approach);
+		TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
@@ -1034,7 +1069,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
  *
  * @return std::vector<std::pair<int,double>> list of pairs of int and double, the first one being the detectorID, the second one the rt distance
  */
-vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids)
+vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const vector<int>* shifted_det_ids)
 {
 	vector<pair<int,double>> result(0);
 	TVector3 wire_end_top;
@@ -1047,7 +1082,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(-0.02, 0.01, 0.1);
+			TVector3 translation(-0.07, 0.01, 0.08);
 //			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
 			if(shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id))
 			{
