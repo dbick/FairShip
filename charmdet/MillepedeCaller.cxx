@@ -790,7 +790,6 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 	}
 }
 
-//TODO test projection matrix
 
 /**
  * Produce a list of GblPoint objects from which a GblTrajectory can be constructed. It is passed a simple MC track, an event id,

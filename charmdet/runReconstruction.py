@@ -1,8 +1,8 @@
-import os,subprocess,ROOT,time,multiprocessing
+import os,subprocess,ROOT,time,multiprocessing,re
 from rootpyPickler import Unpickler
 from rootpyPickler import Pickler
 import pwd
-ncpus = int(multiprocessing.cpu_count()*3./4.)
+ncpus = int(multiprocessing.cpu_count())
 
 noField           = [2199,2200,2201]
 intermediateField = [2383,2388,2389,2390,2392,2395,2396]
@@ -769,4 +769,30 @@ def listMissingSpills(stats,runs=None):
           if not found: missingFiles[r].append(rfile)
    return missingFiles
   
+  
+def GBL_refit_single_rootfile(fname):
+    cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
+    print("Running command: {}".format(cmd))
+    os.system(cmd)
+  
+def GBL_refit():
+    refitted_files = []
+    file_pattern = re.compile("SPILLDATA.+\_RT\_refit\.root")
+    for file in os.listdir('.'):
+        match = file_pattern.match(file)
+        if match:
+            refitted_files.append(match.group())
+    print(refitted_files)
+    pool = multiprocessing.Pool(ncpus)
+    pool.map(GBL_refit_single_rootfile, refitted_files)
+#     for fname in refitted_files:
+#         cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
+#         print("Running command: {}".format(cmd))
+#         os.system(cmd)
+#         time.sleep(40)
+#         while True:
+#             if count_python_processes('drifttubeMonitoring')<ncpus: 
+#                 print("Found {} processes, starting one more...".format(count_python_processes('drifttubeMonitoring')))
+#                 break 
+#             time.sleep(100)
 
