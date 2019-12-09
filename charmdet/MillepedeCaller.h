@@ -61,6 +61,7 @@ private:
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, double sigma_spatial) const;
+	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
 	/*
 	 * Helpers for jacobian calculation
 	 */

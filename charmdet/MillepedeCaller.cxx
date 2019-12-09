@@ -145,12 +145,6 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, dou
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
 
-	//define projection of measurement system to the fit system
-	TMatrixD fit_system_base_vectors(2,3);
-	fit_system_base_vectors.Zero();
-	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
-	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
-
 	vector<genfit::TrackPoint* > points = track->getPointsWithMeasurement();
 	size_t n_points = points.size();
 	result.reserve(n_points);
@@ -190,17 +184,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, dou
 			jacobian->UnitMatrix();
 		}
 		result.push_back(gbl::GblPoint(*jacobian));
-		TRotation rot = calc_rotation_of_vector(closest_approach);
-		TMatrixD rot_mat = rot_to_matrix(rot);
-		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
-		TVectorD rotated_residual(2);
-		rotated_residual[0] = closest_approach.Mag() - measurement;
-		rotated_residual[1] = 0;
-		//write ascii output for testing
-
-		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / TMath::Power(sigma_spatial,2);
-		result.back().addMeasurement(projection_matrix,rotated_residual,precision);
+		add_measurement_info(result.back(),closest_approach, measurement, sigma_spatial);
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,det_id);
@@ -211,6 +195,26 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, dou
 	}
 
 	return result;
+}
+
+void MillepedeCaller::add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const
+{
+	//define projection of measurement system to the fit system
+	TMatrixD fit_system_base_vectors(2,3);
+	fit_system_base_vectors.Zero();
+	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
+	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
+
+	TRotation rot = calc_rotation_of_vector(closest_approach);
+	TMatrixD rot_mat = rot_to_matrix(rot);
+	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
+	TVectorD rotated_residual(2);
+	rotated_residual[0] = closest_approach.Mag() - measurement;
+	rotated_residual[1] = 0;
+
+	TVectorD precision(rotated_residual);
+	precision[0] = 1.0 / TMath::Power(sigma_spatial,2);
+	point.addMeasurement(projection_matrix,rotated_residual,precision);
 }
 
 

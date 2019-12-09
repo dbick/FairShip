@@ -785,14 +785,4 @@ def GBL_refit():
     print(refitted_files)
     pool = multiprocessing.Pool(ncpus)
     pool.map(GBL_refit_single_rootfile, refitted_files)
-#     for fname in refitted_files:
-#         cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
-#         print("Running command: {}".format(cmd))
-#         os.system(cmd)
-#         time.sleep(40)
-#         while True:
-#             if count_python_processes('drifttubeMonitoring')<ncpus: 
-#                 print("Found {} processes, starting one more...".format(count_python_processes('drifttubeMonitoring')))
-#                 break 
-#             time.sleep(100)
 
