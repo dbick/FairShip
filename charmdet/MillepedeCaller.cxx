@@ -455,8 +455,6 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 
-//		traj.printTrajectory(1);
-
 		return chi2;
 	}
 	catch(const genfit::Exception& e)
@@ -488,9 +486,13 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
+//		traj.printTrajectory(1);
+//		traj.printPoints(1);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+		print_fitted_residuals(traj);
 		++fitted;
+
 	}
 	cout << "Fitted " << fitted << " out of " << n_tracks << " tracks." << endl;
 
@@ -794,6 +796,21 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 	}
 }
 
+void MillepedeCaller::print_fitted_residuals(gbl::GblTrajectory& trajectory) const
+{
+	//print residuals
+	TVectorD residuals(1);
+	TVectorD meas_errors(1);
+	TVectorD res_errors(1);
+	TVectorD down_weights(1);
+	unsigned int numRes;
+	for (unsigned int j = 1; j <= trajectory.getNumPoints(); ++j)
+	{
+		trajectory.getMeasResults(j, numRes, residuals, meas_errors, res_errors,down_weights);
+		cout << "Hit: " << j << " Residual: " << residuals[0] << endl;
+	}
+}
+
 
 /**
  * Produce a list of GblPoint objects from which a GblTrajectory can be constructed. It is passed a simple MC track, an event id,
@@ -818,8 +835,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
 		return {};
@@ -856,6 +873,10 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 
+//	cout << "Smeared with " << smear << " cm" << endl;
+//	cout << "[ " << hits[0].first << " ] Undistorted measurement: " << endl;
+//	rotated_residual.Print();
+
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
 	TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
@@ -876,6 +897,11 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		smear = gaussian_smear(m_mersenne_twister);
 		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
 		rotated_residual[1] = 0;
+
+//		cout << "Smeared with " << smear << " cm" << endl;
+//		cout << "[ " << hits[i].first << " ] Undistorted measurement: " << endl;
+//		rotated_residual.Print();
+
 		TVectorD precision(rotated_residual);
 		precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
 		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
@@ -965,6 +991,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
  */
 vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const vector<int>* shifted_det_ids)
 {
+//	cout << "Beginning unsmeared hit generation" << endl;
 	vector<pair<int,double>> result(0);
 	TVector3 wire_end_top;
 	TVector3 wire_end_bottom;
@@ -976,18 +1003,32 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(-0.07, 0.01, 0.08);
+			TVector3 translation(0.06, 0, 0);
 //			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
-			if(shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id))
+			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
+			if(id_shifted)
 			{
+				TVector3 meas_undistorted = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
+				if(meas_undistorted.Mag() < 1.815)
+				{
+//					cout << "Shifted id: " << id;
+					vector<int> label = labels(MODULE, id);
+//				cout << " labels: " << label[0] << "\t" << label[1] << "\t" << label[2] << endl;
+//					cout << "[ " << id << " ] Undistorted measurement: " << endl;
+//					meas_undistorted.Print();
+				}
 				wire_end_bottom = wire_end_bottom + translation;
 				wire_end_top = wire_end_top + translation;
 			}
 		}
 		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
+
 		if(wire_to_track.Mag() < 1.815)
 		{
 			result.push_back(pair<int,double>(id,wire_to_track.Mag()));
+//			cout << "[ " << id << " ] Measurement vector:" << endl;
+//			wire_to_track.Print();
+//			cout << "Stored hit with rt = " << wire_to_track.Mag() << " cm" << endl;
 		}
 	}
 
@@ -1026,11 +1067,9 @@ TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& 
 	// 1.) init unity matrix
 	jacobian->UnitMatrix();
 
-	//2.) enter non-zero partial differentials
-	//2.1) get the two points on track where reconstruction happened
 	double dz = PCA_2.Z() - PCA_1.Z();
 
-	//2.2) enter dx and dy to jacobian
+	//2.) enter non-zero off diagonal elements
 	(*jacobian)[3][1] = dz;
 	(*jacobian)[4][2] = dz;
 

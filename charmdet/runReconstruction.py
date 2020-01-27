@@ -771,11 +771,36 @@ def listMissingSpills(stats,runs=None):
   
   
 def GBL_refit_single_rootfile(fname):
+    """ Perform a refit using the GBL fitter for a single root-file.
+    
+    Author: Stefan Bieschke
+    Version: 1.0
+    Date: Jan. 16, 2020
+    
+    Parameters
+    ----------
+    fname: string
+        filename of the rootfile (ending _RT.root or _RT_refit.root - not necessary but that file format that is conventionally
+        stored with such names). This must include the full path to that file relative to the current working directory from
+        where this script is called.
+    """
     cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
     print("Running command: {}".format(cmd))
     os.system(cmd)
   
 def GBL_refit():
+    """ Performs a refit using the GBL fitter for all files ending with "_RT_refit.root" in the current working directory
+    from where the script is called. For each refitted spill, a file is created, that appends ".mille_out" to the filename of the rootfile.
+    This file contains information about the misalignment of the drift tubes and can be aligned using the standalone program
+    mille.
+    
+    Note that this function is calculating with one CPU thread per .root file up to a limit of the value of the global variable
+    @c ncpus that is defined at the beginning of this script.
+    
+    Author: Stefan Bieschke
+    Version: 1.0
+    Date: Jan. 16, 2020
+    """
     refitted_files = []
     file_pattern = re.compile("SPILLDATA.+\_RT\_refit\.root")
     for file in os.listdir('.'):

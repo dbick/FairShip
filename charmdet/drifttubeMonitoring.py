@@ -79,6 +79,7 @@ parser.add_argument("-u", "--update", dest="updateFile", help="update file", def
 parser.add_argument("-i", "--input", dest="inputFile", help="input histo file", default='residuals.root')
 parser.add_argument("-g", "--geofile", dest="geoFile", help="input geofile", default='')
 parser.add_argument("-s", "--smearing", dest="MCsmearing", help="additional MC smearing", default=MCsmearing)
+parser.add_argument("-p", "--pedefile", dest="pede_file", help="read pede alignment", default=None)
 
 options = parser.parse_args()
 MCsmearing = options.MCsmearing
@@ -154,6 +155,8 @@ if saveGeofile:
 # save ShipGeo dictionary in geofile
     saveBasicParameters.execute("muflux_geofile.root",ShipGeo)
 
+if options.pede_file:
+    labels, corrections = read_pede_corrections(options.pede_file)
 # alignment
 xpos = {}
 xposb = {}
@@ -8001,19 +8004,14 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
         for aTrack in trackCandidates:   aTrack.Delete()
     
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    
+def read_pede_corrections(pede_file):
+    labels, corrections = np.loadtxt(pede_file, skiprows=1, usecols=(0,1), unpack=True)
+    for val in zip(labels,corrections):
+        print("Label: {}\t correction: {}".format(val[0],val[1]))
+    return labels, corrections
+          
 
-# def create_resolutionfunction(out_file_name):
-#     """
-#     Documentation
-#     """
-#     with open(out_file_name,"w+") as f:
-#         for event in sTree:
-#             for track in sTree.FitTracks:
-#                fst = track.getFitStatus()
-#                if fst.isFitConverged():
-#                    distances, residuals = DtAlignment.utils.residual_and_distance(track,dt_modules)
-#                    for i in range(len(distances)):
-#                        f.write("{}\t{}\n".format(distances[i],residuals[i]))
 
 if options.command == "recoStep0":
     withTDC=False
@@ -8120,11 +8118,11 @@ elif options.command == "test":
     yep.stop()
     print "finished"
 elif options.command == "GBL_MC":
-    n_mc_tracks = int(1e4)
+    n_mc_tracks = int(5e6)
     n_min_hits = 3 #Minimum number of hits (total)
     filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
     milleCaller = ROOT.MillepedeCaller(filename)
-    milleCaller.MC_GBL_refit(n_mc_tracks,350e-4)
+    milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits)
 elif options.command == "GBL_refit":
     importRTrel()
     withDefaultAlignment = True

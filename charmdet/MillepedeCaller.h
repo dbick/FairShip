@@ -95,6 +95,7 @@ private:
 	 */
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
 	void print_seed_hits(const genfit::Track& track) const;
+	void print_fitted_residuals(gbl::GblTrajectory& trajectory) const;
 
 
 	/*
