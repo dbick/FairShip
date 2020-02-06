@@ -188,7 +188,8 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, dou
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,det_id);
-		TMatrixD* globals = calc_global_parameters(PCA_track,linear_model);
+		TVector3 wire_bot_to_top = vtop - vbot;
+		TMatrixD* globals = calc_global_parameters(PCA_track,linear_model,wire_bot_to_top);
 		result.back().addGlobals(label, *globals);
 		delete globals;
 		delete jacobian;
@@ -303,26 +304,61 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
  *
  * @param measurement_prediction predicted vector from the wire to the seed track in global reference frame
  * @param linear_model Linear track model with on-track coordinates and direction in global reference frame
+ * @param Wire axis vector in global reference frame showing from wire bottom to wire top position
  *
  * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
  */
-TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model) const
+TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model, const TVector3& wire_bot_to_top) const
 {
-	TRotation alignment_to_measurement();
+	TRotation global_to_alignment;
+	global_to_alignment.SetYAxis(wire_bot_to_top);
+	global_to_alignment.Invert();
+	TMatrixD mat_global_to_alignment = rot_to_matrix(global_to_alignment); //debugging
+	TVector3 meas_prediction_in_alignment_system = global_to_alignment * measurement_prediction;
+	TVector3 track_dir_in_alignmentsys = global_to_alignment * linear_model[1];
+	TRotation global_to_measurement;
+	global_to_measurement.SetXAxis(measurement_prediction);
+	global_to_measurement.Invert();
+	TMatrixD mat_global_to_measurement = rot_to_matrix(global_to_measurement); //debugging
+
+	TVector3 meas_prediction_in_meas_system = global_to_measurement * measurement_prediction;
+	TRotation alignment_to_measurement = global_to_measurement * global_to_alignment.Inverse();
+	alignment_to_measurement.Invert();
+	TMatrixD mat_alignment_to_measurement = rot_to_matrix(alignment_to_measurement);
+
+	//Debugging:
+	cout << endl;
+	cout << "Prediction in global coords: " << endl;
+	measurement_prediction.Print();
+	cout << "Wire direction: " << endl;
+	wire_bot_to_top.Print();
+	cout << "Transform global to alignment (A): " << endl;
+	mat_global_to_alignment.Print();
+	cout << "Pred in alignment sys (A * p)" << endl;
+	meas_prediction_in_alignment_system.Print();
+	cout << "Transform global to measurement (M): " << endl;
+	mat_global_to_measurement.Print();
+	cout << "Pred in meas sys (M * p):" << endl;
+	meas_prediction_in_meas_system.Print();
+	cout << "Test: Meas to align transform " << endl;
+	TVector3 testvec = alignment_to_measurement * meas_prediction_in_meas_system;
+	testvec.Print();
+	cout << endl;
+
+
 
 	TMatrixD dmdg(3,6);
 	TMatrixD* result = new TMatrixD(3,6);
 	TMatrixD drdm(3,3);
 	drdm.UnitMatrix();
-	TVector3 track_direction = linear_model[1];
 	TVector3 nominal_measurementplane_normal(0,0,1);
-	double scalar_prod = track_direction.Dot(nominal_measurementplane_normal);
+	double scalar_prod = track_dir_in_alignmentsys.Dot(nominal_measurementplane_normal);
 
 	for(short i = 0; i < drdm.GetNrows(); ++i)
 	{
 		for(short j = 0; j < drdm.GetNcols(); ++j)
 		{
-			drdm[i][j] -= track_direction[i] * nominal_measurementplane_normal[j] / scalar_prod;
+			drdm[i][j] -= track_dir_in_alignmentsys[i] * nominal_measurementplane_normal[j] / scalar_prod;
 		}
 	}
 
@@ -330,14 +366,16 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	result->Zero();
 
 	dmdg[0][0] = dmdg[1][1] = dmdg[2][2] = 1;
-	dmdg[0][4] = measurement_prediction[2];
-	dmdg[0][5] = - measurement_prediction[1];
-	dmdg[1][3] = - measurement_prediction[2];
-	dmdg[1][5] = measurement_prediction[0];
-	dmdg[2][3] = measurement_prediction[1];
-	dmdg[2][4] = -measurement_prediction[0];
+	dmdg[0][4] = meas_prediction_in_alignment_system[2];
+	dmdg[0][5] = - meas_prediction_in_alignment_system[1];
+	dmdg[1][3] = - meas_prediction_in_alignment_system[2];
+	dmdg[1][5] = meas_prediction_in_alignment_system[0];
+	dmdg[2][3] = meas_prediction_in_alignment_system[1];
+	dmdg[2][4] = -meas_prediction_in_alignment_system[0];
 
-	result->Mult(drdm, dmdg);
+	TMatrixD global_derivatives_in_alignment_system(3,6);
+	global_derivatives_in_alignment_system.Mult(drdm, dmdg);
+	result->Mult(mat_alignment_to_measurement,global_derivatives_in_alignment_system);
 
 	return result;
 }
@@ -887,7 +925,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	unity->UnitMatrix();
 
 	TVector3 vbot, vtop;
-	MufluxSpectrometer::TubeEndPoints(hits[0].first, vtop, vbot);
+	MufluxSpectrometer::TubeEndPoints(hits[0].first, vbot, vtop);
 	TVector3 PCA_wire;
 	TVector3 PCA_track;
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,mc_track_model[0],mc_track_model[1], &PCA_wire, &PCA_track);
@@ -910,14 +948,15 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
-	TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model);
+	TVector3 wire_bot_to_top = vtop - vbot;
+	TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
 
 	for(size_t i = 1; i < hits.size(); ++i)
 	{
 		TVector3 PCA_track_old = PCA_track;
-		MufluxSpectrometer::TubeEndPoints(hits[i].first, vtop, vbot);
+		MufluxSpectrometer::TubeEndPoints(hits[i].first, vbot, vtop);
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,mc_track_model[0],mc_track_model[1],&PCA_wire,&PCA_track);
 		TMatrixD* jacobian = calc_jacobian(PCA_track_old, PCA_track);
 		gbl_hits.push_back(gbl::GblPoint(*jacobian));
@@ -940,7 +979,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
-		TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model);
+		wire_bot_to_top = vtop - vbot;
+		TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
