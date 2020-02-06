@@ -298,15 +298,18 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
  * @brief Calculate the global parameters for alignment
  *
  * @author Stefan Bieschke
- * @date Dec. 2, 2019
- * @version 1.0
+ * @date Feb. 6, 2019
+ * @version 1.1
  *
- * @param measurement_prediction predicted vector from the wire to the seed track
+ * @param measurement_prediction predicted vector from the wire to the seed track in global reference frame
+ * @param linear_model Linear track model with on-track coordinates and direction in global reference frame
  *
  * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
  */
 TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model) const
 {
+	TRotation alignment_to_measurement();
+
 	TMatrixD dmdg(3,6);
 	TMatrixD* result = new TMatrixD(3,6);
 	TMatrixD drdm(3,3);
@@ -486,11 +489,12 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
-//		traj.printTrajectory(1);
-//		traj.printPoints(1);
+		cout << "Printing fitted trajectory parameters" << endl;
+		print_fitted_track(traj);
+		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
-		print_fitted_residuals(traj);
+//		print_fitted_residuals(traj);
 		++fitted;
 
 	}
@@ -796,6 +800,18 @@ void MillepedeCaller::print_seed_hits(const genfit::Track& track) const
 	}
 }
 
+/**
+ * Prints the residuals of the fitted trajectory to all the measurements, the GblTrajectory contains in the form of
+ * GblPoint objects. This is outputted as text.
+ *
+ * @brief Text output of residuals for each hit of fitted GblTrajectory
+ *
+ * @author Stefan Bieschke
+ * @date Jan. 24, 2020
+ * @version 1.0
+ *
+ * @parameter trajectory GblTrajectory that is already fitted
+ */
 void MillepedeCaller::print_fitted_residuals(gbl::GblTrajectory& trajectory) const
 {
 	//print residuals
@@ -808,6 +824,21 @@ void MillepedeCaller::print_fitted_residuals(gbl::GblTrajectory& trajectory) con
 	{
 		trajectory.getMeasResults(j, numRes, residuals, meas_errors, res_errors,down_weights);
 		cout << "Hit: " << j << " Residual: " << residuals[0] << endl;
+	}
+}
+
+void MillepedeCaller::print_fitted_track(gbl::GblTrajectory& trajectory) const
+{
+	TVectorT<double> parameters(5);
+	TMatrixTSym<double> covariance(5, 5);
+	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i)
+	{
+		trajectory.getResults(i, parameters, covariance);
+		cout << "Hit: " << i << endl;
+		for (unsigned int j = 0; j < parameters.GetNrows(); ++j)
+		{
+			cout << "Parameter: " << j << " value: " << parameters[j] << endl;
+		}
 	}
 }
 
@@ -835,8 +866,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
-//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
 		return {};
@@ -879,7 +910,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
-	TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
+	TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
 
@@ -909,7 +940,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
-		TMatrixD* globals = calc_global_parameters(PCA_track,mc_track_model);
+		TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
