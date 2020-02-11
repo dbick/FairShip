@@ -7,7 +7,7 @@ from decorators import *
 import __builtin__ as builtin
 import DtAlignment.DriftTube as DriftTube
 import DtAlignment.DtModule as DtModule
-import DtAlignment.utils
+import DtAlignment
 import numpy as np
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
@@ -79,6 +79,7 @@ parser.add_argument("-u", "--update", dest="updateFile", help="update file", def
 parser.add_argument("-i", "--input", dest="inputFile", help="input histo file", default='residuals.root')
 parser.add_argument("-g", "--geofile", dest="geoFile", help="input geofile", default='')
 parser.add_argument("-s", "--smearing", dest="MCsmearing", help="additional MC smearing", default=MCsmearing)
+parser.add_argument("-p", "--pedefile", dest="pede_file", help="read pede alignment", default=None)
 
 options = parser.parse_args()
 MCsmearing = options.MCsmearing
@@ -154,6 +155,8 @@ if saveGeofile:
 # save ShipGeo dictionary in geofile
     saveBasicParameters.execute("muflux_geofile.root",ShipGeo)
 
+if options.pede_file:
+    labels, corrections = read_pede_corrections(options.pede_file)
 # alignment
 xpos = {}
 xposb = {}
@@ -955,9 +958,6 @@ def print_modules(dt_modules_dict):
                   
 print_layers(dt_modules)
 print_modules(dt_modules)
-
-# milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
-# milleCaller.MC_GBL_refit(200000,350e-4)
         
 
 def compareAlignment():
@@ -3140,7 +3140,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
 #   #module_residuals[key] = [] #use this if you call calculate_residuals
     
     #debugging
-    milleCaller = ROOT.MillepedeCaller("test.milletest",True,True)
+    mille_filename = sTree.GetCurrentFile().GetName() + ".mille_out"
+    milleCaller = ROOT.MillepedeCaller(mille_filename)
     if not onlyPlotting:
         h['biasResDist'].Reset()
         h['biasResDist2'].Reset()
@@ -3453,6 +3454,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=13,onlyPlotting=False,minP=3.):
 #      ALG_fr.close()
     
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    
+
    
 def investigateActiveArea():
     r = 1.815
@@ -7933,6 +7936,83 @@ if options.command == "":
     withCorrections = False
     importAlignmentConstants()
 #
+
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
+    """
+    Documentation
+    """
+    valid_gbl_refits = 0
+    aborted_gbl_refits = 0
+    
+    #debugging
+    mille_filename = sTree.GetCurrentFile().GetName() + ".mille_out"
+    milleCaller = ROOT.MillepedeCaller(mille_filename)
+    pos = ROOT.TVector3()
+    mom = ROOT.TVector3()
+    eventRange = [0,sTree.GetEntries()]
+    if not nEvent<0: eventRange = [nEvent,nEvent+nTot]
+    for Nr in range(eventRange[0],eventRange[1]):
+        getEvent(Nr)
+        if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
+        if not findSimpleEvent(sTree): continue
+        trackCandidates = findTracks(PR)
+        if len(trackCandidates)==1:
+            spectrHitsSorted = ROOT.nestedList()
+            muflux_Reco.sortHits(sTree.Digi_MufluxSpectrometerHits,spectrHitsSorted,True)
+            for aTrack in trackCandidates:
+                fst = aTrack.getFitStatus()
+                if not fst.isFitConverged(): continue
+                try:
+                    sta = aTrack.getFittedState(0)
+                    mom = sta.getMom()
+                    pos = sta.getPos()
+                except:
+                    print "problem with getting state, event",sTree.GetCurrentFile().GetName(),Nr
+                    continue
+                if sta.getMomMag() < minP and not zeroField: continue
+                # check for muon tag to remove ghost tracks
+                muonTag = False
+                RPCclusters, RPCtracks = muonTaggerClustering(PR=11)
+                if len(RPCtracks['X'])==1 and len(RPCtracks['Y'])==1:
+                    posRPC = ROOT.TVector3()
+                    momRPC = ROOT.TVector3()
+                    rc = muflux_Reco.extrapolateToPlane(aTrack,cuts["zRPC1"], posRPC, momRPC)
+                    Xpos = RPCtracks['X'][0][0]*cuts["zRPC1"]+RPCtracks['X'][0][1]
+                    distX = ROOT.TMath.Abs(posRPC[0]-Xpos)
+                    Ypos = RPCtracks['Y'][0][0]*cuts["zRPC1"]+RPCtracks['Y'][0][1]
+                    distY = ROOT.TMath.Abs(posRPC[1]-Ypos)
+                    if abs(distX)<cuts['muTrackMatchX'] and abs(distY)<cuts['muTrackMatchY']: muonTag = True
+                if not muonTag: continue
+                # check for hits in each station
+                stations={1:0,2:0,3:0,4:0}
+                for p in aTrack.getPoints():
+                    rawM = p.getRawMeasurement()
+                    s = rawM.getDetId()/10000000
+                    if s < 1 or s > 4: 
+                        print "error with rawM", rawM.getDetId()
+                    stations[s]+=1
+                if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
+                """
+                refit
+                """
+                print("Processing event number {}".format(Nr))
+                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,6*0.05)              
+                if(chi2_gbl == -1):
+                    aborted_gbl_refits += 1
+                else:
+                    valid_gbl_refits += 1
+        for aTrack in trackCandidates:   aTrack.Delete()
+    
+    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    
+def read_pede_corrections(pede_file):
+    labels, corrections = np.loadtxt(pede_file, skiprows=1, usecols=(0,1), unpack=True)
+    for val in zip(labels,corrections):
+        print("Label: {}\t correction: {}".format(val[0],val[1]))
+    return labels, corrections
+          
+
+
 if options.command == "recoStep0":
     withTDC=False
     print "make clean TDC distributions"
@@ -8037,4 +8117,20 @@ elif options.command == "test":
         rc=sTree.GetEvent(n)
     yep.stop()
     print "finished"
+elif options.command == "GBL_MC":
+    n_mc_tracks = int(1e5)
+    n_min_hits = 3 #Minimum number of hits (total)
+    filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
+    milleCaller = ROOT.MillepedeCaller(filename)
+    milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits)
+elif options.command == "GBL_refit":
+    importRTrel()
+    withDefaultAlignment = True
+    withCorrections = False 
+    importAlignmentConstants()
+    GBL_refit()
+# elif options.command == "resolutionfunction":
+#     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
+#     create_resolutionfunction(res_fnc_fname)
+    
 #alignConstants.pop('strawPositions') # if recorded alignment constants should not be used.

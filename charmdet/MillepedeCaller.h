@@ -2,7 +2,6 @@
 #define CHARMDET_MILLEPEDECALLER_H_
 
 #include "TObject.h"
-#include "Mille.h"
 //includes for GBL fitter from genfit
 #include <vector>
 #include "GblPoint.h"
@@ -20,6 +19,7 @@
 #include <cstdint>
 #include "MufluxSpectrometer.h"
 #include "MufluxSpectrometerHit.h"
+#include <iostream>
 
 //includes for MC testing
 #include <random>
@@ -42,24 +42,16 @@ typedef enum
 class MillepedeCaller//: public TObject
 {
 public:
-	MillepedeCaller(const char *outFileName, bool asBinary = true, bool writeZero = false);
+	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
 
-	void call_mille(int n_local_derivatives,
-					const float *local_derivatives,
-					int n_global_derivatives,
-					const float *global_derivatives,
-					const int *label,
-					float measured_residual,
-					float sigma);
-
-	double perform_GBL_refit(const genfit::Track& track, std::vector<MufluxSpectrometerHit>* time_over_threshold = nullptr) const;
+	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial) const;
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3);
+	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
 	ClassDef(MillepedeCaller,3);
 
 private:
-	Mille mille;
 	gbl::MilleBinary* m_gbl_mille_binary;
 
 	//random generator
@@ -68,7 +60,8 @@ private:
 	std::unordered_map<std::string, std::vector<int>> m_modules;
 
 	//helper methods
-	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
+	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, double sigma_spatial) const;
+	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
 	/*
 	 * Helpers for jacobian calculation
 	 */
@@ -94,7 +87,7 @@ private:
 	 */
 	std::vector<int> labels(const alignment_mode mode, const int channel_id) const;
 	std::vector<int> labels_case_module(const int channel_id) const;
-	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction, const std::vector<TVector3>& linear_model) const;
+	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction, const std::vector<TVector3>& linear_model, const TVector3& wire_bot_to_top) const;
 
 
 	/*
@@ -102,15 +95,17 @@ private:
 	 */
 	bool check_ordered_by_arclen(const genfit::Track& track) const;
 	void print_seed_hits(const genfit::Track& track) const;
+	void print_fitted_residuals(gbl::GblTrajectory& trajectory) const;
+	void print_fitted_track(gbl::GblTrajectory& trajectory) const;
 
 
 	/*
 	 * Monte-Carlo Tracks for testing
 	 */
-	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits);
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, double smearing_sigma, unsigned int min_hits);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
-	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2);
+	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 
 };
 
