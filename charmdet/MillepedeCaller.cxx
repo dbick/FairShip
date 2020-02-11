@@ -96,7 +96,7 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	}
 	vector<int> t1x = {};
 	int station = 1;
-	int view = 1;
+	int view = 0;
 	for (char plane = 0; plane < 2; ++plane)
 	{
 		for (char layer = 0; layer < 2; ++layer)
@@ -111,6 +111,21 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 
 	m_modules["T1X"] = t1x;
 	vector<int> t1u = {};
+	station = 1;
+	view = 1;
+	for (char plane = 0; plane < 2; ++plane)
+	{
+		for (char layer = 0; layer < 2; ++layer)
+		{
+			for (char tube = 1; tube < 13; ++tube)
+			{
+				t1x.push_back(
+						station * 10000000 + view * 1000000 + plane * 100000
+								+ layer * 10000 + 2000 + tube);
+			}
+		}
+	}
+	m_modules["T1U"] = t1u;
 }
 
 
