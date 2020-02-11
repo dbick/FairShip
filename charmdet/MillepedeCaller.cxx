@@ -533,7 +533,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,fitted,smearing_sigma,min_hits);
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,smearing_sigma,min_hits);
 		if(hitlist.size() < min_hits)
 		{
 			continue;
@@ -913,13 +913,13 @@ void MillepedeCaller::print_fitted_track(gbl::GblTrajectory& trajectory) const
  *
  * @return std::vector<gbl::GblPoint> containing all hits, except track has less than @c min_hits hits, then it will be empty
  */
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, int event_id, double smearing_sigma, unsigned int min_hits)
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, double smearing_sigma, unsigned int min_hits)
 {
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+//	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
 		return {};
@@ -1088,7 +1088,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(0.06, 0, 0);
+			TVector3 translation(-0.5, 0, -0.2);
 //			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
