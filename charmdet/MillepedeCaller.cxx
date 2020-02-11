@@ -341,25 +341,24 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	alignment_to_measurement.Invert();
 	TMatrixD mat_alignment_to_measurement = rot_to_matrix(alignment_to_measurement);
 
-	//Debugging:
-	cout << endl;
-	cout << "Prediction in global coords: " << endl;
-	measurement_prediction.Print();
-	cout << "Wire direction: " << endl;
-	wire_bot_to_top.Print();
-	cout << "Transform global to alignment (A): " << endl;
-	mat_global_to_alignment.Print();
-	cout << "Pred in alignment sys (A * p)" << endl;
-	meas_prediction_in_alignment_system.Print();
-	cout << "Transform global to measurement (M): " << endl;
-	mat_global_to_measurement.Print();
-	cout << "Pred in meas sys (M * p):" << endl;
-	meas_prediction_in_meas_system.Print();
-	cout << "Test: Meas to align transform " << endl;
-	TVector3 testvec = alignment_to_measurement * meas_prediction_in_meas_system;
-	testvec.Print();
-	cout << endl;
-
+//	//Debugging:
+//	cout << endl;
+//	cout << "Prediction in global coords: " << endl;
+//	measurement_prediction.Print();
+//	cout << "Wire direction: " << endl;
+//	wire_bot_to_top.Print();
+//	cout << "Transform global to alignment (A): " << endl;
+//	mat_global_to_alignment.Print();
+//	cout << "Pred in alignment sys (A * p)" << endl;
+//	meas_prediction_in_alignment_system.Print();
+//	cout << "Transform global to measurement (M): " << endl;
+//	mat_global_to_measurement.Print();
+//	cout << "Pred in meas sys (M * p):" << endl;
+//	meas_prediction_in_meas_system.Print();
+//	cout << "Test: Meas to align transform " << endl;
+//	TVector3 testvec = alignment_to_measurement * meas_prediction_in_meas_system;
+//	testvec.Print();
+//	cout << endl;
 
 
 	TMatrixD dmdg(3,6);
