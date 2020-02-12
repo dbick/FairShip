@@ -22,7 +22,6 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	m_mersenne_twister = mt19937(19937);
 	m_gbl_mille_binary = new gbl::MilleBinary(out_file_name,true,2000);
 
-	m_tube_ids.resize(0);
 
 	m_modules["T1U"] = {};
 	m_modules["T2V"] = {};
@@ -41,17 +40,29 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 
 	//generate list of tube ids
 	//T1 and T2
+	string module_name;
 	for (char station = 1; station < 3; ++station)
 	{
 		for (char view = 0; view < 2; ++view)
 		{
+			switch (station)
+			{
+			case 1:
+				module_name = view == 0 ? "T1X" : "T1U";
+				break;
+			case 2:
+				module_name = view == 0 ? "T2V" : "T2X";
+				break;
+			}
 			for (char plane = 0; plane < 2; ++plane)
 			{
 				for (char layer = 0; layer < 2; ++layer)
 				{
 					for (char tube = 1; tube < 13; ++tube)
 					{
-						m_tube_ids.push_back(station*10000000+view*1000000+plane*100000+layer*10000+2000+tube);
+						int id = station * 10000000 + view * 1000000 + plane * 100000 + layer * 10000 + 2000 + tube;
+						m_tube_id_to_module[id] = module_name;
+						m_modules[module_name].push_back(id);
 					}
 				}
 			}
@@ -89,43 +100,15 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 					string key = module_key.str();
 					int id = station*10000000+plane*100000+layer*10000+2000+tube;
 					m_modules[key].push_back(id);
-					m_tube_ids.push_back(id);
+					m_tube_id_to_module[id] = key;
 				}
 			}
 		}
 	}
-	vector<int> t1x = {};
-	int station = 1;
-	int view = 0;
-	for (char plane = 0; plane < 2; ++plane)
+	for(pair<string,vector<int>> entry : m_modules)
 	{
-		for (char layer = 0; layer < 2; ++layer)
-		{
-			for (char tube = 1; tube < 13; ++tube)
-			{
-				t1x.push_back(station * 10000000 + view * 1000000 + plane * 100000
-								+ layer * 10000 + 2000 + tube);
-			}
-		}
+		m_nominal_module_centerpos[entry.first] = calc_module_centerpos(entry);
 	}
-
-	m_modules["T1X"] = t1x;
-	vector<int> t1u = {};
-	station = 1;
-	view = 1;
-	for (char plane = 0; plane < 2; ++plane)
-	{
-		for (char layer = 0; layer < 2; ++layer)
-		{
-			for (char tube = 1; tube < 13; ++tube)
-			{
-				t1x.push_back(
-						station * 10000000 + view * 1000000 + plane * 100000
-								+ layer * 10000 + 2000 + tube);
-			}
-		}
-	}
-	m_modules["T1U"] = t1u;
 }
 
 
@@ -148,14 +131,16 @@ MillepedeCaller::~MillepedeCaller()
  * @brief List hits from seed track as vector<GblPoint>
  *
  * @author Stefan Bieschke
- * @date Aug. 06, 2019
- * @version 1.0
+ * @date Feb. 12, 2020
+ * @version 1.1
  *
  * @param track Seed track, in this case genfit::Track from Kalman fitter
+ * @param mode What structures should be aligned, can be MODULE or SINGLE_TUBE for example
+ * @param sigma_spatial spatial resolution guess for fit
  *
  * @return std::vector<gbl::GblPoint> containing the hits ordered by arclen with measurement added
  */
-vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, double sigma_spatial) const
+vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial)
 {
 	vector<TVector3> linear_model = linear_model_wo_scatter(*track);
 	vector<gbl::GblPoint> result = {};
@@ -204,7 +189,23 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, dou
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,det_id);
 		TVector3 wire_bot_to_top = vtop - vbot;
-		TMatrixD* globals = calc_global_parameters(PCA_track,linear_model,wire_bot_to_top);
+
+		TVector3 measurement_prediction, alignment_origin;
+		string module_descriptor;
+
+		switch (mode)
+		{
+		case MODULE:
+			module_descriptor = m_tube_id_to_module[det_id];
+			alignment_origin = calc_module_centerpos(make_pair(module_descriptor, m_modules[module_descriptor]));
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		case SINGLE_TUBE:
+			alignment_origin = vbot + 0.5 * (vtop - vbot);
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		}
+		TMatrixD* globals = calc_global_parameters(measurement_prediction,closest_approach,linear_model,wire_bot_to_top);
 		result.back().addGlobals(label, *globals);
 		delete globals;
 		delete jacobian;
@@ -317,13 +318,14 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
  * @date Feb. 6, 2019
  * @version 1.1
  *
- * @param measurement_prediction predicted vector from the wire to the seed track in global reference frame
+ * @param measurement_prediction predicted vector from the alignment system origin to the closest approach on the track for this hit in global coordinates
+ * @param closest_approach vector of closest approach from wire to track in global reference frame
  * @param linear_model Linear track model with on-track coordinates and direction in global reference frame
  * @param Wire axis vector in global reference frame showing from wire bottom to wire top position
  *
  * @result Matrix (3x6) containing the derivatives of the measurement w.r.t all parameters
  */
-TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const vector<TVector3>& linear_model, const TVector3& wire_bot_to_top) const
+TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_prediction, const TVector3& closest_approach, const vector<TVector3>& linear_model, const TVector3& wire_bot_to_top) const
 {
 	TRotation global_to_alignment;
 	global_to_alignment.SetYAxis(wire_bot_to_top);
@@ -332,7 +334,7 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	TVector3 meas_prediction_in_alignment_system = global_to_alignment * measurement_prediction;
 	TVector3 track_dir_in_alignmentsys = global_to_alignment * linear_model[1];
 	TRotation global_to_measurement;
-	global_to_measurement.SetXAxis(measurement_prediction);
+	global_to_measurement.SetXAxis(closest_approach);
 	global_to_measurement.Invert();
 	TMatrixD mat_global_to_measurement = rot_to_matrix(global_to_measurement); //debugging
 
@@ -483,11 +485,11 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial) const
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial)
 {
 	try
 	{
-		vector < gbl::GblPoint > points = list_hits(&track, sigma_spatial);
+		vector < gbl::GblPoint > points = list_hits(&track, MODULE, sigma_spatial);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
@@ -533,7 +535,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,smearing_sigma,min_hits);
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,MODULE,smearing_sigma,min_hits);
 		if(hitlist.size() < min_hits)
 		{
 			continue;
@@ -787,6 +789,37 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 	return result;
 }
 
+/**
+ * Calculate the nominal, geometric center position of a drift tube module in global coordinates. The nominal coordinates are taken
+ * from the c++ class MufluxSpectrometer.
+ *
+ * @brief Calculate module center position in global coordinates
+ *
+ * @author Stefan Bieschke
+ * @date Feb. 12, 2020
+ * @version 1.0
+ *
+ * @param module_name_id_list_pair pair of string with module descriptor (e.g "T1X") in first entry and list of ids in second
+ */
+TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& module_name_id_list_pair) const
+{
+	TVector3 center_pos;
+	TVector3 wire_center;
+	TVector3 wire_top, wire_bot;
+	int n_tubes = 0;
+	for(int id : module_name_id_list_pair.second)
+	{
+		MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
+		//calculate centerpos of single wire
+		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
+		center_pos += wire_center;
+		++n_tubes;
+	}
+	center_pos = (1.0 / n_tubes) * center_pos;
+
+	return center_pos;
+}
+
 
 void MillepedeCaller::print_model_parameters(const vector<TVector3>& model) const
 {
@@ -913,7 +946,7 @@ void MillepedeCaller::print_fitted_track(gbl::GblTrajectory& trajectory) const
  *
  * @return std::vector<gbl::GblPoint> containing all hits, except track has less than @c min_hits hits, then it will be empty
  */
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, double smearing_sigma, unsigned int min_hits)
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits)
 {
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
@@ -963,7 +996,23 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
 	TVector3 wire_bot_to_top = vtop - vbot;
-	TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
+	TVector3 measurement_prediction, alignment_origin;//TODO implement
+	string module_descriptor;
+
+	switch(mode)
+	{
+	case MODULE:
+		module_descriptor = m_tube_id_to_module[hits[0].first];
+		alignment_origin = calc_module_centerpos(make_pair(module_descriptor, m_modules[module_descriptor]));
+		measurement_prediction = PCA_track - alignment_origin;
+		break;
+	case SINGLE_TUBE:
+		alignment_origin = vbot + 0.5 * (vtop - vbot);
+		measurement_prediction = PCA_track - alignment_origin;
+		break;
+	}
+
+	TMatrixD* globals = calc_global_parameters(measurement_prediction,closest_approach,mc_track_model,wire_bot_to_top);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
 
@@ -994,7 +1043,20 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
 		wire_bot_to_top = vtop - vbot;
-		TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
+
+		switch(mode)
+		{
+		case MODULE:
+			module_descriptor = m_tube_id_to_module[hits[0].first];
+			alignment_origin = calc_module_centerpos(make_pair(module_descriptor, m_modules[module_descriptor]));
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		case SINGLE_TUBE:
+			alignment_origin = vbot + 0.5 * (vtop - vbot);
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		}
+		TMatrixD* globals = calc_global_parameters(measurement_prediction,closest_approach,mc_track_model,wire_bot_to_top);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;
 	}
@@ -1083,8 +1145,9 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 	TVector3 wire_to_track;
 
 	//check distance to every tube
-	for(int id : m_tube_ids)
+	for(auto entry : m_tube_id_to_module)
 	{
+		int id = entry.first;
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{

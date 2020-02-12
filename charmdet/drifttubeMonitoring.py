@@ -7996,7 +7996,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
                 refit
                 """
                 print("Processing event number {}".format(Nr))
-                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,6*0.05)              
+                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,3*0.05)              
                 if(chi2_gbl == -1):
                     aborted_gbl_refits += 1
                 else:
