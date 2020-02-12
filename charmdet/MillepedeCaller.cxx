@@ -22,7 +22,6 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	m_mersenne_twister = mt19937(19937);
 	m_gbl_mille_binary = new gbl::MilleBinary(out_file_name,true,2000);
 
-	m_tube_ids.resize(0);
 
 	m_modules["T1U"] = {};
 	m_modules["T2V"] = {};
@@ -62,7 +61,7 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 					for (char tube = 1; tube < 13; ++tube)
 					{
 						int id = station * 10000000 + view * 1000000 + plane * 100000 + layer * 10000 + 2000 + tube;
-						m_tube_ids.push_back(id);
+						m_tube_id_to_module[id] = module_name;
 						m_modules[module_name].push_back(id);
 					}
 				}
@@ -101,10 +100,14 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 					string key = module_key.str();
 					int id = station*10000000+plane*100000+layer*10000+2000+tube;
 					m_modules[key].push_back(id);
-					m_tube_ids.push_back(id);
+					m_tube_id_to_module[id] = key;
 				}
 			}
 		}
+	}
+	for(pair<string,vector<int>> entry : m_modules)
+	{
+		m_nominal_module_centerpos[entry.first] = calc_module_centerpos(entry);
 	}
 }
 
@@ -765,6 +768,37 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 	result.Mult(fit_system_base_vectors,measurement_to_global);
 	result.Invert();
 	return result;
+}
+
+/**
+ * Calculate the nominal, geometric center position of a drift tube module in global coordinates. The nominal coordinates are taken
+ * from the c++ class MufluxSpectrometer.
+ *
+ * @brief Calculate module center position in global coordinates
+ *
+ * @author Stefan Bieschke
+ * @date Feb. 12, 2020
+ * @version 1.0
+ *
+ * @param module_name_id_list_pair pair of string with module descriptor (e.g "T1X") in first entry and list of ids in second
+ */
+TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& module_name_id_list_pair) const
+{
+	TVector3 center_pos;
+	TVector3 wire_center;
+	TVector3 wire_top, wire_bot;
+	int n_tubes = 0;
+	for(int id : module_name_id_list_pair.second)
+	{
+		MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
+		//calculate centerpos of single wire
+		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
+		center_pos += wire_center;
+		++n_tubes;
+	}
+	center_pos = (1.0 / n_tubes) * center_pos;
+
+	return center_pos;
 }
 
 

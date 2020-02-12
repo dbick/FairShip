@@ -56,7 +56,7 @@ private:
 
 	//random generator
 	std::mt19937 m_mersenne_twister;
-	std::vector<int> m_tube_ids;
+	std::unordered_map<int,std::string> m_tube_id_to_module;
 	std::unordered_map<std::string, std::vector<int>> m_modules; //detector IDs making up a module
 	std::unordered_map<std::string,TVector3> m_nominal_module_centerpos; //nominal geometric center of a drift tube module
 
@@ -76,6 +76,7 @@ private:
 	TRotation calc_rotation_of_vector(const TVector3& v) const;
 	TMatrixD rot_to_matrix(const TRotation& rot) const;
 	TMatrixD calc_projection_matrix(const TMatrixD& fit_system_base_vectors, const TMatrixD& rotation_global_to_measurement) const;
+	TVector3 calc_module_centerpos(const std::pair<std::string,std::vector<int>>& module_name_id_list_pair) const;
 
 	/*
 	 * GBL model methods
