@@ -41,17 +41,29 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 
 	//generate list of tube ids
 	//T1 and T2
+	string module_name;
 	for (char station = 1; station < 3; ++station)
 	{
 		for (char view = 0; view < 2; ++view)
 		{
+			switch (station)
+			{
+			case 1:
+				module_name = view == 0 ? "T1X" : "T1U";
+				break;
+			case 2:
+				module_name = view == 0 ? "T2V" : "T2X";
+				break;
+			}
 			for (char plane = 0; plane < 2; ++plane)
 			{
 				for (char layer = 0; layer < 2; ++layer)
 				{
 					for (char tube = 1; tube < 13; ++tube)
 					{
-						m_tube_ids.push_back(station*10000000+view*1000000+plane*100000+layer*10000+2000+tube);
+						int id = station * 10000000 + view * 1000000 + plane * 100000 + layer * 10000 + 2000 + tube;
+						m_tube_ids.push_back(id);
+						m_modules[module_name].push_back(id);
 					}
 				}
 			}
@@ -94,38 +106,6 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 			}
 		}
 	}
-	vector<int> t1x = {};
-	int station = 1;
-	int view = 0;
-	for (char plane = 0; plane < 2; ++plane)
-	{
-		for (char layer = 0; layer < 2; ++layer)
-		{
-			for (char tube = 1; tube < 13; ++tube)
-			{
-				t1x.push_back(station * 10000000 + view * 1000000 + plane * 100000
-								+ layer * 10000 + 2000 + tube);
-			}
-		}
-	}
-
-	m_modules["T1X"] = t1x;
-	vector<int> t1u = {};
-	station = 1;
-	view = 1;
-	for (char plane = 0; plane < 2; ++plane)
-	{
-		for (char layer = 0; layer < 2; ++layer)
-		{
-			for (char tube = 1; tube < 13; ++tube)
-			{
-				t1x.push_back(
-						station * 10000000 + view * 1000000 + plane * 100000
-								+ layer * 10000 + 2000 + tube);
-			}
-		}
-	}
-	m_modules["T1U"] = t1u;
 }
 
 
@@ -963,6 +943,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
 	TVector3 wire_bot_to_top = vtop - vbot;
+	TVector3 measurement_prediction; //TODO implement
 	TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
 	gbl_hits.back().addGlobals(label, *globals);
 	delete globals;
@@ -994,6 +975,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		//calculate labels and global derivatives for hit
 		vector<int> label = labels(MODULE,hits[i].first);
 		wire_bot_to_top = vtop - vbot;
+		TVector3 measurement_prediction; //TODO implement
 		TMatrixD* globals = calc_global_parameters(closest_approach,mc_track_model,wire_bot_to_top);
 		gbl_hits.back().addGlobals(label, *globals);
 		delete globals;

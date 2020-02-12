@@ -57,7 +57,8 @@ private:
 	//random generator
 	std::mt19937 m_mersenne_twister;
 	std::vector<int> m_tube_ids;
-	std::unordered_map<std::string, std::vector<int>> m_modules;
+	std::unordered_map<std::string, std::vector<int>> m_modules; //detector IDs making up a module
+	std::unordered_map<std::string,TVector3> m_nominal_module_centerpos; //nominal geometric center of a drift tube module
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, double sigma_spatial) const;
