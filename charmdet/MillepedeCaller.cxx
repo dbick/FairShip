@@ -222,11 +222,12 @@ void MillepedeCaller::add_measurement_info(gbl::GblPoint& point, const TVector3&
 	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
 	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
 
-	TRotation rot = calc_rotation_of_vector(closest_approach);
-	TMatrixD rot_mat = rot_to_matrix(rot);
+	TRotation rotation_global_to_measurement = calc_rotation_of_vector(closest_approach);
+	rotation_global_to_measurement.Invert();
+	TMatrixD rot_mat = rot_to_matrix(rotation_global_to_measurement);
 	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 	TVectorD rotated_residual(2);
-	rotated_residual[0] = closest_approach.Mag() - measurement;
+	rotated_residual[0] =  measurement - closest_approach.Mag();
 	rotated_residual[1] = 0;
 
 	TVectorD precision(rotated_residual);
@@ -544,8 +545,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
 		cout << "Printing fitted trajectory parameters" << endl;
-		print_fitted_track(traj);
-		print_model_parameters(track);
+//		print_fitted_track(traj);
+//		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 //		print_fitted_residuals(traj);
@@ -782,7 +783,7 @@ TMatrixD MillepedeCaller::calc_projection_matrix(
 {
 	TMatrixD result(2,2); //projection matrix has dimensions 2x2
 	TMatrixD measurement_to_global(rotation_global_to_measurement); //copy rotational matrix
-//	measurement_to_global.Invert(); //invert matrix in place
+	measurement_to_global.Invert(); //invert matrix in place
 	measurement_to_global.ResizeTo(3,2); //TODO check if this is correct, want to skip column normal to measurement direction
 	result.Mult(fit_system_base_vectors,measurement_to_global);
 	result.Invert();
@@ -951,7 +952,17 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &(m_modules["T3bX"]));
+	vector<int> shifted_det_ids = {};
+//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
+	vector<string> shifted_modules = {"T3bX"};
+	for(string mod : shifted_modules)
+	{
+		for(int id : m_modules[mod])
+		{
+			shifted_det_ids.push_back(id);
+		}
+	}
+	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &shifted_det_ids);
 //	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
@@ -959,13 +970,6 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	}
 
 	vector<gbl::GblPoint> gbl_hits = {};
-
-	TMatrixD fit_system_base_vectors(2,3);
-	fit_system_base_vectors.Zero();
-	fit_system_base_vectors[0][0] = 1.0; 	//first row vector for x direction
-	fit_system_base_vectors[1][1] = 1.0; 	//second row vector for y direction
-
-
 
 	//zero arc length GBL point for first hit
 	TMatrixD* unity = new TMatrixD(5,5);
@@ -978,20 +982,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,mc_track_model[0],mc_track_model[1], &PCA_wire, &PCA_track);
 
 	gbl_hits.push_back(gbl::GblPoint(*unity));
-	TRotation rot = calc_rotation_of_vector(closest_approach);
-	TMatrixD rot_mat = rot_to_matrix(rot);
-	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
-	TVectorD rotated_residual(2);
 	double smear = gaussian_smear(m_mersenne_twister);
-	rotated_residual[0] = closest_approach.Mag() - (hits[0].second + smear);
-	rotated_residual[1] = 0;
-	TVectorD precision(rotated_residual);
-	precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
-	gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
-
-//	cout << "Smeared with " << smear << " cm" << endl;
-//	cout << "[ " << hits[0].first << " ] Undistorted measurement: " << endl;
-//	rotated_residual.Print();
+	add_measurement_info(gbl_hits.back(), closest_approach, TMath::Abs(hits[0].second + smear), smearing_sigma);
 
 	//add labels and derivatives for first hit
 	vector<int> label = labels(MODULE,hits[0].first);
@@ -1023,21 +1015,10 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,mc_track_model[0],mc_track_model[1],&PCA_wire,&PCA_track);
 		TMatrixD* jacobian = calc_jacobian(PCA_track_old, PCA_track);
 		gbl_hits.push_back(gbl::GblPoint(*jacobian));
-		TRotation rot = calc_rotation_of_vector(closest_approach);
-		TMatrixD rot_mat = rot_to_matrix(rot);
-		TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
-		TVectorD rotated_residual(2);
+
 		smear = gaussian_smear(m_mersenne_twister);
-		rotated_residual[0] = closest_approach.Mag() - (hits[i].second + smear);
-		rotated_residual[1] = 0;
+		add_measurement_info(gbl_hits.back(), closest_approach, TMath::Abs(hits[i].second + smear), smearing_sigma);
 
-//		cout << "Smeared with " << smear << " cm" << endl;
-//		cout << "[ " << hits[i].first << " ] Undistorted measurement: " << endl;
-//		rotated_residual.Print();
-
-		TVectorD precision(rotated_residual);
-		precision[0] = 1.0 / (smearing_sigma * smearing_sigma);
-		gbl_hits.back().addMeasurement(projection_matrix,rotated_residual,precision);
 		delete jacobian;
 
 		//calculate labels and global derivatives for hit
@@ -1152,19 +1133,9 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		if(shifted_det_ids)
 		{
 			TVector3 translation(-0.5, 0, -0.2);
-//			TVector3 rotation(TMath::Pi() / 180, - 0.4 * TMath::Pi() / 180 , 0.3 * TMath::Pi() / 180);
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
-				TVector3 meas_undistorted = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
-				if(meas_undistorted.Mag() < 1.815)
-				{
-//					cout << "Shifted id: " << id;
-					vector<int> label = labels(MODULE, id);
-//				cout << " labels: " << label[0] << "\t" << label[1] << "\t" << label[2] << endl;
-//					cout << "[ " << id << " ] Undistorted measurement: " << endl;
-//					meas_undistorted.Print();
-				}
 				wire_end_bottom = wire_end_bottom + translation;
 				wire_end_top = wire_end_top + translation;
 			}
@@ -1174,9 +1145,6 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		if(wire_to_track.Mag() < 1.815)
 		{
 			result.push_back(pair<int,double>(id,wire_to_track.Mag()));
-//			cout << "[ " << id << " ] Measurement vector:" << endl;
-//			wire_to_track.Print();
-//			cout << "Stored hit with rt = " << wire_to_track.Mag() << " cm" << endl;
 		}
 	}
 

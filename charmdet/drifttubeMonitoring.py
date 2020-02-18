@@ -8005,13 +8005,32 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
     
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
     
+    
 def read_pede_corrections(pede_file):
-    labels, corrections = np.loadtxt(pede_file, skiprows=1, usecols=(0,1), unpack=True)
-    for val in zip(labels,corrections):
-        print("Label: {}\t correction: {}".format(val[0],val[1]))
-    return labels, corrections
-          
+    import re
+    pede_pattern = re.compile("\s*(\d{4})\s*(-?\d*\.\d+[Ee]?[+-]?\d*)\s*(-?\d+\.\d*)\s*(-?\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d+)")
 
+    labels = []
+    corrections = []
+    errors = []
+
+    with open(filename) as resultfile:
+        for line in resultfile:
+            match = pattern.match(line)
+            if match:
+                if match.group(4):
+                    labels.append(int(match.group(1)))
+                    corrections.append(float(match.group(4)))
+                    errors.append(float(match.group(5)))
+        
+    pede_res = zip(labels,corrections,errors)
+    for entry in pede_res:
+        #split into translations and rotations
+        #translation labels end with 1,2 or 3
+        if int(entry[0]/10) < 4:
+            print(entry)
+    
+          
 
 if options.command == "recoStep0":
     withTDC=False
@@ -8118,7 +8137,7 @@ elif options.command == "test":
     yep.stop()
     print "finished"
 elif options.command == "GBL_MC":
-    n_mc_tracks = int(1e5)
+    n_mc_tracks = int(5e4)
     n_min_hits = 3 #Minimum number of hits (total)
     filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
     milleCaller = ROOT.MillepedeCaller(filename)
