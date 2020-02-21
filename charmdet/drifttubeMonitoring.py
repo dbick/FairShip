@@ -2,6 +2,7 @@
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
 ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit> muflux_hitlist;')
+ROOT.gROOT.ProcessLine('typedef std::map<int,double> pede_result_cpp;')
 
 from decorators import *
 import __builtin__ as builtin
@@ -19,6 +20,7 @@ from argparse import ArgumentParser
 import shipunit as u
 import rootUtils as ut
 from array import array
+from MufluxPatRec import decodeDetectorID
 
 ########
 zeroField    = True
@@ -155,8 +157,6 @@ if saveGeofile:
 # save ShipGeo dictionary in geofile
     saveBasicParameters.execute("muflux_geofile.root",ShipGeo)
 
-if options.pede_file:
-    labels, corrections = read_pede_corrections(options.pede_file)
 # alignment
 xpos = {}
 xposb = {}
@@ -8006,7 +8006,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
     
     
-def read_pede_corrections(pede_file):
+def read_pede_corrections(pede_filename):
     import re
     pede_pattern = re.compile("\s*(\d{4})\s*(-?\d*\.\d+[Ee]?[+-]?\d*)\s*(-?\d+\.\d*)\s*(-?\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d+)")
 
@@ -8014,9 +8014,9 @@ def read_pede_corrections(pede_file):
     corrections = []
     errors = []
 
-    with open(filename) as resultfile:
+    with open(pede_filename) as resultfile:
         for line in resultfile:
-            match = pattern.match(line)
+            match = pede_pattern.match(line)
             if match:
                 if match.group(4):
                     labels.append(int(match.group(1)))
@@ -8024,13 +8024,38 @@ def read_pede_corrections(pede_file):
                     errors.append(float(match.group(5)))
         
     pede_res = zip(labels,corrections,errors)
-    for entry in pede_res:
-        #split into translations and rotations
-        #translation labels end with 1,2 or 3
-        if int(entry[0]/10) < 4:
-            print(entry)
+    results_to_cpp = ROOT.pede_result_cpp()
+    for i in range(len(pede_res)):
+        entry = pede_res[i]
+        results_to_cpp[entry[0]] = entry[1]
+        
+    return results_to_cpp, pede_res
     
-          
+    
+def tube_id_module_pede_labels(id):  
+    station, view, pnb, layer, tube = decodeDetectorID(id)
+
+    labels = [0] * 6
+    base_label = 1000 * station
+    if station > 2:
+
+        if tube >= 37 and tube <= 48:
+            base_label += 10
+        elif tube >= 25 and tube <= 36:
+            base_label += 20
+        elif tube >= 13 and tube <= 24:
+            base_label += 30
+    else:
+        base_label += 100 * view
+
+    for i in range(len(labels)):
+        labels[i] = base_label + i + 1 
+        
+    return labels
+
+if options.pede_file:
+    print("Using pede file: {}".format(options.pede_file))
+    cpp_pede_results, python_pede_results = read_pede_corrections(options.pede_file)
 
 if options.command == "recoStep0":
     withTDC=False
@@ -8141,7 +8166,10 @@ elif options.command == "GBL_MC":
     n_min_hits = 3 #Minimum number of hits (total)
     filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
     milleCaller = ROOT.MillepedeCaller(filename)
-    milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits)
+    if cpp_pede_results != None:
+        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,cpp_pede_results)
+    else:
+        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits)
 elif options.command == "GBL_refit":
     importRTrel()
     withDefaultAlignment = True

@@ -21,6 +21,7 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 {
 	m_mersenne_twister = mt19937(19937);
 	m_gbl_mille_binary = new gbl::MilleBinary(out_file_name,true,2000);
+	m_debugging_file = new TFile("debugging_out.root","RECREATE");
 
 
 	m_modules["T1U"] = {};
@@ -121,6 +122,7 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 MillepedeCaller::~MillepedeCaller()
 {
 	delete m_gbl_mille_binary;
+	m_debugging_file->Close();
 }
 
 /**
@@ -156,7 +158,9 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		return p1->getRawMeasurement()->getRawHitCoords()[2] < p2->getRawMeasurement()->getRawHitCoords()[2];
 	});
 
+
 	TVector3 PCA_track(0,0,0);
+
 	//#pragma omp parallel for
 	for(size_t i = 0; i < n_points; ++i)
 	{
@@ -170,6 +174,11 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		TVector3 vbot(raw[0],raw[1],raw[2]);
 		TVector3 vtop(raw[3],raw[4],raw[5]);
 		double measurement = raw[6]; //rt distance [cm]
+		if(measurement < 1.0)
+		{
+			PCA_track = PCA_track_last;
+			continue;
+		}
 
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
 
@@ -187,7 +196,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		add_measurement_info(result.back(),closest_approach, measurement, sigma_spatial);
 
 		//calculate labels and global derivatives for hit
-		vector<int> label = labels(MODULE,det_id);
+		vector<int> label = calc_labels(MODULE,det_id);
 		TVector3 wire_bot_to_top = vtop - vbot;
 
 		TVector3 measurement_prediction, alignment_origin;
@@ -237,7 +246,7 @@ void MillepedeCaller::add_measurement_info(gbl::GblPoint& point, const TVector3&
 
 
 //TODO implement
-vector<int> MillepedeCaller::labels(const alignment_mode mode, const int channel_id) const
+vector<int> MillepedeCaller::calc_labels(const alignment_mode mode, const int channel_id) const
 {
 	switch(mode)
 	{
@@ -397,6 +406,16 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	return result;
 }
 
+void MillepedeCaller::apply_pede_correction(TVector3& vbot, TVector3& vtop, const std::vector<double>& corrections)
+{
+	vbot[0] = vbot[0] - corrections[0];
+	vtop[0] = vtop[0] - corrections[0];
+	vbot[2] = vbot[2] - corrections[2];
+	vtop[2] = vtop[2] - corrections[2];
+
+	//TODO rotations
+}
+
 
 //TODO add mathematical description of matrix parameter determination to doc comment
 /**
@@ -522,8 +541,17 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 }
 
 //TODO document
-double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits)
+double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits, map<int,double>* pede_corrections)
 {
+	if(pede_corrections)
+	{
+		cout << "Fitting with corrections:" << endl;
+
+		for(map<int,double>::iterator it = pede_corrections->begin(); it != pede_corrections->end(); ++it)
+		{
+			cout << it->first << " " << it->second << endl;
+		}
+	}
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
@@ -536,7 +564,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,MODULE,smearing_sigma,min_hits);
+		vector<gbl::GblPoint> hitlist = MC_list_hits(track,MODULE,smearing_sigma,min_hits,pede_corrections);
 		if(hitlist.size() < min_hits)
 		{
 			continue;
@@ -549,7 +577,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 //		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
-//		print_fitted_residuals(traj);
+		print_fitted_residuals(traj);
 		++fitted;
 
 	}
@@ -947,14 +975,14 @@ void MillepedeCaller::print_fitted_track(gbl::GblTrajectory& trajectory) const
  *
  * @return std::vector<gbl::GblPoint> containing all hits, except track has less than @c min_hits hits, then it will be empty
  */
-vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits)
+vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits, map<int,double>* pede_corrections)
 {
 	//apply gaussian smearing of measured hit
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
 	vector<int> shifted_det_ids = {};
-//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
-	vector<string> shifted_modules = {"T3bX"};
+	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
+//	vector<string> shifted_modules = {"T3bX"};
 	for(string mod : shifted_modules)
 	{
 		for(int id : m_modules[mod])
@@ -977,6 +1005,17 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	TVector3 vbot, vtop;
 	MufluxSpectrometer::TubeEndPoints(hits[0].first, vbot, vtop);
+	//apply pede corrections if available
+	if(pede_corrections)
+	{
+		vector<int> labels_for_tube = calc_labels(MODULE,hits[0].first);
+		double correction_x = (*pede_corrections)[labels_for_tube[0]];
+		double correction_z = (*pede_corrections)[labels_for_tube[2]];
+		vbot[0] = vbot[0] - correction_x;
+		vtop[0] = vtop[0] - correction_x;
+		vbot[2] = vbot[2] - correction_z;
+		vtop[2] = vtop[2] - correction_z;
+	}
 	TVector3 PCA_wire;
 	TVector3 PCA_track;
 	TVector3 closest_approach = calc_shortest_distance(vtop, vbot,mc_track_model[0],mc_track_model[1], &PCA_wire, &PCA_track);
@@ -984,9 +1023,10 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	gbl_hits.push_back(gbl::GblPoint(*unity));
 	double smear = gaussian_smear(m_mersenne_twister);
 	add_measurement_info(gbl_hits.back(), closest_approach, TMath::Abs(hits[0].second + smear), smearing_sigma);
+	bool id_shifted = shifted_det_ids.end() != find(shifted_det_ids.begin(),shifted_det_ids.end(),hits[0].first);
 
 	//add labels and derivatives for first hit
-	vector<int> label = labels(MODULE,hits[0].first);
+	vector<int> label = calc_labels(MODULE,hits[0].first);
 	TVector3 wire_bot_to_top = vtop - vbot;
 	TVector3 measurement_prediction, alignment_origin;//TODO implement
 	string module_descriptor;
@@ -1012,17 +1052,64 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	{
 		TVector3 PCA_track_old = PCA_track;
 		MufluxSpectrometer::TubeEndPoints(hits[i].first, vbot, vtop);
+		if(pede_corrections)
+		{
+			vector<int> labels_for_tube = calc_labels(MODULE,hits[i].first);
+			double correction_x = (*pede_corrections)[labels_for_tube[0]];
+			double correction_z = (*pede_corrections)[labels_for_tube[2]];
+			vbot[0] = vbot[0] - correction_x;
+			vtop[0] = vtop[0] - correction_x;
+			vbot[2] = vbot[2] - correction_z;
+			vtop[2] = vtop[2] - correction_z;
+
+		}
 		TVector3 closest_approach = calc_shortest_distance(vtop,vbot,mc_track_model[0],mc_track_model[1],&PCA_wire,&PCA_track);
+		//TODO Remove Debugging stuff
+		bool id_shifted = shifted_det_ids.end() != find(shifted_det_ids.begin(),shifted_det_ids.end(),hits[i].first);
+		if(id_shifted && closest_approach[0] < 0 && closest_approach[0] > -0.25 && !pede_corrections)
+		{
+			cout << "Rejected" << endl;
+			PCA_track = PCA_track_old;
+			continue;
+		}
+
 		TMatrixD* jacobian = calc_jacobian(PCA_track_old, PCA_track);
 		gbl_hits.push_back(gbl::GblPoint(*jacobian));
 
 		smear = gaussian_smear(m_mersenne_twister);
 		add_measurement_info(gbl_hits.back(), closest_approach, TMath::Abs(hits[i].second + smear), smearing_sigma);
 
+		//DEBUGGING
+//		bool id_shifted = shifted_det_ids.end() != find(shifted_det_ids.begin(),shifted_det_ids.end(),hits[i].first);
+//		if (id_shifted)
+//		{
+////			cout << "ID " << hits[i].first << " shifted." << endl;
+//			SMatrix55 aProjection;
+//			SVector5 aResiduals;
+//			SVector5 aPrecision;
+//			gbl_hits.back().getMeasurement(aProjection, aResiduals, aPrecision);
+////			cout << "Closest approach: " << endl;
+////			cout << closest_approach[0] << ", " << closest_approach[1] << ", " << closest_approach[2] << endl;
+//			char driftSide = closest_approach[0] < 0 ? '-':'+';
+////			cout << "Drift side: " << driftSide << endl;
+////			cout << "Residual: " << aResiduals[3] << endl;
+//			if(driftSide == '-' && aResiduals[3] > -0.45 && aResiduals[3] < 0.55)
+//			{
+//				cout << "------------------------------------------------------------" << endl;
+//				cout << "Something wrong here" << endl;
+//				cout << "ID " << hits[i].first << endl;
+//				cout << "Closest approach: " << endl;
+//				cout << closest_approach[0] << ", " << closest_approach[1] << ", " << closest_approach[2] << endl;
+//				cout << "Drift side: " << driftSide << endl;
+//				cout << "Residual: " << aResiduals[3] << endl;
+//			}
+//		}
+		//END DEBUGGING
+
 		delete jacobian;
 
 		//calculate labels and global derivatives for hit
-		vector<int> label = labels(MODULE,hits[i].first);
+		vector<int> label = calc_labels(MODULE,hits[i].first);
 		wire_bot_to_top = vtop - vbot;
 
 		switch(mode)

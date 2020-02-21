@@ -788,7 +788,7 @@ def GBL_refit_single_rootfile(fname):
     print("Running command: {}".format(cmd))
     os.system(cmd)
   
-def GBL_refit():
+def GBL_refit(max_spills=None):
     """ Performs a refit using the GBL fitter for all files ending with "_RT_refit.root" in the current working directory
     from where the script is called. For each refitted spill, a file is created, that appends ".mille_out" to the filename of the rootfile.
     This file contains information about the misalignment of the drift tubes and can be aligned using the standalone program
@@ -807,7 +807,10 @@ def GBL_refit():
         match = file_pattern.match(file)
         if match:
             refitted_files.append(match.group())
+    if max_spills:
+        refitted_files = refitted_files[:max_spills]
     print(refitted_files)
+    
     pool = multiprocessing.Pool(ncpus)
     pool.map(GBL_refit_single_rootfile, refitted_files)
 
