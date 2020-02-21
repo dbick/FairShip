@@ -551,6 +551,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		{
 			cout << it->first << " " << it->second << endl;
 		}
+		save_previous_rotations_to_disk("Previous_det_id_rotations.root");
 	}
 	double chi2, lostweight;
 	int ndf;
@@ -1277,4 +1278,28 @@ TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& 
 	(*jacobian)[4][2] = dz;
 
 	return jacobian;
+}
+
+void MillepedeCaller::save_previous_rotations_to_disk(const char* filename)
+{
+	cout << "Writing file with Rotations for each module" << endl;
+	TFile module_rotation(filename, "RECREATE");
+	for (unordered_map<string, vector<int>>::iterator it = m_modules.begin();
+			it != m_modules.end(); ++it)
+	{
+		for (int id : it->second)
+		{
+			stringstream det_id;
+			det_id << id;
+			TDirectory* directory = module_rotation.mkdir(det_id.str().c_str());
+			directory->cd();
+			TRotation rot;
+			TVector3 vbot, vtop;
+			MufluxSpectrometer::TubeEndPoints(id, vbot, vtop);
+			TVector3 dir = vtop - vbot;
+			rot.SetYAxis(dir);
+			rot.Write();
+		}
+	}
+	module_rotation.Close();
 }

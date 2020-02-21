@@ -112,6 +112,7 @@ private:
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
+	void save_previous_rotations_to_disk(const char* filename);
 
 };
 
