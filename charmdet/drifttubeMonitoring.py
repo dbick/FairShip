@@ -27,6 +27,8 @@ zeroField    = True
 DAFfitter    = True
 withMaterial = True
 MCdata = False
+cpp_pede_results = None
+python_pede_results = None
 ########
 # before RT correction: MCsmearing=0.04  #  + 0.027**2 -> 0.05  
 MCsmearing=0.022  #  + 0.027**2 -> 0.035
@@ -2281,7 +2283,8 @@ def bestTracks():
     theTracks2 = findTracks(PR=12)
     bestTracks = cloneKiller(theTracks1 + theTracks2)
     return bestTracks
-def fitTrack(hitlist,Pstart=3.):
+
+def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # need measurements
     global fitter
     hitPosLists={}
@@ -2330,6 +2333,19 @@ def fitTrack(hitlist,Pstart=3.):
                         break
                 if not found: print "fittrack: digi not found, something wrong here",tdc
         vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
+        """
+        Apply pede corrections for fit by changing vbot, vtop to new values
+        """
+        if pede_corrections:
+            corr_labels = tube_id_module_pede_labels(hit.GetDetectorID())
+            x_corr = 0
+            z_corr = 0
+            for entry in pede_corrections:
+                if entry[0] % 10 > 3: continue #first only translations
+                if entry[0] in corr_labels:
+                    if entry[0] % 10 == 1: x_corr = -entry[1]
+                    elif entry[0] % 10 == 3: z_corr = -entry[1]
+            vbot, vtop = apply_pede_corrections(vbot, vtop, x_corr, z_corr, 0, 0, 0)
         s,v,p,l,view,channelID,tdcId,nRT = stationInfo(hit)
         distance = 0
         if withTDC: distance = RT(hit,tdc)
@@ -2699,7 +2715,7 @@ def findDTClustersDebug2(L):
         for hit in L[l]:
             print stationInfo(hit),hit.GetTimeOverThreshold() 
 
-def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True):
+def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True,pede_results = None):
     if PR < 3  and sTree.GetBranch('FitTracks'): return sTree.FitTracks
     if PR == 3 and sTree.GetBranch('FitTracks_refitted'): return sTree.FitTracks_refitted
     if PR%2==0 : 
@@ -2724,7 +2740,7 @@ def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True):
            for n in range(trInfo.N()):
               detID = trInfo.detId(n)
               hitList.append(keysToDThits[detID][0])
-           aTrack = fitTrack(hitList,P)
+           aTrack = fitTrack(hitList,P,pede_corrections=pede_results)
            if type(aTrack) == type(1): continue
            trackCandidates.append(aTrack)
         return trackCandidates
@@ -7937,12 +7953,29 @@ if options.command == "":
     importAlignmentConstants()
 #
 
-def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
     """
-    Documentation
+    Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
+    produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
+    
+    This is based on the function plotBiasedResiduals(...) in this script.
+    
+    
+    Parameters
+    ----------
+    nEvent: int
+        Number of event where to start the processing. By setting -1, all events are processed.
+    nTot: int
+        Number of events from the beginning (nEvent) to be processed. Only used if nEvent >= 0. 
+    PR: int
+        Code defining seed track origin. So far only 13 is tested to work, this means completely new trackfit using Kalman and GBL
+    minP: float
+        Minimum momentum that a track must have in order to be accepted
+    pede_results: list<tuple>
+        List of tuples with pede corrections. This is typically the (second) return of the function read_pede_corrections(...).
     """
     valid_gbl_refits = 0
-    aborted_gbl_refits = 0
+    aborted_gbl_refits = 0    
     
     #debugging
     mille_filename = sTree.GetCurrentFile().GetName() + ".mille_out"
@@ -7955,7 +7988,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
         getEvent(Nr)
         if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
         if not findSimpleEvent(sTree): continue
-        trackCandidates = findTracks(PR)
+        trackCandidates = findTracks(PR,pede_results=pede_results)
         if len(trackCandidates)==1:
             spectrHitsSorted = ROOT.nestedList()
             muflux_Reco.sortHits(sTree.Digi_MufluxSpectrometerHits,spectrHitsSorted,True)
@@ -7996,7 +8029,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
                 refit
                 """
                 print("Processing event number {}".format(Nr))
-                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,3*0.05)              
+                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,3*0.05,sTree.GetCurrentFile().GetName())              
                 if(chi2_gbl == -1):
                     aborted_gbl_refits += 1
                 else:
@@ -8007,6 +8040,9 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.):
     
     
 def read_pede_corrections(pede_filename):
+    """ Read corrections calculated by the standalone program pede that are provided in a textfile. Per default pede
+    produces a resultfile called "millepede.res"    
+    """
     import re
     pede_pattern = re.compile("\s*(\d{4})\s*(-?\d*\.\d+[Ee]?[+-]?\d*)\s*(-?\d+\.\d*)\s*(-?\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d+)")
 
@@ -8032,7 +8068,7 @@ def read_pede_corrections(pede_filename):
     return results_to_cpp, pede_res
     
     
-def tube_id_module_pede_labels(id):  
+def tube_id_module_pede_labels(id): 
     station, view, pnb, layer, tube = decodeDetectorID(id)
 
     labels = [0] * 6
@@ -8052,6 +8088,18 @@ def tube_id_module_pede_labels(id):
         labels[i] = base_label + i + 1 
         
     return labels
+
+def apply_pede_corrections(vbot, vtop, dx, dz, alpha, beta, gamma):
+    """
+    Correct the wire end positions passed as via variables vbot and vtop to this function with the correction values from pede.
+    """
+    wire_dir = vtop - vbot
+    alignment_to_global = ROOT.TRotation()
+    alignment_to_global.SetYAxis(wire_dir)
+    translation_in_alignmentsystem = ROOT.TVector3(dx,0,dz)
+    translation_in_global_system = alignment_to_global * translation_in_alignmentsystem
+    
+    return ROOT.TVector3(vbot + translation_in_global_system), ROOT.TVector3(vtop + translation_in_global_system)
 
 if options.pede_file:
     print("Using pede file: {}".format(options.pede_file))
@@ -8169,13 +8217,18 @@ elif options.command == "GBL_MC":
     if cpp_pede_results != None:
         milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,cpp_pede_results)
     else:
-        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits)
+        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,0)
 elif options.command == "GBL_refit":
     importRTrel()
     withDefaultAlignment = True
     withCorrections = False 
     importAlignmentConstants()
-    GBL_refit()
+    if python_pede_results:
+        print("Refitting with python pede results:")
+        for entry in python_pede_results:
+            print(entry)
+    GBL_refit(pede_results=python_pede_results)
+        
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
 #     create_resolutionfunction(res_fnc_fname)

@@ -3,6 +3,7 @@
 
 #include "TObject.h"
 #include "TFile.h"
+#include "TTree.h"
 //includes for GBL fitter from genfit
 #include <vector>
 #include "GblPoint.h"
@@ -46,7 +47,7 @@ public:
 	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
 
-	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial);
+	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial, const char* spillname = nullptr);
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3, std::map<int,double>* pede_corrections = nullptr);
 	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
@@ -54,16 +55,17 @@ public:
 
 private:
 	gbl::MilleBinary* m_gbl_mille_binary;
-	TFile* m_debugging_file;
 
 	//random generator
 	std::mt19937 m_mersenne_twister;
 	std::unordered_map<int,std::string> m_tube_id_to_module;
 	std::unordered_map<std::string, std::vector<int>> m_modules; //detector IDs making up a module
 	std::unordered_map<std::string,TVector3> m_nominal_module_centerpos; //nominal geometric center of a drift tube module
+	TFile* m_output_file;
+	TTree* m_output_tree;
 
 	//helper methods
-	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial);
+	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
 	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
 
 	/*
@@ -108,11 +110,12 @@ private:
 	/*
 	 * Monte-Carlo Tracks for testing
 	 */
-	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits, std::map<int,double>* pede_corrections = nullptr);
+	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits, std::map<int,double>* pede_corrections = nullptr, TTree* output_tree = nullptr);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 	void save_previous_rotations_to_disk(const char* filename);
+	TTree* create_output_tree();
 
 };
 
