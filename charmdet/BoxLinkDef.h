@@ -14,6 +14,7 @@
 #pragma link C++ class MufluxSpectrometer+;
 #pragma link C++ class MufluxSpectrometerHit+;
 #pragma link C++ class MufluxSpectrometerPoint+;
+#pragma link C++ class MufluxSpectrometerRTRelation+;
 #pragma link C++ class SciFi+;
 #pragma link C++ class SciFiPoint+;
 #pragma link C++ class SciFiHit+;

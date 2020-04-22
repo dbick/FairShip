@@ -27,6 +27,8 @@ ${GENFIT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
+DanielAna.cxx
+MufluxSpectrometerRTRelation.cxx
 Box.cxx
 BoxPoint.cxx
 BoxContFact.cxx

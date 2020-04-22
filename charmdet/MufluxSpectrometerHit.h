@@ -41,6 +41,7 @@ public:
    bool hasTrigger() const { return !((flags & DriftTubes::NoTrigger) == DriftTubes::NoTrigger); }
    bool hasTimeOverThreshold() const { return !((flags & DriftTubes::NoWidth) == DriftTubes::NoWidth); }
    Float_t GetTimeOverThreshold() const { return time_over_threshold; }
+   uint16_t GetFlags() const {return flags;}
    std::vector<int> StationInfo();
 private:
    /** Copy constructor **/
