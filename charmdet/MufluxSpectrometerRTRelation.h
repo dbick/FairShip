@@ -12,6 +12,9 @@ class MufluxSpectrometerRTRelation : public TH1D {
 
   MufluxSpectrometerRTRelation(const char *name,const char *title,Int_t nbins,Double_t xlow,Double_t xup);
 
+  MufluxSpectrometerRTRelation(const TH1D& HDriftTimes);
+
+  
   void InitRTRelation(const TH1D &HDriftTimes);
   Double_t GetRadius(Double_t drifttime);
 
