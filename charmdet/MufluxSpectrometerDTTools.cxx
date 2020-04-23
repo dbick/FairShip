@@ -140,7 +140,7 @@ void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromet
     
     //draw xy projection
     if(station<3){
-      TLine *tube = new TLine(-vtop->x()+400,vtop->y(),->x()+400,vbot->y());
+      TLine *tube = new TLine(vtop->x()+400,vtop->y(),vbot->x()+400,vbot->y());
       if(station+vnb==2)tube->SetLineColor(3+vnb);
       else tube->SetLineColor(2);
       tube->Draw();
