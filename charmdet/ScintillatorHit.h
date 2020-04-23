@@ -21,7 +21,8 @@ public:
    uint16_t GetChannel() const { return channel % 0x1000; }
    bool hasTimeOverThreshold() const { return !((flags & DriftTubes::NoWidth) == DriftTubes::NoWidth); }
    Float_t GetTimeOverThreshold() const { return time_over_threshold; }
-
+   inline uint16_t GetFlags() const { return flags; }
+   
 private:
    ScintillatorHit(const ScintillatorHit &other);
    ScintillatorHit operator=(const ScintillatorHit &other);
