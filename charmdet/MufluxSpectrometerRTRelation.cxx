@@ -1,7 +1,4 @@
 #include "MufluxSpectrometerRTRelation.h"
-#include <stdio.h>
-#include "iostream"
-
 
 MufluxSpectrometerRTRelation::MufluxSpectrometerRTRelation() : TH1D(){}
 
@@ -15,17 +12,11 @@ MufluxSpectrometerRTRelation::MufluxSpectrometerRTRelation(const TH1D& HDriftTim
   Double_t norm=1.815/HDriftTimes.Integral(1,nbins);
   
   for(int i = 1; i <= nbins; i++){
-    //pHRTRelation->SetBinContent(i,norm*HDriftTimes->Integral(1,i));
     SetBinContent(i,norm*HDriftTimes.Integral(1,i));
   }
 
   
 }
-
-
-//void MufluxSpectrometerRTRelation::SetRTRelation(TH1D *theHRTRelation){
-//  //HRTRelation = theHRTRelation;
-//}
 
 
 void MufluxSpectrometerRTRelation::InitRTRelation(const TH1D &HDriftTimes){
@@ -35,29 +26,18 @@ void MufluxSpectrometerRTRelation::InitRTRelation(const TH1D &HDriftTimes){
   
   int nbins=GetNbinsX();
   
-  //TH1D * pHRTRelation=HRTRelation;
-  // TH1D* pHRTRelation = new TH1D("HRTRelation","RT Relation",nbins,low,high);
   
   Double_t norm=1.815/HDriftTimes.Integral(1,nbins);
 
   for(int i = 1; i <= nbins; i++){
-    //pHRTRelation->SetBinContent(i,norm*HDriftTimes->Integral(1,i));
     SetBinContent(i,norm*HDriftTimes.Integral(1,i));
   }
 
 
-  //std::cout << "test " << GetRadius(100) << std::endl;
-  
-  //HRTRelation=pHRTRelation;
   
 }
 
-
 Double_t MufluxSpectrometerRTRelation::GetRadius(Double_t drifttime){
-  //return -1;
-
-  //return HRTRelation->GetBinContent(HRTRelation->FindBin(drifttime));
-  
   return GetBinContent(FindBin(drifttime));
 }
 
