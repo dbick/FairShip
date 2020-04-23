@@ -29,6 +29,7 @@ link_directories( ${LINK_DIRECTORIES})
 set(SRCS
 DanielAna.cxx
 MufluxSpectrometerRTRelation.cxx
+MufluxSpectrometerDTTools.cxx
 Box.cxx
 BoxPoint.cxx
 BoxContFact.cxx

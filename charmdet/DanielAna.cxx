@@ -4,15 +4,16 @@
 #include "ScintillatorHit.h"
 #include "MufluxSpectrometer.h"
 #include "MufluxSpectrometerRTRelation.h"
+#include "MufluxSpectrometerDTTools.h"
 
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
 #include "TH1.h"
-#include "TROOT.h"
-#include "TStyle.h"
-#include "TCanvas.h"
-#include "TEllipse.h"
-#include "TLine.h"
+//#include "TROOT.h"
+//#include "TStyle.h"
+//#include "TCanvas.h"
+//#include "TEllipse.h"
+//#include "TLine.h"
 
 void helloDaniel(){
   std::cout << "Hello Daniel" << std::endl;
@@ -143,7 +144,15 @@ void dtAnaChain(TTreeReader *t){
  //RTRel->InitRTRelation(*HDriftTimes);
   std::cout << RTRel->GetRadius(100) << std::endl;;
   //RTRel->GetEntries();
-    
+
+
+  t->Restart();
+  //t->Next();
+  //t->SetEntry(71832);
+  t->SetEntry(2);
+  std::cout << "Drawing ebvent with n hits " << Digi_MufluxSpectrometerHits.GetSize() << std::endl;
+  DrawDTEvent(Digi_MufluxSpectrometerHits,*RTRel);   
+  
   
 }
 
@@ -195,7 +204,7 @@ TH1D *FilterDTSpectrum(TTreeReader *t){
       std::cout << "Scint ID: " << shit->GetDetectorID() << " FLAGS " << shit->GetFlags() << " Time " << shit->GetDigi() << " (" << shit->GetTimeOverThreshold() << ") " << std::endl;
     }
 
-    DrawDTEvent(Digi_MufluxSpectrometerHits);   
+    //DrawDTEvent(Digi_MufluxSpectrometerHits);   
     }
     //break;
     event++;
@@ -206,108 +215,3 @@ TH1D *FilterDTSpectrum(TTreeReader *t){
 }
 
 
-  
-void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits){
- 
-    
-  gStyle->SetLineScalePS(1);
-  TCanvas *disp = new TCanvas("disp","Event Display",1600,480);
-  disp->Range(0,-120,800,120);
-
-  TCanvas *zoomdisp = new TCanvas("zoomdisp","Event Display Zoom",960,768);
-  zoomdisp->Range(0,-72,180,72);
-  
-  Int_t DetectorID;
-
-  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
-  TVector3 *vtop = new TVector3();
-  TVector3 *vbot = new TVector3();
-
-  //Draw Detector Geometry
-
-  //stations 1 and 2 have two views with one module each
-  for(int station=1;station<=2;station++){
-    for(int vnb=0;vnb<2;vnb++){
-      for(int pnb=0;pnb<2;pnb++){
-	for(int lnb=0;lnb<2;lnb++){
-	  for(int wire=1;wire<=12;wire++){
-	    DetectorID=station*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+wire;
-	    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
-	    //std::cout << DetectorID << " " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
-	    double scale=1;
-	    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,2.,2.);
-	    el->Draw();
-	    zoomdisp->cd();
-	    el->Draw();
-	    disp->cd();
-	  }
-	}
-      }
-    }
-  }
-
-
-   //stations 3 and 4 have one view with four modules
-  for(int station=3;station<=4;station++){
-    for(int vnb=0;vnb<1;vnb++){
-      for(int pnb=0;pnb<2;pnb++){
-	for(int lnb=0;lnb<2;lnb++){
-	  for(int wire=1;wire<=48;wire++){
-	    DetectorID=station*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+wire;
-	    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
-	    //std::cout << DetectorID << " " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
-	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
-	    el->Draw();
-	  }
-	}
-      }
-    }
-  }
-
-
-  //Draw Hits
-
-
-
- 
-
-  int n =  Digi_MufluxSpectrometerHits.GetSize();
-  for(int i=0;i<n;i++){
-    MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[i]);
-    DetectorID = hit->GetDetectorID();
-
-    int station=DetectorID/10000000;
-    int vnb=(DetectorID%10000000)/1000000;
-    
-    //hit->MufluxSpectrometerEndPoints(*vbot,*vtop);
-    //std::cout << "Method 1: " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
-
-    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
-
-    //std::cout << "Method 2: " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
-    double scale=1;
-    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,2.,2.);
-    hitel->SetFillColor(2);
-    if(station+vnb==2)hitel->SetFillColor(3+vnb);
-    hitel->Draw();
-    zoomdisp->cd();
-    hitel->Draw();
-    disp->cd();
-
-    
-    if(station<3){
-      TLine *tube = new TLine(
-			      -vtop->x()+400,
-			      vtop->y(),
-			      -vbot->x()+400,
-			      vbot->y()
-			      );
-      tube->SetLineColor(2);
-      if(station+vnb==2)tube->SetLineColor(3+vnb);
-      tube->Draw();
-    }
-  }
-  
-}
