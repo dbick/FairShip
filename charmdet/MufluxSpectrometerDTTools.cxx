@@ -58,7 +58,7 @@ void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromet
 	for(int lnb=0;lnb<2;lnb++){
 	  for(int wire=1;wire<=12;wire++){
 	    DetectorID=station*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+wire;
-	    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
+	    mySpectrometer->TubeEndPoints(DetectorID, *vtop, *vbot);
 	    //std::cout << DetectorID << " " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
 	    double scale=1;
 	    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
