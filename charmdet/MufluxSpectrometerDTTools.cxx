@@ -11,6 +11,7 @@
 #include "TCanvas.h"
 #include "TEllipse.h"
 #include "TLine.h"
+#include "TLatex.h"
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
 
@@ -97,8 +98,12 @@ void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromet
       }
     }
   }
-  
-  
+
+  //label "directions"
+  TLatex text;
+  text.DrawLatex(275,80, "Jura");
+  text.DrawLatex(425,-80, "Sal#grave{e}ve");
+    
   //Draw Hits
   
   int n =  Digi_MufluxSpectrometerHits.GetSize();
@@ -140,7 +145,7 @@ void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromet
     
     //draw xy projection
     if(station<3){
-      TLine *tube = new TLine(vtop->x()+400,vtop->y(),vbot->x()+400,vbot->y());
+      TLine *tube = new TLine(-vtop->x()+350,vtop->y(),-vbot->x()+350,vbot->y());
       if(station+vnb==2)tube->SetLineColor(3+vnb);
       else tube->SetLineColor(2);
       tube->Draw();
