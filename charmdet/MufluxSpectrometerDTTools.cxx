@@ -14,6 +14,7 @@
 #include "TLatex.h"
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
+#include "TMath.h"
 
 
 void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits){
@@ -71,9 +72,17 @@ void DrawDTGeom(TCanvas *& disp){
 	    DetectorID=station*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+wire;
 	    mySpectrometer->TubeEndPoints(DetectorID, *vtop, *vbot);
 	    //std::cout << DetectorID << " " << vtop->x() << " " << vtop->y() << " " << vtop->z() << std::endl;
-	    double scale=1;
-	    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,2.,2.);
+	    if(station+vnb==2){
+	      if(station==1){
+		vbot->RotateZ(-60./180*TMath::Pi());
+		vtop->RotateZ(-60./180*TMath::Pi());
+	      }
+	      if(station==2){
+		vbot->RotateZ(60./180*TMath::Pi());
+		vtop->RotateZ(60./180*TMath::Pi());
+	      }
+	    }
+	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
 	    el->Draw();
 	  }
 	}
@@ -109,8 +118,8 @@ void DrawDTGeom(TCanvas *& disp){
 
 void DrawDTGeomT12(TCanvas *& disp){
   
-  disp = new TCanvas("zoomdisp12","Event Display zoom T1/2",960,768);
-  disp->Range(0,-72,180,72);
+  disp = new TCanvas("zoomdisp12","Event Display zoom T1/2",1440,1080);
+  disp->Range(0,-54,144,54);
   disp->cd();
   
   Double_t DetectorID;
@@ -126,9 +135,17 @@ void DrawDTGeomT12(TCanvas *& disp){
 	  for(int wire=1;wire<=12;wire++){
 	    DetectorID=station*10000000+vnb*1000000+pnb*100000+lnb*10000+2000+wire;
 	    mySpectrometer->TubeEndPoints(DetectorID, *vtop, *vbot);
-	    double scale=1;
-	    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,2.,2.);
+	    if(station+vnb==2){
+	      if(station==1){
+		vbot->RotateZ(-60./180*TMath::Pi());
+		vtop->RotateZ(-60./180*TMath::Pi());
+	      }
+	      if(station==2){
+		vbot->RotateZ(60./180*TMath::Pi());
+		vtop->RotateZ(60./180*TMath::Pi());
+	      }
+	    }
+	    TEllipse *el = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
 	    el->Draw();
 	  }
 	}
@@ -191,22 +208,32 @@ void DrawDTHits(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromete
     
     mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
 
-    double scale=1;
-    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-
-    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,2.,2.);
-    hitel->SetFillColor(2);
-    if(station+vnb==2)hitel->SetFillColor(3+vnb);
-    hitel->Draw();
-
-    
-    //draw xy projection
+    //draw xy projection before rotation
     if(station<3){
       TLine *tube = new TLine(-vtop->x()+350,vtop->y(),-vbot->x()+350,vbot->y());
       if(station+vnb==2)tube->SetLineColor(3+vnb);
       else tube->SetLineColor(2);
       tube->Draw();
     }
+    
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+      
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
+    hitel->SetFillColor(2);
+    if(station+vnb==2)hitel->SetFillColor(3+vnb);
+    hitel->Draw();
+
+    
+
   }
 }
 
@@ -236,10 +263,19 @@ void DrawDTHitsRT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrome
     
     mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
 
-    double scale=1;
-    if(station+vnb==2)scale=1./cos(60*3.14159/180);//scale stereo views
-
-    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,scale*(vtop->x()+vbot->x())/2,radius*2./1.8,radius*2./1.8);
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+    
+    
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,radius*2./1.8,radius*2./1.8);
     hitel->SetFillColor(2);
     if(station+vnb==2)hitel->SetFillColor(3+vnb);
     hitel->Draw();
