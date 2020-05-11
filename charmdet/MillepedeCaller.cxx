@@ -748,8 +748,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
-//		cout << "Printing fitted trajectory parameters" << endl;
-//		print_fitted_track(traj);
+		cout << "Printing fitted trajectory parameters" << endl;
+		print_fitted_track(traj);
 //		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
@@ -1159,8 +1159,9 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
 	vector<int> shifted_det_ids = {};
-	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
+//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
 //	vector<string> shifted_modules = {"T3bX"};
+	vector<string> shifted_modules = {};
 	for(string mod : shifted_modules)
 	{
 		for(int id : m_modules[mod])
