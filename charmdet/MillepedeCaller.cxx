@@ -676,7 +676,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 
 }
 
-double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, const char* spillname = nullptr)
+double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, const char* spillname)
 {
 	try
 	{
