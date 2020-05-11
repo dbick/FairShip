@@ -255,6 +255,111 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	return result;
 }
 
+std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree)
+{
+	vector<TVector3> linear_model = {track->get_position(), track->get_direction()};
+	vector<gbl::GblPoint> result = {};
+
+	vector<pair<int,double>> points = track->get_hits();
+	size_t n_points = points.size();
+	result.reserve(n_points);
+
+	//sort hits by arc length
+//	sort(points.begin(),points.end(),[](const genfit::TrackPoint* p1, const genfit::TrackPoint* p2){
+//		//sort for z-coordinates of bottom wire end - assumes no major differences in rotation around x axis for one layer
+//		return p1->getRawMeasurement()->getRawHitCoords()[2] < p2->getRawMeasurement()->getRawHitCoords()[2];
+//	});
+
+
+	TVector3 PCA_track(0,0,0);
+	TVector3 PCA_wire(0,0,0);
+	TVector3 closest_approach(0,0,0);
+	int detID,driftside;
+	double track_distance, rt, residual;
+	if(tree)
+	{
+		tree->SetBranchAddress("detectorID",&detID);
+		tree->SetBranchAddress("driftside",&driftside);
+		tree->SetBranchAddress("trackDistance",&track_distance);
+		tree->SetBranchAddress("rt",&rt);
+		tree->SetBranchAddress("residual",&residual);
+		tree->SetBranchAddress("wire_pca_x",&PCA_wire[0]);
+		tree->SetBranchAddress("wire_pca_y",&PCA_wire[1]);
+		tree->SetBranchAddress("wire_pca_z",&PCA_wire[2]);
+		tree->SetBranchAddress("meas_x",&closest_approach[0]);
+		tree->SetBranchAddress("meas_y",&closest_approach[1]);
+		tree->SetBranchAddress("meas_z",&closest_approach[2]);
+	}
+
+	//#pragma omp parallel for
+	for(size_t i = 0; i < n_points; ++i)
+	{
+		TVector3 PCA_track_last = PCA_track;
+		pair<int,double> point = points[i];
+		//get coords of upper and lower end of hit tube
+		TVector3 vbot;
+		TVector3 vtop;
+		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
+		double measurement = point.second; //rt distance [cm]
+
+		//if(measurement < 0.5)
+		//{
+		//	PCA_track = PCA_track_last;
+		//	continue;
+		//}
+
+		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
+
+		TMatrixD* jacobian;
+		if (i != 0)
+		{
+			jacobian = calc_jacobian(PCA_track_last, PCA_track);
+		}
+		else
+		{
+			jacobian = new TMatrixD(5,5);
+			jacobian->UnitMatrix();
+		}
+		result.push_back(gbl::GblPoint(*jacobian));
+		add_measurement_info(result.back(),closest_approach, measurement, sigma_spatial);
+
+		//calculate labels and global derivatives for hit
+		vector<int> label = calc_labels(MODULE,point.first);
+		TVector3 wire_bot_to_top = vtop - vbot;
+
+		TVector3 measurement_prediction, alignment_origin;
+		string module_descriptor;
+
+		switch (mode)
+		{
+		case MODULE:
+			module_descriptor = m_tube_id_to_module[point.first];
+			alignment_origin = calc_module_centerpos(make_pair(module_descriptor, m_modules[module_descriptor]));
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		case SINGLE_TUBE:
+			alignment_origin = vbot + 0.5 * (vtop - vbot);
+			measurement_prediction = PCA_track - alignment_origin;
+			break;
+		}
+		TMatrixD* globals = calc_global_parameters(measurement_prediction,closest_approach,linear_model,wire_bot_to_top);
+		result.back().addGlobals(label, *globals);
+		delete globals;
+		delete jacobian;
+		if(tree)
+		{
+			detID = point.first;
+			driftside = closest_approach[0] < 0 ? -1 : 1;
+			track_distance = closest_approach.Mag();
+			rt = measurement;
+			residual = measurement - closest_approach.Mag();
+			tree->Fill();
+		}
+	}
+
+	return result;
+}
+
 /**
  *
  */
@@ -566,9 +671,16 @@ pair<double,TMatrixD*> MillepedeCaller::single_jacobian_with_arclength(const gen
  */
 double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial, const char* spillname)
 {
+	GBL_seed_track seed(track);
+	return perform_GBL_refit(seed, sigma_spatial, spillname);
+
+}
+
+double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, const char* spillname = nullptr)
+{
 	try
 	{
-		vector < gbl::GblPoint > points = list_hits(&track, MODULE, sigma_spatial, m_output_tree);
+		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, m_output_tree);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
@@ -584,7 +696,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 		double chi2, lostWeight;
 
 		cout << "------------performing refit--------------" << endl;
-		cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
+//		cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
 
 
 		rc = traj.fit(chi2,ndf,lostWeight);
@@ -597,6 +709,7 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 	{
 		return -1;
 	}
+
 }
 
 //TODO document

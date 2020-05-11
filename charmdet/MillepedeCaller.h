@@ -22,6 +22,7 @@
 #include "MufluxSpectrometer.h"
 #include "MufluxSpectrometerHit.h"
 #include <iostream>
+#include "GBLseedtrack.h"
 
 //includes for MC testing
 #include <random>
@@ -48,6 +49,7 @@ public:
 	virtual ~MillepedeCaller();
 
 	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial, const char* spillname = nullptr);
+	double perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, const char* spillname = nullptr);
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3, std::map<int,double>* pede_corrections = nullptr);
 	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
@@ -66,6 +68,7 @@ private:
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
+	std::vector<gbl::GblPoint> list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
 	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
 
 	/*
