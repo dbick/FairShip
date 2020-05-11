@@ -17,11 +17,11 @@ public:
 	GBL_seed_track(const genfit::Track& track);
 	virtual ~GBL_seed_track();
 
-	inline const size_t get_number_of_hits() const;
-	inline const TVector3& get_position() const;
-	inline const TVector3& get_direction() const;
+	const size_t get_number_of_hits() const;
+	const TVector3& get_position() const;
+	const TVector3& get_direction() const;
 
-	inline const std::vector<std::pair<int,double>>& get_hits() const;
+	const std::vector<std::pair<int,double>>& get_hits() const;
 
 	const std::vector<int> get_hit_detIDs() const;
 

@@ -37,23 +37,23 @@ GBL_seed_track::GBL_seed_track::~GBL_seed_track()
 	// TODO Auto-generated destructor stub
 }
 
-inline const size_t GBL_seed_track::get_number_of_hits() const
+const size_t GBL_seed_track::get_number_of_hits() const
 {
 	return m_hits.size();
 }
 
 
-inline const TVector3& GBL_seed_track::get_position() const
+const TVector3& GBL_seed_track::get_position() const
 {
 	return m_position;
 }
 
-inline const TVector3& GBL_seed_track::get_direction() const
+const TVector3& GBL_seed_track::get_direction() const
 {
 	return m_direction;
 }
 
-inline const vector<pair<int,double>>& GBL_seed_track::get_hits() const
+const vector<pair<int,double>>& GBL_seed_track::get_hits() const
 {
 	return m_hits;
 }
