@@ -1396,6 +1396,8 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 
 	double z_beginning = 17.0;
 	double z_end = 739.0;
+	cout << "Beg: (" << offset_x_beginning << "," << offset_y_beginning << "," << z_beginning << ")"
+			<< "End : (" << offset_x_end << "," << offset_y_end << "," << z_end << ")" << endl;
 
 	TVector3 beginning = TVector3(offset_x_beginning, offset_y_beginning, z_beginning);
 	TVector3 end = TVector3(offset_x_end, offset_y_end, z_end);
