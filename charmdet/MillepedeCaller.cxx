@@ -1396,13 +1396,14 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 
 	double z_beginning = 17.0;
 	double z_end = 739.0;
-	cout << "Beg: (" << offset_x_beginning << "," << offset_y_beginning << "," << z_beginning << ")"
-			<< "End : (" << offset_x_end << "," << offset_y_end << "," << z_end << ")" << endl;
 
 	TVector3 beginning = TVector3(offset_x_beginning, offset_y_beginning, z_beginning);
 	TVector3 end = TVector3(offset_x_end, offset_y_end, z_end);
 	TVector3 direction = end - beginning;
 	vector<TVector3> result = {beginning, direction};
+
+	cout << "Beg: (" << beginning[0] << "," << beginning[1] << "," << beginning[2] << ")"
+				<< "End : (" << end[0] << "," << end[1] << "," << end[2] << ")" << endl;
 
 	return result;
 }
@@ -1410,7 +1411,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
 {
 	uniform_real_distribution<double> uniform(0.0,1.0);
-	normal_distribution<double> gaussian(0,12.5);
+	normal_distribution<double> gaussian(0,8.0);
 	//generate point somewhere near target
 	double z_beg = -300 + 80 * uniform(m_mersenne_twister);
 	double r_beg = 5 * uniform(m_mersenne_twister);
@@ -1427,6 +1428,8 @@ vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
 	TVector3 end(x_end, y_end, 17);
 
 	vector<TVector3> result = {beginning, end};
+	cout << "Beg: (" << beginning[0] << "," << beginning[1] << "," << beginning[2] << ")"
+					<< "End : (" << end[0] << "," << end[1] << "," << end[2] << ")" << endl;
 	return result;
 }
 
