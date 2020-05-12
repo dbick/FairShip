@@ -1411,7 +1411,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
 {
 	uniform_real_distribution<double> uniform(0.0,1.0);
-	normal_distribution<double> gaussian(0,5.0);
+	normal_distribution<double> gaussian(0,3.0);
 	//generate point somewhere near target
 	double z_beg = -400 + 80 * uniform(m_mersenne_twister);
 	double r_beg = 5 * uniform(m_mersenne_twister);
