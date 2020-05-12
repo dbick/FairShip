@@ -733,7 +733,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	vector<vector<TVector3>> tracks(n_tracks);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
-		tracks[i] = MC_gen_track();
+		tracks[i] = MC_gen_track_boosted();
 	}
 
 	unsigned int fitted = 0;
