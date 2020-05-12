@@ -1407,6 +1407,29 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 	return result;
 }
 
+vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
+{
+	uniform_real_distribution<double> uniform(0.0,1.0);
+	normal_distribution<double> gaussian(0,12.5);
+	//generate point somewhere near target
+	double z_beg = -300 + 80 * uniform(m_mersenne_twister);
+	double r_beg = 5 * uniform(m_mersenne_twister);
+	double rotation_beg = 2 * TMath::Pi() * uniform(m_mersenne_twister);
+	double x_beg = r_beg * TMath::Cos(rotation_beg);
+	double y_beg = r_beg * TMath::Sin(rotation_beg);
+	TVector3 beginning(x_beg, y_beg, z_beg);
+
+	//generate gaussian distribution of points close to center of T1 with width of 12.5cm in x and y
+	double r_end = gaussian(m_mersenne_twister);
+	double rotation_end = 2 * TMath::Pi() * uniform(m_mersenne_twister);
+	double x_end = r_end * TMath::Cos(rotation_end);
+	double y_end = r_end * TMath::Sin(rotation_end);
+	TVector3 end(x_end, y_end, 17);
+
+	vector<TVector3> result = {beginning, end};
+	return result;
+}
+
 /**
  * Generate unsmeared hits for a given MC track. The track is passed with its startpoint and direction to this method.
  * When generating hits the closest distance to the wire is calculated for every wire in the detector to this track. If the

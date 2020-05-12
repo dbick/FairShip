@@ -115,6 +115,7 @@ private:
 	 */
 	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits, std::map<int,double>* pede_corrections = nullptr, TTree* output_tree = nullptr);
 	std::vector<TVector3> MC_gen_track();
+	std::vector<TVector3> MC_gen_track_boosted();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 	void save_previous_rotations_to_disk(const char* filename);
