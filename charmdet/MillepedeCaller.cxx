@@ -1559,8 +1559,8 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 	//rotate tube itself
 	TVector3 cbot = vbot - tube_nominal_centerpos;
 	TVector3 ctop = vtop - tube_nominal_centerpos;
-	TVector3 new_top = new_tube_center + ctop;
-	TVector3 new_bot = new_tube_center + cbot;
+	TVector3 new_top = new_tube_center + (rot * ctop);
+	TVector3 new_bot = new_tube_center + (rot * cbot);
 
 	vector<TVector3> result = {new_top, new_bot};
 	return result;
