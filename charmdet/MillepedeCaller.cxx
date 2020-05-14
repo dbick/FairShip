@@ -1161,7 +1161,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	vector<int> shifted_det_ids = {};
 //	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
-	vector<string> shifted_modules = {"T3bX"};
+	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
+//	vector<string> shifted_modules = {"T3bX"};
 //	vector<string> shifted_modules = {};
 	for(string mod : shifted_modules)
 	{
@@ -1470,7 +1471,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		{
 			TVector3 translation(-0.5, 0, -0.2);
 			TRotation rot;
-			rot.RotateZ(TMath::Pi() / 6); //rotate 2 mrad around z axis
+			rot.RotateZ(180 / TMath::Pi()); //rotate 1 deg
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
@@ -1479,7 +1480,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 				vector<TVector3> top_bot_new = rotate_tube_in_module(id, rot);
 				wire_end_top = top_bot_new[0];
 				wire_end_bottom = top_bot_new[1];
-				cout << "Top: (" << wire_end_top[0] << ", " << wire_end_top[1] << ", " << wire_end_top[2] << ")" << endl;
+//				cout << "Top: (" << wire_end_top[0] << ", " << wire_end_top[1] << ", " << wire_end_top[2] << ")" << endl;
 			}
 		}
 		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
