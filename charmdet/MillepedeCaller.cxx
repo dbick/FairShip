@@ -733,8 +733,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	vector<vector<TVector3>> tracks(n_tracks);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
-//		tracks[i] = MC_gen_track_boosted();
-		tracks[i] = MC_gen_track();
+		tracks[i] = MC_gen_track_boosted();
+//		tracks[i] = MC_gen_track();
 	}
 
 	unsigned int fitted = 0;
@@ -750,7 +750,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
 		cout << "Printing fitted trajectory parameters" << endl;
-		print_fitted_track(traj);
+//		print_fitted_track(traj);
 //		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
 		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
@@ -1470,16 +1470,16 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		if(shifted_det_ids)
 		{
 			TVector3 translation(-0.5, 0, -0.2);
-			TRotation rot;
-			rot.RotateZ(TMath::Pi() / 180); //rotate 1 deg
+//			TRotation rot;
+//			rot.RotateZ(TMath::Pi() / 180); //rotate 1 deg
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
-//				wire_end_bottom = wire_end_bottom + translation;
-//				wire_end_top = wire_end_top + translation;
-				vector<TVector3> top_bot_new = rotate_tube_in_module(id, rot);
-				wire_end_top = top_bot_new[0];
-				wire_end_bottom = top_bot_new[1];
+				wire_end_bottom = wire_end_bottom + translation;
+				wire_end_top = wire_end_top + translation;
+//				vector<TVector3> top_bot_new = rotate_tube_in_module(id, rot);
+//				wire_end_top = top_bot_new[0];
+//				wire_end_bottom = top_bot_new[1];
 //				cout << "Top: (" << wire_end_top[0] << ", " << wire_end_top[1] << ", " << wire_end_top[2] << ")" << endl;
 			}
 		}
