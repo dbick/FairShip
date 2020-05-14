@@ -1471,7 +1471,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		{
 			TVector3 translation(-0.5, 0, -0.2);
 			TRotation rot;
-			rot.RotateZ(TMath::Pi() / 180 * 5); //rotate 1 deg
+			rot.RotateZ(TMath::Pi() / 360); //rotate 1 deg
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
@@ -1552,15 +1552,9 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 
 	TVector3 vtop, vbot;
 	MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
-	TVector3 tube_nominal_centerpos = vbot + 0.5 * (vtop - vbot);
-	TVector3 mod_center_to_tube_center = tube_nominal_centerpos - module_center;
-	TVector3 new_tube_center = module_center + (rot * mod_center_to_tube_center);
 
-	//rotate tube itself
-	TVector3 cbot = vbot - tube_nominal_centerpos;
-	TVector3 ctop = vtop - tube_nominal_centerpos;
-	TVector3 new_top = new_tube_center + (rot * ctop);
-	TVector3 new_bot = new_tube_center + (rot * cbot);
+	TVector3 new_top = module_center + rot * (vtop - module_center);
+	TVector3 new_bot = module_center + rot * (vbot - module_center);
 
 	vector<TVector3> result = {new_top, new_bot};
 	return result;
