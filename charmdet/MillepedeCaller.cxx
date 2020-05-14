@@ -733,7 +733,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	vector<vector<TVector3>> tracks(n_tracks);
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
-		tracks[i] = MC_gen_track_boosted();
+//		tracks[i] = MC_gen_track_boosted();
+		tracks[i] = MC_gen_track();
 	}
 
 	unsigned int fitted = 0;
@@ -1160,8 +1161,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 
 	vector<int> shifted_det_ids = {};
 //	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
-//	vector<string> shifted_modules = {"T3bX"};
-	vector<string> shifted_modules = {};
+	vector<string> shifted_modules = {"T3bX"};
+//	vector<string> shifted_modules = {};
 	for(string mod : shifted_modules)
 	{
 		for(int id : m_modules[mod])
@@ -1468,11 +1469,17 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		if(shifted_det_ids)
 		{
 			TVector3 translation(-0.5, 0, -0.2);
+			TRotation rot;
+			rot.RotateZ(2e-3); //rotate 2 mrad around z axis
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
-				wire_end_bottom = wire_end_bottom + translation;
-				wire_end_top = wire_end_top + translation;
+//				wire_end_bottom = wire_end_bottom + translation;
+//				wire_end_top = wire_end_top + translation;
+				vector<TVector3> top_bot_new = rotate_tube_in_module(id, rot);
+				wire_end_top = top_bot_new[0];
+				wire_end_bottom = top_bot_new[1];
+				cout << "Top: (" << wire_end_top[0] << ", " << wire_end_top[1] << ", " << wire_end_top[2] << ")" << endl;
 			}
 		}
 		wire_to_track = calc_shortest_distance(wire_end_top, wire_end_bottom, start, direction, nullptr, nullptr);
@@ -1526,6 +1533,38 @@ TMatrixD* MillepedeCaller::calc_jacobian(const TVector3& PCA_1, const TVector3& 
 
 	return jacobian;
 }
+
+/**
+ * Calculate top- and bottom end positions of a drift tube's sense wire when the module of tubes that contains this particular
+ * one is rotated from its nominal position
+ *
+ * @author Stefan Bieschke
+ * @version 1.0
+ *
+ * @param tube_id Detector ID of the tube
+ * @param rot Rotation as a ROOT TRotation object
+ */
+vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const TRotation& rot)
+{
+	string module = m_tube_id_to_module[tube_id];
+	TVector3 module_center = m_nominal_module_centerpos[module];
+
+	TVector3 vtop, vbot;
+	MufluxSpectrometer::TubeEndPoints(tube_id, vtop, vbot);
+	TVector3 tube_nominal_centerpos = vbot + 0.5 * (vtop - vbot);
+	TVector3 mod_center_to_tube_center = tube_nominal_centerpos - module_center;
+	TVector3 new_tube_center = module_center + (rot * mod_center_to_tube_center);
+
+	//rotate tube itself
+	TVector3 cbot = vbot - tube_nominal_centerpos;
+	TVector3 ctop = vtop - tube_nominal_centerpos;
+	TVector3 new_top = new_tube_center + ctop;
+	TVector3 new_bot = new_tube_center + cbot;
+
+	vector<TVector3> result = {new_top, new_bot};
+	return result;
+}
+
 
 void MillepedeCaller::save_previous_rotations_to_disk(const char* filename)
 {

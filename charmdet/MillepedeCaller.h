@@ -118,6 +118,7 @@ private:
 	std::vector<TVector3> MC_gen_track_boosted();
 	std::vector<std::pair<int,double>> MC_gen_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
+	std::vector<TVector3> rotate_tube_in_module(const int tube_id, const TRotation& rot);
 	void save_previous_rotations_to_disk(const char* filename);
 	TTree* create_output_tree();
 
