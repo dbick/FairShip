@@ -1471,7 +1471,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		{
 			TVector3 translation(-0.5, 0, -0.2);
 			TRotation rot;
-			rot.RotateZ(180 / TMath::Pi()); //rotate 1 deg
+			rot.RotateZ(TMath::Pi() / 180); //rotate 1 deg
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
