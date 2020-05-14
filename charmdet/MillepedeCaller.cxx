@@ -1550,7 +1550,7 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 	TVector3 module_center = m_nominal_module_centerpos[module];
 
 	TVector3 vtop, vbot;
-	MufluxSpectrometer::TubeEndPoints(tube_id, vtop, vbot);
+	MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
 	TVector3 tube_nominal_centerpos = vbot + 0.5 * (vtop - vbot);
 	TVector3 mod_center_to_tube_center = tube_nominal_centerpos - module_center;
 	TVector3 new_tube_center = module_center + (rot * mod_center_to_tube_center);
