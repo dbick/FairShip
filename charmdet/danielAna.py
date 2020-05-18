@@ -1,7 +1,7 @@
 
 #import yep
 import ROOT,os,time,sys,operator,atexit
-##ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
+#ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
 
 from decorators import *
 import __builtin__ as builtin
@@ -15,7 +15,6 @@ from argparse import ArgumentParser
 import shipunit as u
 import rootUtils as ut
 from array import array
-
 
 
 parser = ArgumentParser()
@@ -120,6 +119,29 @@ def localAna():
     f=ROOT.TFile.Open(options.listOfFiles)
     t=ROOT.TTreeReader("cbmsim",f)
     ROOT.dtAnaChain(t)
+    #ROOT.FilterDTSpectrum(t)
 
 
-localAna()
+
+def localAnaEvent(i):
+    f=ROOT.TFile.Open(options.listOfFiles)
+    t=ROOT.TTreeReader("cbmsim",f)
+    ROOT.dtAnaChain(t,i)
+
+
+def testEP():
+    #m=ROOT.MufluxSpectrometer()
+    #a=ROOT.TVector3()
+    #b=ROOT.TVector3()
+    #m.TubeEndPointsSurvey(10002001,a,b)
+    #m.TubeEndPointsSurvey(10002002,a,b)
+    #m.TubeEndPointsSurvey(10002003,a,b)
+    m=ROOT.MufluxSpectrometerDTSurvey()
+    m.Init()
+    m.Test(11102001)
+
+
+    
+    
+#localAna()
+#testEP()
