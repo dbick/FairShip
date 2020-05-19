@@ -455,6 +455,8 @@ vector<int> MillepedeCaller::labels_case_module(const int channel_id) const
 		{
 			base_label += 30;
 		}
+		//ADCB scheme
+		//TODO change that
 	}
 	else
 	{
@@ -1160,8 +1162,8 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 	normal_distribution<double> gaussian_smear(0,smearing_sigma); //mean 0, sigma 350um in cm
 
 	vector<int> shifted_det_ids = {};
-//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
-	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
+	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX", "T4aX", "T4bX", "T4cX","T4dX"};
+//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
 //	vector<string> shifted_modules = {"T3bX"};
 //	vector<string> shifted_modules = {};
 	for(string mod : shifted_modules)
@@ -1469,17 +1471,18 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-			TVector3 translation(-0.5, 0, -0.2);
+//			TVector3 translation(-0.5, 0, -0.2); //testing
+			TVector3 translation(0.03536, 0, -0.03536); //realistic
 			TRotation rot;
-			rot.RotateZ(TMath::Pi() / 360); //rotate 1 deg
+			rot.RotateZ(6.25e-4); //0.036 deg, means 500um offset at wire end
 			bool id_shifted = shifted_det_ids->end() != find(shifted_det_ids->begin(),shifted_det_ids->end(),id);
 			if(id_shifted)
 			{
-//				wire_end_bottom = wire_end_bottom + translation;
-//				wire_end_top = wire_end_top + translation;
 				vector<TVector3> top_bot_new = rotate_tube_in_module(id, rot);
 				wire_end_top = top_bot_new[0];
 				wire_end_bottom = top_bot_new[1];
+				wire_end_bottom = wire_end_bottom + translation;
+				wire_end_top = wire_end_top + translation;
 //				cout << "Top: (" << wire_end_top[0] << ", " << wire_end_top[1] << ", " << wire_end_top[2] << ")" << endl;
 			}
 		}
