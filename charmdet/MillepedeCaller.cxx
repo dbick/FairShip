@@ -751,7 +751,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		gbl::GblTrajectory traj(hitlist, false);
 		traj.milleOut(*m_gbl_mille_binary);
 		traj.fit(chi2, ndf, lostweight);
-		cout << "Printing fitted trajectory parameters" << endl;
+//		cout << "Printing fitted trajectory parameters" << endl;
 //		print_fitted_track(traj);
 //		print_model_parameters(track);
 		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
@@ -1198,6 +1198,17 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 		vtop[0] = vtop[0] - correction_x;
 		vbot[2] = vbot[2] - correction_z;
 		vtop[2] = vtop[2] - correction_z;
+		double rotation_gamma = (*pede_corrections)[labels_for_tube[5]];
+		//apply rotation
+		TRotation rot;
+		rot.RotateZ(-rotation_gamma);
+		string module_name = m_tube_id_to_module[hits[0].first];
+		TVector3 mod_center = m_nominal_module_centerpos[module_name];
+		TVector3 new_top = mod_center + (rot * (vtop-mod_center));
+		TVector3 new_bot = mod_center + (rot * (vbot-mod_center));
+		vtop = new_top;
+		vbot = new_bot;
+
 	}
 	TVector3 PCA_wire;
 	TVector3 PCA_track;
@@ -1272,7 +1283,16 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 			vtop[0] = vtop[0] - correction_x;
 			vbot[2] = vbot[2] - correction_z;
 			vtop[2] = vtop[2] - correction_z;
-
+			double rotation_gamma = (*pede_corrections)[labels_for_tube[5]];
+			//apply rotation
+			TRotation rot;
+			rot.RotateZ(-rotation_gamma);
+			string module_name = m_tube_id_to_module[hits[i].first];
+			TVector3 mod_center = m_nominal_module_centerpos[module_name];
+			TVector3 new_top = mod_center + (rot * (vtop-mod_center));
+			TVector3 new_bot = mod_center + (rot * (vbot-mod_center));
+			vtop = new_top;
+			vbot = new_bot;
 		}
 		closest_approach = calc_shortest_distance(vtop,vbot,mc_track_model[0],mc_track_model[1],&PCA_wire,&PCA_track);
 		//TODO Remove Debugging stuff
