@@ -40,6 +40,7 @@ PixelModulesPoint.cxx
 MufluxSpectrometer.cxx
 MufluxSpectrometerHit.cxx
 MufluxSpectrometerPoint.cxx
+MufluxSpectrometerDTSurvey.cxx
 SciFi.cxx
 SciFiPoint.cxx
 SciFiHit.cxx
