@@ -2284,6 +2284,9 @@ def bestTracks():
     bestTracks = cloneKiller(theTracks1 + theTracks2)
     return bestTracks
 
+spect_survey = ROOT.MufluxSpectrometerDTSurvey()
+spect_survey.Init()
+
 def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # need measurements
     global fitter
@@ -2332,7 +2335,9 @@ def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
                         found = True
                         break
                 if not found: print "fittrack: digi not found, something wrong here",tdc
-        vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
+        vbot = ROOT.TVector3()
+        vtop = ROOT.TVector3()
+        spect_survey.TubeEndPointsSurvey(hit.GetDetectorID(),vtop,vbot)
         """
         Apply pede corrections for fit by changing vbot, vtop to new values
         """
