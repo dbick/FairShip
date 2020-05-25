@@ -53,6 +53,7 @@ RPCTrack.cxx
 MufluxReco.cxx
 MillepedeCaller.cxx
 GBLseedtrack.cxx
+MufluxSpectrometerDTSurvey.cxx
 )
 
 Set(HEADERS )

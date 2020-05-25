@@ -29,6 +29,7 @@
 #pragma link C++ class MufluxReco+;
 #pragma link C++ class MillepedeCaller+;
 #pragma link C++ class GBL_seed_track+;
+#pragma link C++ class MufluxSpectrometerDTSurvey+;
 
 #endif
 
