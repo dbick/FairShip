@@ -1356,6 +1356,7 @@ DTEfficiencyFudgefactor(method=-1)
 if sTree.GetBranch('MCTrack'):  
       muflux_Reco.setNoisyChannels(deadChannels4MC)
       muflux_Reco.setDeadChannels(deadChannelsRPC4MC)
+      
 def MakeKeysToDThits(minToT=-999):
     keysToDThits={}
     key = -1
@@ -2277,6 +2278,7 @@ def momDisplay():
         h[t].Update()
 
 sigma_spatial = 0.25 # almost binary resolution! (ShipGeo.MufluxSpectrometer.InnerTubeDiameter/2.)/ROOT.TMath.Sqrt(12) 
+sigma_spatial = 0.05
 
 def bestTracks():
     theTracks1 = findTracks(PR=11)
@@ -2297,10 +2299,12 @@ def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # approximate covariance
     covM = ROOT.TMatrixDSym(6)
     resolution   = sigma_spatial
+    res2 = resolution**2
+    cov_entry = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
     if not withTDC: resolution = 10*sigma_spatial
-    for  i in range(3):   covM[i][i] = resolution*resolution
+    for  i in range(3):   covM[i][i] = res2
     # covM[0][0]=resolution*resolution*100.
-    for  i in range(3,6): covM[i][i] = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
+    for  i in range(3,6): covM[i][i] = cov_entry
     rep = ROOT.genfit.RKTrackRep(13)
 # start state
     state = ROOT.genfit.MeasuredStateOnPlane(rep)
@@ -8034,7 +8038,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                 refit
                 """
                 print("Processing event number {}".format(Nr))
-                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,3*0.05,sTree.GetCurrentFile().GetName())              
+                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,sTree.GetCurrentFile().GetName())              
                 if(chi2_gbl == -1):
                     aborted_gbl_refits += 1
                 else:
