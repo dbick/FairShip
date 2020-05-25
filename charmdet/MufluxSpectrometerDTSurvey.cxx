@@ -422,20 +422,20 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
     
     if(module==10){
       
-      distance.top_jur.SetXYZ(-11*42*mm-10*mm,-170*mm-8.35*mm,30.3*mm);
+      distance.top_jur.SetXYZ(-11*42*mm,-170*mm-8.35*mm,30.3*mm);
       distance.top_sal.SetXYZ(-10*mm,-170*mm-8.35*mm,30.3*mm);
       
-      distance.bot_jur.SetXYZ(-11*42*mm-10*mm,70*mm+8.65*mm,30.3*mm);
+      distance.bot_jur.SetXYZ(-11*42*mm,70*mm+8.65*mm,30.3*mm);
       distance.bot_sal.SetXYZ(-10*mm,70*mm+8.65*mm,30.3*mm);
     
     }
 
     else if(module==11){ //rotated
       
-      distance.top_jur.SetXYZ(-11*42*mm-10*mm,-170*mm,-143.7*mm);
+      distance.top_jur.SetXYZ(-11*42*mm,-170*mm,-143.7*mm);
       distance.top_sal.SetXYZ(-10*mm,-170*mm,-143.7*mm);
       
-      distance.bot_jur.SetXYZ(-11*42*mm-10*mm,70*mm,-143.7*mm);
+      distance.bot_jur.SetXYZ(-11*42*mm,70*mm,-143.7*mm);
       distance.bot_sal.SetXYZ(-10*mm,70*mm,-143.7*mm);
 
       double stereo=DTSurveyStereoAngle(DetectorID);//-1.051;
