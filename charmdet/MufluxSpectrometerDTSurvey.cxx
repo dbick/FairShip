@@ -14,6 +14,18 @@
  */
 MufluxSpectrometerDTSurvey::MufluxSpectrometerDTSurvey(){}
 
+/**
+ * Destructor. 
+ *
+ * @brief Destructor
+ *
+ * @author Daniel Bick
+ * @date May 25, 2020
+ * @version 1.0
+ *
+ */
+MufluxSpectrometerDTSurvey::~MufluxSpectrometerDTSurvey(){}
+
 
 /**
  * Initializes the std map for the tube end points based on the survey
@@ -396,8 +408,8 @@ DTSurveyPoints  MufluxSpectrometerDTSurvey::DTSurveyMuflux(Int_t DetectorID){
  * @param DetectorID ID of any tube in the module
  *
  * @author Daniel Bick
- * @date May 20, 2020
- * @version 1.0
+ * @date May 25, 2020
+ * @version 1.1
  *
  */
 DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t DetectorID){
@@ -418,7 +430,7 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
     
     }
 
-    else if(module==11){
+    else if(module==11){ //rotated
       
       distance.top_jur.SetXYZ(-11*42*mm-10*mm,-170*mm,-143.7*mm);
       distance.top_sal.SetXYZ(-10*mm,-170*mm,-143.7*mm);
@@ -438,10 +450,10 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
 
     else if(module==20){ //rotated
 
-      distance.top_sal.SetXYZ(11*42*mm+10*mm,-170*mm,143.7*mm);
+      distance.top_sal.SetXYZ(11*42*mm,-170*mm,143.7*mm);
       distance.top_jur.SetXYZ(10*mm,-170*mm,143.7*mm);
       
-      distance.bot_sal.SetXYZ(11*42*mm+10*mm,70*mm,143.7*mm);
+      distance.bot_sal.SetXYZ(11*42*mm,70*mm,143.7*mm);
       distance.bot_jur.SetXYZ(10*mm,70*mm,143.7*mm);
 
       double stereo=DTSurveyStereoAngle(DetectorID);
@@ -454,12 +466,12 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
       
     }
 
-    else if(module==21){ //rotated
+    else if(module==21){ 
 
-      distance.top_sal.SetXYZ(11*42*mm+10*mm,-170*mm-7.3*mm,-30.3*mm);
+      distance.top_sal.SetXYZ(11*42*mm,-170*mm-7.3*mm,-30.3*mm);
       distance.top_jur.SetXYZ(10*mm,-170*mm-7.3*mm,-30.3*mm);
       
-      distance.bot_sal.SetXYZ(11*42*mm+10*mm,70*mm+8.45*mm,-30.3*mm);
+      distance.bot_sal.SetXYZ(11*42*mm,70*mm+8.45*mm,-30.3*mm);
       distance.bot_jur.SetXYZ(10*mm,70*mm+8.45*mm,-30.3*mm);
 
     }

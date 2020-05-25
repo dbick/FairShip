@@ -61,7 +61,7 @@ class MufluxSpectrometerDTSurvey{
  public:
   
   MufluxSpectrometerDTSurvey();
-  ~MufluxSpectrometerDTSurvey();
+  virtual ~MufluxSpectrometerDTSurvey();
   void Init();
   void Test(Int_t DetectorID);
   Int_t Module(Int_t DetectorID);
