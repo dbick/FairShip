@@ -5,6 +5,7 @@
 #include "ScintillatorHit.h"
 #include "MufluxSpectrometer.h"
 #include "MufluxSpectrometerRTRelation.h"
+#include "MufluxSpectrometerDTSurvey.h"
 
 #include "TROOT.h"
 #include "TStyle.h"
@@ -54,6 +55,7 @@ void DrawDTGeom(TCanvas *& disp){
   disp->Range(0,-120,800,120);
   disp->cd();
   
+  //MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
   
   Int_t DetectorID;
   
@@ -232,7 +234,61 @@ void DrawDTHits(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromete
     if(station+vnb==2)hitel->SetFillColor(3+vnb);
     hitel->Draw();
 
+  }
+}
+
+
+void DrawDTHitsToT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,TCanvas *& disp){
+  
+  disp->cd();
+  gStyle->SetPalette(kRainBow);
+  
+  Int_t DetectorID;
+  
+  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
+  TVector3 *vtop = new TVector3();
+  TVector3 *vbot = new TVector3();
     
+  //Draw Hits
+  
+  int n =  Digi_MufluxSpectrometerHits.GetSize();
+  for(int i=0;i<n;i++){
+    MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[i]);
+    DetectorID = hit->GetDetectorID();
+    double radius=2;
+    //if(rtrel) radius = RTRel.GetRadius(hit->GetDigi());
+    
+    int station=DetectorID/10000000;
+    int vnb=(DetectorID%10000000)/1000000;
+    
+    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
+
+    //draw xy projection before rotation
+    /*
+    if(station<3){
+      TLine *tube = new TLine(-vtop->x()+350,vtop->y(),-vbot->x()+350,vbot->y());
+      if(station+vnb==2)tube->SetLineColor(3+vnb);
+      else tube->SetLineColor(2);
+      tube->Draw();
+    }
+    */    
+
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+      
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
+    //hitel->SetFillColor(gROOT->GetColor(5));
+    //(short)hit->GetTimeOverThreshold()));
+    //if(station+vnb==2)hitel->SetFillColor(3+vnb);
+    hitel->Draw();
 
   }
 }
@@ -287,6 +343,8 @@ void DrawDTHitsRT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrome
 
 
 void DrawDTTangent(tangent2d tangent, TCanvas *& disp){
+  if(tangent.p<0) return; //ignore invalid hits
+
   disp->cd();
 
   double z1=0;
@@ -299,6 +357,8 @@ void DrawDTTangent(tangent2d tangent, TCanvas *& disp){
 }
 
 void DrawDTStereoTangent(tangent2d tangent, TCanvas *& disp, int station){
+  if(tangent.p<0) return; //ignore invalid hits
+
   disp->cd();
 
   double z1=0;
