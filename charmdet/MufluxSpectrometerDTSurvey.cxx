@@ -440,11 +440,11 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
 
       double stereo=DTSurveyStereoAngle(DetectorID);//-1.051;
       
-      distance.top_jur.RotateZ(-stereo);
-      distance.top_sal.RotateZ(-stereo);
+      distance.top_jur.RotateZ(stereo);
+      distance.top_sal.RotateZ(stereo);
       
-      distance.bot_jur.RotateZ(-stereo);
-      distance.bot_sal.RotateZ(-stereo);
+      distance.bot_jur.RotateZ(stereo);
+      distance.bot_sal.RotateZ(stereo);
       
     }
 
@@ -458,11 +458,11 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
 
       double stereo=DTSurveyStereoAngle(DetectorID);
       
-      distance.top_jur.RotateZ(-stereo);
-      distance.top_sal.RotateZ(-stereo);
+      distance.top_jur.RotateZ(stereo);
+      distance.top_sal.RotateZ(stereo);
       
-      distance.bot_jur.RotateZ(-stereo);
-      distance.bot_sal.RotateZ(-stereo);
+      distance.bot_jur.RotateZ(stereo);
+      distance.bot_sal.RotateZ(stereo);
       
     }
 
@@ -543,12 +543,12 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
 
   if(station==11){
     double stereo=DTSurveyStereoAngle(DetectorID);
-    staggering.RotateZ(-stereo);
+    staggering.RotateZ(stereo);
   }
 
   if(station==20){
     double stereo=DTSurveyStereoAngle(DetectorID);
-    staggering.RotateZ(-stereo);
+    staggering.RotateZ(stereo);
   }
   
   return staggering;
@@ -589,9 +589,11 @@ void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 
 Double_t MufluxSpectrometerDTSurvey::DTSurveyStereoAngle(Int_t DetectorID){
   
   DTSurveyPoints spoint=DTSurveyMuflux(DetectorID);
+
+  //carefull: angle is calculated based on long side of the module. negative atan gives correct orientation of rotaion  
   
-  Double_t angle_jur=atan((spoint.top_jur.x()-spoint.bot_jur.x())/(spoint.top_jur.y()-spoint.bot_jur.y()));
-  Double_t angle_sal=atan((spoint.top_sal.x()-spoint.bot_sal.x())/(spoint.top_sal.y()-spoint.bot_sal.y()));
+  Double_t angle_jur=-atan((spoint.top_jur.x()-spoint.bot_jur.x())/(spoint.top_jur.y()-spoint.bot_jur.y()));
+  Double_t angle_sal=-atan((spoint.top_sal.x()-spoint.bot_sal.x())/(spoint.top_sal.y()-spoint.bot_sal.y()));
 
   //std::cout << angle_jur << " " << angle_sal << std::endl;
 

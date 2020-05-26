@@ -212,13 +212,13 @@ void dtAnaChain(TTreeReader *t, int event){
 
   double beta=-60./180*TMath::Pi();
 
-  beta=-surv->DTSurveyStereoAngle(11002001);
+  beta=surv->DTSurveyStereoAngle(11002001);
   
   std::cout << "Stereo 1 -- y0 " << (-cos(beta)*all.p/cos(all.alpha)+stereo1.p/cos(stereo1.alpha))/sin(beta) << "\t\t delta_y " << (-tan(stereo1.alpha)+tan(all.alpha)*cos(beta))/sin(beta) << std::endl;
 
   //beta=-60./180*TMath::Pi();
 
-  beta=-surv->DTSurveyStereoAngle(20002001);
+  beta=surv->DTSurveyStereoAngle(20002001);
   std::cout << "Stereo 2 -- y0 " << (-cos(beta)*all.p/cos(all.alpha)+stereo2.p/cos(stereo2.alpha))/sin(beta) << "\t\t delta_y " << (-tan(stereo2.alpha)+tan(all.alpha)*cos(beta))/sin(beta) << std::endl;
   
   
@@ -449,15 +449,15 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
       Double_t angle;
       if(hit->GetDetectorID()/10000000==1){
 	if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	else angle=-stereo_angle;
-	vbot->RotateZ(angle);
-	vtop->RotateZ(angle);
+	else angle=stereo_angle;
+	vbot->RotateZ(-angle);
+	vtop->RotateZ(-angle);
       }
       if(hit->GetDetectorID()/10000000==2){
 	if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	else angle=stereo_angle;
-	vbot->RotateZ(angle);
-	vtop->RotateZ(angle);
+	else angle=-stereo_angle;
+	vbot->RotateZ(-angle);
+	vtop->RotateZ(-angle);
       }
     }
     
@@ -482,15 +482,15 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
 	Double_t angle;
 	if(hit->GetDetectorID()/10000000==1){
 	  if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	  else angle=-stereo_angle;
-	  vbot->RotateZ(angle);
-	  vtop->RotateZ(angle);
+	  else angle=stereo_angle;
+	  vbot->RotateZ(-angle);
+	  vtop->RotateZ(-angle);
 	}
 	if(hit->GetDetectorID()/10000000==2){
 	  if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	  else angle=stereo_angle;
-	  vbot->RotateZ(angle);
-	  vtop->RotateZ(angle);
+	  else angle=-stereo_angle;
+	  vbot->RotateZ(-angle);
+	  vtop->RotateZ(-angle);
 	}
       }
       
@@ -559,15 +559,15 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
 		  Double_t angle;
 		  if(hit->GetDetectorID()/10000000==1){
 		    if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-		    else angle=-stereo_angle;
-		    vbot->RotateZ(angle);
-		    vtop->RotateZ(angle);
+		    else angle=stereo_angle;
+		    vbot->RotateZ(-angle);
+		    vtop->RotateZ(-angle);
 		  }
 		  if(hit->GetDetectorID()/10000000==2){
 		    if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-		    else angle=stereo_angle;
-		    vbot->RotateZ(angle);
-		    vtop->RotateZ(angle);
+		    else angle=-stereo_angle;
+		    vbot->RotateZ(-angle);
+		    vtop->RotateZ(-angle);
 		  }
 		}
 
