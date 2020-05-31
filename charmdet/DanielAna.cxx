@@ -284,6 +284,9 @@ void dtPatAna(TTreeReader *t){
 
   TPat->Fill();
   event++;
+
+
+
   /* 
   std::cout << "Front" << std::endl << front.closehits << " \t" << front.alpha*180./3.14159 << " \t" << front.p << " \t" << front.avres << " \t" << front.avres*front.closehits/(front.closehits-2) <<  std::endl;;
 
@@ -610,6 +613,16 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
   //  for (std::list<tangent2d>::iterator it=listoftangents.begin(); it != listoftangents.end(); ++it)
   //  if(it->closehits>2) std::cout << it->closehits << " \t" << it->alpha*180./3.14159 << " \t" << it->p << " \t" << it->avres << " \t" << it->avres*it->closehits/(it->closehits-2) <<  std::endl;;
 
+  
+  vbot->Delete();
+  vtop->Delete();
+    
+  //delete hit;
+
+  delete mySpectrometer;
+  delete survey;
+
+  
   return listoftangents.front();
 																							
 }
