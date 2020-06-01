@@ -4,18 +4,9 @@
 #include "TTreeReaderArray.h"
 #include "MufluxSpectrometerHit.h"
 #include "MufluxSpectrometerRTRelation.h"
+#include "MufluxSpectrometerDTPatRec.h"
 #include "TCanvas.h"
 
-
-struct tangent2d {
-  double alpha;
-  double p;
-  int closehits;
-  double avres; //average residual
-  bool operator<(tangent2d &t){
-        return closehits > t.closehits;
-  }
-} ;
 
 void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits);
 void DrawDTEvent(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,MufluxSpectrometerRTRelation &RTRel);
