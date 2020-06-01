@@ -24,10 +24,7 @@ TH1D *FilterDTSpectrum(TTreeReader *&t);
 void PrintSpectrometerHit(MufluxSpectrometerHit &hit);
 void PrintScintillatorHit(ScintillatorHit &hit);
 
-int GetStationB(int DetectorID);
-int GetView(int DetectorID);
-
-tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel, int station, int view);
+//tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel, int station, int view);
 
 void checkAlignment();
 void drawModule(Int_t module);
