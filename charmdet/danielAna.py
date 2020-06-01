@@ -128,7 +128,11 @@ def localAnaEvent(i):
     t=ROOT.TTreeReader("cbmsim",f)
     ROOT.dtAnaChain(t,i)
 
-
+def patAna():
+    f=ROOT.TFile.Open(options.listOfFiles)
+    t=ROOT.TTreeReader("cbmsim",f)
+    ROOT.dtPatAna(t)
+    
 def testEP():
     #m=ROOT.MufluxSpectrometer()
     #a=ROOT.TVector3()
