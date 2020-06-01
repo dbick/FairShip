@@ -7,6 +7,7 @@
 #include "MufluxSpectrometerRTRelation.h"
 #include "MufluxSpectrometerDTTools.h"
 #include "MufluxSpectrometerDTSurvey.h"
+#include "MufluxSpectrometerDTPatRec.h"
 
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
@@ -210,6 +211,8 @@ void dtAnaChain(TTreeReader *t, int event){
   std::cout << "Alpha in vertical modules " << all.alpha*180./TMath::Pi() << std::endl;
   std::cout << "Expected Alpha from Stereo Moudles  " << atan(-tan(stereo1.alpha)-tan(stereo2.alpha))*180./TMath::Pi() << std::endl;
 
+
+  /*
   double beta=-60./180*TMath::Pi();
 
   beta=surv->DTSurveyStereoAngle(11002001);
@@ -220,7 +223,23 @@ void dtAnaChain(TTreeReader *t, int event){
 
   beta=surv->DTSurveyStereoAngle(20002001);
   std::cout << "Stereo 2 -- y0 " << (-cos(beta)*all.p/cos(all.alpha)+stereo2.p/cos(stereo2.alpha))/sin(beta) << "\t\t delta_y " << (-tan(stereo2.alpha)+tan(all.alpha)*cos(beta))/sin(beta) << std::endl;
-  
+  */
+
+
+  Double_t beta1=surv->DTSurveyStereoAngle(11002001);
+  Double_t beta2=surv->DTSurveyStereoAngle(20002001);
+
+  Double_t yslope = YslopeFromProjections(stereo1.alpha, beta1, stereo2.alpha, beta2);
+  Double_t y0 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, stereo2.alpha, stereo2.p, beta2);
+
+  Double_t yslope1 = YslopeFromProjections(stereo1.alpha, beta1, front.alpha, 0);
+  Double_t y01 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, front.alpha, front.p, 0);
+
+  Double_t yslope2 = YslopeFromProjections(stereo2.alpha, beta2, front.alpha, 0);
+  Double_t y02 = Y0FromProjections(stereo2.alpha, stereo2.p, beta2, front.alpha, front.p, 0);
+
+  std::cout << "Slope:\t" << yslope << " \t" << yslope1 << " \t" << yslope2 << std::endl;
+  std::cout << "Y0:\t" << y0 << " \t" << y01 << " \t" << y02 << std::endl;
   
   
 }
@@ -233,6 +252,8 @@ void dtPatAna(TTreeReader *t){
   
   MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
   surv->Init();
+  Double_t beta1=surv->DTSurveyStereoAngle(11002001);
+  Double_t beta2=surv->DTSurveyStereoAngle(20002001);
   
   TH1D *HDriftTimes = FilterDTSpectrum(t);
 
@@ -252,6 +273,11 @@ void dtPatAna(TTreeReader *t){
   tangent2d stereo1;
   tangent2d stereo2;
 
+ 
+
+  Double_t yslope,yslope1,yslope2;
+  Double_t y0,y01,y02;
+
   int event=0;
   
   TPat->Branch("falpha",&front.alpha,"falpha/D");
@@ -265,7 +291,12 @@ void dtPatAna(TTreeReader *t){
   TPat->Branch("s2alpha",&stereo2.alpha,"s2alpha/D");
   TPat->Branch("s2p",&stereo2.p,"s2p/D");
   TPat->Branch("event",&event,"event/I");
-
+  TPat->Branch("yslope",&yslope,"yslope/D");
+  TPat->Branch("yslope1",&yslope1,"yslope1/D");
+  TPat->Branch("yslope2",&yslope2,"yslope2/D");
+  TPat->Branch("y0",&y0,"y0/D");
+  TPat->Branch("y01",&y01,"y01/D");
+  TPat->Branch("y02",&y02,"y02/D");
   
   
   //t->Next();
@@ -282,39 +313,42 @@ void dtPatAna(TTreeReader *t){
   stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,1);
   stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,2);
 
+  if(stereo1.p>=0&&stereo2.p>=0){
+    yslope = YslopeFromProjections(stereo1.alpha, beta1, stereo2.alpha, beta2);
+    y0 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, stereo2.alpha, stereo2.p, beta2);
+  }
+  else{
+    yslope=0;
+    y0=0;
+  }
+
+  if(stereo1.p>=0&&front.p>=0){
+  yslope1 = YslopeFromProjections(stereo1.alpha, beta1, front.alpha, 0);
+  y01 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, front.alpha, front.p, 0);
+  }
+  else{
+    yslope1=0;
+    y0=0;
+  }
+
+
+  if(stereo2.p>=0&&front.p>=0){
+    yslope2 = YslopeFromProjections(stereo2.alpha, beta2, front.alpha, 0);
+    y02 = Y0FromProjections(stereo2.alpha, stereo2.p, beta2, front.alpha, front.p, 0);}
+  else{
+    yslope2=0;
+    y02=0;
+  }
+
+  
   TPat->Fill();
   event++;
-
-
-
-  /* 
-  std::cout << "Front" << std::endl << front.closehits << " \t" << front.alpha*180./3.14159 << " \t" << front.p << " \t" << front.avres << " \t" << front.avres*front.closehits/(front.closehits-2) <<  std::endl;;
-
-  std::cout << "Back" << std::endl << back.closehits << " \t" << back.alpha*180./3.14159 << " \t" << back.p << " \t" << back.avres << " \t" << back.avres*back.closehits/(back.closehits-2) <<  std::endl;;
-
-    std::cout << "All" << std::endl << all.closehits << " \t" << all.alpha*180./3.14159 << " \t" << all.p << " \t" << all.avres << " \t" << all.avres*all.closehits/(all.closehits-2) <<  std::endl;;
-
-  std::cout << "S1" << std::endl << stereo1.closehits << " \t" << stereo1.alpha*180./3.14159 << " \t" << stereo1.p << " \t" << stereo1.avres << " \t" << stereo1.avres*stereo1.closehits/(stereo1.closehits-2) <<  std::endl;;
-
-  std::cout << "S2" << std::endl << stereo2.closehits << " \t" << stereo2.alpha*180./3.14159 << " \t" << stereo2.p << " \t" << stereo2.avres << " \t" << stereo2.avres*stereo2.closehits/(stereo2.closehits-2) <<  std::endl;;  
-
-  std::cout << all.p/all.alpha << " " << stereo1.p/stereo1.alpha-stereo2.p/stereo2.alpha << std::endl;
-  std::cout << "sum tan stereo: " << tan(stereo1.alpha)+tan(stereo2.alpha) << " \t tan vertical: " << tan(all.alpha) << std::endl;
-
-  std::cout << "Alpha in vertical modules " << all.alpha*180./TMath::Pi() << std::endl;
-  std::cout << "Expected Alpha from Stereo Moudles  " << atan(-tan(stereo1.alpha)-tan(stereo2.alpha))*180./TMath::Pi() << std::endl;
-
-
-  double beta=-surv->DTSurveyStereoAngle(11002001);
   
-  std::cout << "Stereo 1 -- y0 " << (-cos(beta)*all.p/cos(all.alpha)+stereo1.p/cos(stereo1.alpha))/sin(beta) << "\t\t delta_y " << (-tan(stereo1.alpha)+tan(all.alpha)*cos(beta))/sin(beta) << std::endl;
+  //if(event>=10000)break;
 
-  //beta=-60./180*TMath::Pi();
+  }
 
-  beta=-surv->DTSurveyStereoAngle(20002001);
-  std::cout << "Stereo 2 -- y0 " << (-cos(beta)*all.p/cos(all.alpha)+stereo2.p/cos(stereo2.alpha))/sin(beta) << "\t\t delta_y " << (-tan(stereo2.alpha)+tan(all.alpha)*cos(beta))/sin(beta) << std::endl;
-  */
-  }  
+  
   fout->Write();
   fout->Close();
 }
@@ -403,232 +437,6 @@ void PrintScintillatorHit(ScintillatorHit &hit){
 }
 
 
-int GetStationB(int DetectorID){ //retuns binary station
-  return 1<<(DetectorID/10000000-1);
-}
-
-int GetView(int DetectorID){
-  int station=GetStationB(DetectorID);
-  int vnb=(DetectorID%10000000)/1000000;
-  if(station==1&&vnb==1)return 1;
-  if(station==2&&vnb==0)return 2;
-  return 0;
-}
-
-
-tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel, int bin_station, int view){
-
-  bool b_survey=true;
-
-  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
-  MufluxSpectrometerDTSurvey *survey = new MufluxSpectrometerDTSurvey();
-  
-  TVector3 *vtop = new TVector3();
-  TVector3 *vbot = new TVector3();
-
-  Double_t x[2],z[2],r[2];
-  MufluxSpectrometerHit* hit;
-
-  std::list<tangent2d> listoftangents;
-  
-  
-  int n =  Digi_MufluxSpectrometerHits.GetSize();
-  for(int i=0;i<n;i++){
-    hit = &(Digi_MufluxSpectrometerHits[i]);
-
-    //int station=hit->GetDetectorID()/10000000;
-    //int vnb=(hit->GetDetectorID()%10000000)/1000000;
-    //if(station>2||station+vnb==2)continue; //only T1/2 no stereo
-
-    if(GetView(hit->GetDetectorID())!=view)continue;
-    if(GetStationB(hit->GetDetectorID())&bin_station==0)continue;
-    
-    if(!b_survey) mySpectrometer->TubeEndPoints(hit->GetDetectorID(), *vtop, *vbot);
-    else survey->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
-
-    Double_t stereo_angle=60./180*TMath::Pi();
-    
-    if(view!=0){
-      Double_t angle;
-      if(hit->GetDetectorID()/10000000==1){
-	if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	else angle=stereo_angle;
-	vbot->RotateZ(-angle);
-	vtop->RotateZ(-angle);
-      }
-      if(hit->GetDetectorID()/10000000==2){
-	if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	else angle=-stereo_angle;
-	vbot->RotateZ(-angle);
-	vtop->RotateZ(-angle);
-      }
-    }
-    
-    x[0]=(vtop->x()+vbot->x())/2;
-    z[0]=(vbot->z()+vbot->z())/2;
-    r[0]=RTRel.GetRadius(hit->GetDigi());
-
-    for(int j=i+1;j<n;j++){
-      hit = &(Digi_MufluxSpectrometerHits[j]);
-
-      //station=hit->GetDetectorID()/10000000;
-      //vnb=(hit->GetDetectorID()%10000000)/1000000;
-      //if(station>2||station+vnb==2)continue; //only T1/2 no stereo
-
-      if(GetView(hit->GetDetectorID())!=view)continue;
-      if((GetStationB(hit->GetDetectorID())&bin_station)==0)continue;
-      
-      if(!b_survey) mySpectrometer->TubeEndPoints(hit->GetDetectorID(), *vtop, *vbot);
-      else survey->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
-
-      if(view!=0){
-	Double_t angle;
-	if(hit->GetDetectorID()/10000000==1){
-	  if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	  else angle=stereo_angle;
-	  vbot->RotateZ(-angle);
-	  vtop->RotateZ(-angle);
-	}
-	if(hit->GetDetectorID()/10000000==2){
-	  if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-	  else angle=-stereo_angle;
-	  vbot->RotateZ(-angle);
-	  vtop->RotateZ(-angle);
-	}
-      }
-      
-      
-      x[1]=(vtop->x()+vbot->x())/2;
-      z[1]=(vbot->z()+vbot->z())/2;
-      r[1]=RTRel.GetRadius(hit->GetDigi());
-
-    
-      /*
-      std::cout << "Comparing two hits" << std::endl;
-      std::cout << "\t Hit 0 at " << x[0] << ", " << z[0] << "\t\t" << "radius " << r[0] << std::endl;
-      std::cout << "\t Hit 1 at " << x[1] << ", " << z[1] << "\t\t" << "radius " << r[1] << std::endl; 
-      */
-     
-
-      Double_t deltax=x[0]-x[1];
-      Double_t deltaz=z[0]-z[1];
-      
-      Double_t distance=sqrt(pow(deltax,2)+pow(deltaz,2));
-      //if(distance<5)continue; //skip adjacent tubes since high uncertainty due to lever arm 
-
-      //std::cout << "\t Distance is " << distance <<std::endl;
-      
-      Double_t deltar[2];
-      deltar[0]=r[0]-r[1];
-      deltar[1]=r[0]+r[1];
-
-      Int_t pm[2];
-      pm[0]=1;
-      pm[1]=-1;
-      
-      for(int k=0;k<2;k++){
-	for(int l=0;l<2;l++){
-	  for(int m=0;m<2;m++){
-	    int o=4*k+2*l+m;
-	    tangent2d tangent;
-	    tangent.alpha=2*atan((deltaz+pm[l]*sqrt(pow(deltaz,2)-pow(deltar[k],2)+pow(deltax,2)))/(pm[m]*deltar[k]+deltax));
-	    //m is the "sign" used for r[0] 
-	    tangent.p=x[0]*cos(tangent.alpha)+z[0]*sin(tangent.alpha)-pm[m]*r[0];
-	    /*
-	    std::cout << "\t\t" << alpha_single[o]*180./3.14159 << "   \t" << p_single[o] ;//<< std::endl;
-	    p_single[o]=x[1]*cos(alpha_single[o])+z[1]*sin(alpha_single[o])-pm[(m+k)%2]*r[1];
-	    std::cout << "   \t" << p_single[o] << std::endl;
-	    */
-	    if(tangent.p>=0){
-	      //std::cout << "\t\t" << tangent.alpha*180./3.14159 << "   \t" << tangent.p << std::endl;
-
-	      tangent.closehits=0;
-	      tangent.avres=0;
-	      //std::cout << "\t\t\t Distance to other hits: "; 
-	      //distance to other hits
-	      for(int ii=0;ii<n;ii++){
-		hit = &(Digi_MufluxSpectrometerHits[ii]);
-
-		//station=hit->GetDetectorID()/10000000;
-		//vnb=(hit->GetDetectorID()%10000000)/1000000;
-		//if(station+vnb==2)continue; //no stereo
-		if(GetView(hit->GetDetectorID())!=view)continue;
-		if((GetStationB(hit->GetDetectorID())&bin_station)==0)continue;
-
-		if(!b_survey) mySpectrometer->TubeEndPoints(hit->GetDetectorID(), *vtop, *vbot);
-		else survey->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
-		
-		if(view!=0){
-		  Double_t angle;
-		  if(hit->GetDetectorID()/10000000==1){
-		    if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-		    else angle=stereo_angle;
-		    vbot->RotateZ(-angle);
-		    vtop->RotateZ(-angle);
-		  }
-		  if(hit->GetDetectorID()/10000000==2){
-		    if(b_survey) angle = survey->DTSurveyStereoAngle(hit->GetDetectorID());
-		    else angle=-stereo_angle;
-		    vbot->RotateZ(-angle);
-		    vtop->RotateZ(-angle);
-		  }
-		}
-
-		   
-		Double_t xhit=(vtop->x()+vbot->x())/2;
-		Double_t zhit=(vtop->z()+vbot->z())/2;
-
-		Double_t track_distance = xhit*cos(tangent.alpha)+zhit*sin(tangent.alpha)-tangent.p;
-		Double_t residual = fabs(track_distance)-RTRel.GetRadius(hit->GetDigi());
-		if(fabs(residual)<.9&&fabs(track_distance)<2.1){ //2.1 referes to half tube distance... realistic is 1.815, but for pattern reco ok
-		  tangent.closehits++;
-		  tangent.avres+=fabs(residual);
-		}
-		//std::cout << "\t" << residual;
-	      }
-	      tangent.avres/=tangent.closehits;
-	      //we need at least 3 hits for a valid tangent
-	      if(tangent.closehits>2)listoftangents.push_back(tangent);
-	      //std::cout << "\t\t\t" << tangent.closehits << " close hits, average " << tangent.avres << std::endl;
-	    }
-	  }
-	}
-      }
-    }
-  }
-
-  if(listoftangents.size()==0){
-    tangent2d falsetangent;
-    falsetangent.p=-1; // real p always positive
-    falsetangent.alpha=-10; // real alpha does not exceed 2pi
-    falsetangent.closehits=0;
-    falsetangent.avres=0;
-    return falsetangent;
-  }
-  
-  listoftangents.sort();
-
-
-  
-  //  for (std::list<tangent2d>::iterator it=listoftangents.begin(); it != listoftangents.end(); ++it)
-  //  if(it->closehits>2) std::cout << it->closehits << " \t" << it->alpha*180./3.14159 << " \t" << it->p << " \t" << it->avres << " \t" << it->avres*it->closehits/(it->closehits-2) <<  std::endl;;
-
-  
-  vbot->Delete();
-  vtop->Delete();
-    
-  //delete hit;
-
-  delete mySpectrometer;
-  delete survey;
-
-  
-  return listoftangents.front();
-																							
-}
-
-
-
 void checkAlignment(){
   
   
@@ -642,6 +450,7 @@ void checkAlignment(){
   TVector3 *stop = new TVector3();
   TVector3 *sbot = new TVector3();
 
+  bool table=false;
   
   for(int module=0;module<12;module++){
     std::cout << "Module " << module << std::endl;
@@ -660,16 +469,16 @@ void checkAlignment(){
 	  mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
 	  surv->TubeEndPointsSurvey(DetectorID, *stop, *sbot);
 
-
-	  //std::cout << DetectorID << " TOP   " << stop->x()-vtop->x() << "  \t" << stop->y()-vtop->y() << "  \t" << stop->z()-vtop->z() << "  \t\t BOT   " << sbot->x()-vbot->x() << "  \t" << sbot->y()-vbot->y() << "  \t" << sbot->z()-vbot->z() << "\t\t\t\t\t" << vtop->x()-vbot->x() << std::endl;
+	  if(!table){
+	    // std::cout << DetectorID << " TOP   " << stop->x()-vtop->x() << "  \t" << stop->y()-vtop->y() << "  \t" << stop->z()-vtop->z() << "  \t\t BOT   " << sbot->x()-vbot->x() << "  \t" << sbot->y()-vbot->y() << "  \t" << sbot->z()-vbot->z() << "\t\t\t\t\t" << vtop->x()-vbot->x() << std::endl;
+	    
 	  
-	  /*
 	  std::cout << DetectorID << "\t TOP \t survey \t FairShip \t Delta \t\t BOT\t survey \t FairShip \t Delta " << std::endl;
-	  std::cout << "       x \t\t "  << stop->x() << "   \t " << vtop->x() << "   \t " <<  stop->x()-vtop->x() << "   \t\t "  << sbot->x() << "  \t " << vbot->x() << "   \t " <<  sbot->x()-vbot->x() << std:: endl;
-	  std::cout << "       y \t\t "  << stop->y() << "   \t " << vtop->y() << "   \t " <<  stop->y()-vtop->y() << "   \t\t "  << sbot->y() << "  \t " << vbot->y() << "   \t " <<  sbot->y()-vbot->y() << std:: endl;
-	  std::cout << "       z \t\t "  << stop->z() << "   \t " << vtop->z() << "   \t " <<  stop->z()-vtop->z() << "   \t\t "  << sbot->z() << "  \t " << vbot->z() << "   \t " <<  sbot->z()-vbot->z() << std:: endl;
+	  std::cout << "       x \t\t "  << stop->x() << "   \t " << vtop->x() << "   \t " <<  stop->x()-vtop->x() << "   \t\t "  << sbot->x() << "    \t " << vbot->x() << "    \t " <<  sbot->x()-vbot->x() << std:: endl;
+	  std::cout << "       y \t\t "  << stop->y() << "   \t " << vtop->y() << "   \t " <<  stop->y()-vtop->y() << "   \t\t "  << sbot->y() << "    \t " << vbot->y() << "    \t " <<  sbot->y()-vbot->y() << std:: endl;
+	  std::cout << "       z \t\t "  << stop->z() << "   \t " << vtop->z() << "   \t " <<  stop->z()-vtop->z() << "   \t\t "  << sbot->z() << "    \t " << vbot->z() << "    \t " <<  sbot->z()-vbot->z() << std:: endl;
 
-	  */
+	  }
 	  
 	  
 	}
@@ -678,9 +487,8 @@ void checkAlignment(){
       
     }
     
-     std::cout << module << " & " << stop->x()-vtop->x() << " & " << stop->y()-vtop->y() << " & " << stop->z()-vtop->z() << " & " << sbot->x()-vbot->x() << " & " << sbot->y()-vbot->y() << " & " << sbot->z()-vbot->z() << " \\\\" << std::endl;
-    
-    //   std::cout << "-------------------------------------------------------------------------------------------------------------------------" << std::endl;
+    if(table)std::cout << module << " & " << stop->x()-vtop->x() << " & " << stop->y()-vtop->y() << " & " << stop->z()-vtop->z() << " & " << sbot->x()-vbot->x() << " & " << sbot->y()-vbot->y() << " & " << sbot->z()-vbot->z() << " \\\\" << std::endl;
+    else  std::cout << "-------------------------------------------------------------------------------------------------------------------------" << std::endl;
   }
   
 }
