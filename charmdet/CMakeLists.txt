@@ -41,6 +41,7 @@ MufluxSpectrometer.cxx
 MufluxSpectrometerHit.cxx
 MufluxSpectrometerPoint.cxx
 MufluxSpectrometerDTSurvey.cxx
+MufluxSpectrometerDTPatRec.cxx
 SciFi.cxx
 SciFiPoint.cxx
 SciFiHit.cxx
