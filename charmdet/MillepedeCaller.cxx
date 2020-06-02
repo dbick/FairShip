@@ -204,6 +204,12 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 		//}
 
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
+		//reject hits too far away from seed track
+		if(closest_approach.Mag() > 2) //2cm for tube radius = 1.815cm... lets be gentle
+		{
+			cout << "Rejected hit for detID: " << det_id << ", distance to seed track was: " << closest_approach.Mag() << " cm." << endl;
+			continue;
+		}
 
 		TMatrixD* jacobian;
 		if (i != 0)
