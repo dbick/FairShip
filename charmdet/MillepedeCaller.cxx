@@ -306,8 +306,7 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		//get coords of upper and lower end of hit tube
 		TVector3 vbot;
 		TVector3 vtop;
-		detID = point.first;
-		m_survey.TubeEndPointsSurvey(detID, vtop, vbot);
+		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
 //		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
 		double measurement = point.second; //rt distance [cm]
 
@@ -318,6 +317,10 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		//}
 
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
+		if(closest_approach.Mag() > 2.00)
+		{
+			continue;
+		}
 
 		TMatrixD* jacobian;
 		if (i != 0)
