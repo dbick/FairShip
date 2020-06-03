@@ -25,6 +25,7 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	root_output << "datatree_" << out_file_name << ".root";
 	m_output_file = new TFile(root_output.str().c_str(),"RECREATE");
 	m_output_tree = create_output_tree();
+	m_survey.Init();
 
 
 	m_modules["T1U"] = {};
@@ -305,7 +306,9 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		//get coords of upper and lower end of hit tube
 		TVector3 vbot;
 		TVector3 vtop;
-		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
+		detID = point.first;
+		m_survey.TubeEndPointsSurvey(detID, vtop, vbot);
+//		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
 		double measurement = point.second; //rt distance [cm]
 
 		//if(measurement < 0.5)

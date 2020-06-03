@@ -23,6 +23,7 @@
 #include "MufluxSpectrometerHit.h"
 #include <iostream>
 #include "GBLseedtrack.h"
+#include "MufluxSpectrometerDTSurvey.h"
 
 //includes for MC testing
 #include <random>
@@ -65,6 +66,7 @@ private:
 	std::unordered_map<std::string,TVector3> m_nominal_module_centerpos; //nominal geometric center of a drift tube module
 	TFile* m_output_file;
 	TTree* m_output_tree;
+	MufluxSpectrometerDTSurvey m_survey;
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
