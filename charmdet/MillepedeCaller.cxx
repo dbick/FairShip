@@ -262,7 +262,7 @@ vector<gbl::GblPoint> MillepedeCaller::list_hits(const genfit::Track* track, con
 	return result;
 }
 
-std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree)
+std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, map<int,double>* pede_corrections, TTree* tree)
 {
 	vector<TVector3> linear_model = {track->get_position(), track->get_direction()};
 	vector<gbl::GblPoint> result = {};
@@ -307,6 +307,27 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		TVector3 vbot;
 		TVector3 vtop;
 		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
+		if (pede_corrections)
+		{
+			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
+			double correction_x = (*pede_corrections)[labels_for_tube[0]];
+			double correction_z = (*pede_corrections)[labels_for_tube[2]];
+			vbot[0] = vbot[0] - correction_x;
+			vtop[0] = vtop[0] - correction_x;
+			vbot[2] = vbot[2] - correction_z;
+			vtop[2] = vtop[2] - correction_z;
+			double rotation_gamma = (*pede_corrections)[labels_for_tube[5]];
+			//apply rotation
+			TRotation rot;
+			rot.RotateZ(-rotation_gamma);
+			string module_name = m_tube_id_to_module[point.first];
+			TVector3 mod_center = m_nominal_module_centerpos[module_name];
+			TVector3 new_top = mod_center + (rot * (vtop - mod_center));
+			TVector3 new_bot = mod_center + (rot * (vbot - mod_center));
+			vtop = new_top;
+			vbot = new_bot;
+
+		}
 //		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
 		double measurement = point.second; //rt distance [cm]
 
@@ -534,26 +555,6 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 	alignment_to_measurement.Invert();
 	TMatrixD mat_alignment_to_measurement = rot_to_matrix(alignment_to_measurement);
 
-//	//Debugging:
-//	cout << endl;
-//	cout << "Prediction in global coords: " << endl;
-//	measurement_prediction.Print();
-//	cout << "Wire direction: " << endl;
-//	wire_bot_to_top.Print();
-//	cout << "Transform global to alignment (A): " << endl;
-//	mat_global_to_alignment.Print();
-//	cout << "Pred in alignment sys (A * p)" << endl;
-//	meas_prediction_in_alignment_system.Print();
-//	cout << "Transform global to measurement (M): " << endl;
-//	mat_global_to_measurement.Print();
-//	cout << "Pred in meas sys (M * p):" << endl;
-//	meas_prediction_in_meas_system.Print();
-//	cout << "Test: Meas to align transform " << endl;
-//	TVector3 testvec = alignment_to_measurement * meas_prediction_in_meas_system;
-//	testvec.Print();
-//	cout << endl;
-
-
 	TMatrixD dmdg(3,6);
 	TMatrixD* result = new TMatrixD(3,6);
 	TMatrixD drdm(3,3);
@@ -745,6 +746,18 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 			cout << it->first << " " << it->second << endl;
 		}
 	}
+	vector<int> shifted_det_ids = { };
+//	vector<string> shifted_modules = { "T3aX", "T3bX", "T3cX", "T3dX", "T4aX", "T4bX", "T4cX", "T4dX" };
+	//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
+	//	vector<string> shifted_modules = {"T3bX"};
+		vector<string> shifted_modules = {};
+	for (string mod : shifted_modules)
+	{
+		for (int id : m_modules[mod])
+		{
+			shifted_det_ids.push_back(id);
+		}
+	}
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
@@ -760,22 +773,13 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<pair<int,double>> hits = MC_gen_clean_hits(track[0], track[1]);
+		vector<pair<int,double>> hits = MC_gen_clean_hits(track[0], track[1],&shifted_det_ids);
 		if(hits.size() < min_hits)
 		{
 			continue;
 		}
-		cout << "Printing unsmeared hits:" << endl;
-		for(auto hit : hits)
-		{
-			cout << hit.first << "\t" << hit.second << endl;
-		}
 		smear_hits(hits,350e-6);
-		cout << "Printing smeared hits:" << endl;
-		for(auto hit : hits)
-		{
-			cout << hit.first << "\t" << hit.second << endl;
-		}
+
 		GBL_seed_track seed(track, hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
 		perform_GBL_refit(seed, 350e-6);
