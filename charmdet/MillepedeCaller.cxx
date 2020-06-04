@@ -556,11 +556,11 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		{
 			continue;
 		}
-		smear_hits(hits,350e-6);
+		smear_hits(hits,350e-4);
 
-		GBL_seed_track seed(track, hits);
+		GBL_seed_track seed(track,hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
-		perform_GBL_refit(seed, 350e-6, pede_corrections);
+		perform_GBL_refit(seed, 350e-4, pede_corrections);
 
 		++fitted;
 	}
