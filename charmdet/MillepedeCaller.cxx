@@ -178,7 +178,7 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		TVector3 vbot;
 		TVector3 vtop;
 //		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
-		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
+		MufluxSpectrometer::TubeEndPoints(point.first, vbot, vtop);
 		if (pede_corrections)
 		{
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
@@ -474,39 +474,32 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 
 double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial,map<int,double>* pede_corrections, const char* spillname)
 {
-	try
+
+	vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, pede_corrections, m_output_tree);
+	gbl::GblTrajectory traj(points,false); //param false for B=0
+
+	traj.milleOut(*m_gbl_mille_binary);
+	//check track validity
+	if(!traj.isValid())
 	{
-		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, pede_corrections, m_output_tree);
-		gbl::GblTrajectory traj(points,false); //param false for B=0
-
-		traj.milleOut(*m_gbl_mille_binary);
-		//check track validity
-		if(!traj.isValid())
-		{
-			cout << "Error, GBL trajectory is invalid." << endl;
-			cerr << "Error, GBL trajectory is invalid." << endl;
-			return -1;
-		}
-
-		int rc, ndf;
-		double chi2, lostWeight;
-//		cout << "Seed slope (dx,dy): " << track.get_direction()[0]/track.get_direction()[2] << ", " << track.get_direction()[1]/track.get_direction()[2] << endl;
-
-		cout << "------------performing refit--------------" << endl;
-//		cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
-
-
-		rc = traj.fit(chi2,ndf,lostWeight);
-		cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
-		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
-
-		return chi2;
-	}
-	catch(const genfit::Exception& e)
-	{
+		cout << "Error, GBL trajectory is invalid." << endl;
+		cerr << "Error, GBL trajectory is invalid." << endl;
 		return -1;
 	}
 
+	int rc, ndf;
+	double chi2, lostWeight;
+//	cout << "Seed slope (dx,dy): " << track.get_direction()[0]/track.get_direction()[2] << ", " << track.get_direction()[1]/track.get_direction()[2] << endl;
+
+	cout << "------------performing refit--------------" << endl;
+//	cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
+
+
+	rc = traj.fit(chi2,ndf,lostWeight);
+	cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
+	cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+
+	return chi2;
 }
 
 //TODO document
@@ -567,6 +560,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		++fitted;
 	}
 	file.close();
+//	tree->Write();
+//	debuggingfile.Close();
 
 	return 0.0;
 }
@@ -824,7 +819,7 @@ TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& 
 	for(int id : module_name_id_list_pair.second)
 	{
 //		m_survey.TubeEndPointsSurvey(id, wire_top, wire_bot);
-		MufluxSpectrometer::TubeEndPoints(id, wire_top, wire_bot);
+		MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
 		//calculate centerpos of single wire
 		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
 		center_pos += wire_center;
@@ -1057,7 +1052,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 	{
 		int id = entry.first;
 //		m_survey.TubeEndPointsSurvey(id, wire_end_top, wire_end_bottom);
-		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
+		MufluxSpectrometer::TubeEndPoints(id, wire_end_bottom, wire_end_top);
 		if(shifted_det_ids)
 		{
 			TVector3 translation(0.03536, 0, -0.03536); //realistic
@@ -1085,10 +1080,10 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 	//sort with lambda comparison
 	sort(result.begin(), result.end(), [&](pair<int,double> element1, pair<int,double> element2){
 //		m_survey.TubeEndPointsSurvey(element1.first, wire_end_top, wire_end_bottom);
-		MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_top, wire_end_bottom);
+		MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_bottom, wire_end_top);
 		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 //		m_survey.TubeEndPointsSurvey(element2.first, wire_end_top, wire_end_bottom);
-		MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_top, wire_end_bottom);
+		MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_bottom, wire_end_top);
 		double z2 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		return z1 < z2;
 		});
@@ -1154,7 +1149,7 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 
 	TVector3 vtop, vbot;
 //	m_survey.TubeEndPointsSurvey(tube_id, vtop, vbot);
-	MufluxSpectrometer::TubeEndPoints(tube_id, vtop, vbot);
+	MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
 
 	TVector3 new_top = module_center + rot * (vtop - module_center);
 	TVector3 new_bot = module_center + rot * (vbot - module_center);
