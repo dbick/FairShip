@@ -114,6 +114,12 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	{
 		m_nominal_module_centerpos[entry.first] = calc_module_centerpos(entry);
 	}
+
+	//Print module center positions:
+	for(auto it = m_nominal_module_centerpos.begin(); it != m_nominal_module_centerpos.end(); ++it)
+	{
+		it->second.Print();
+	}
 }
 
 
@@ -977,9 +983,9 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 	uniform_real_distribution<double> uniform(0.0, 1.0);
 	double offset_x_beginning = m_nominal_module_centerpos["T1X"][0] - 21.0 + 42.0 * uniform(m_mersenne_twister);
 	double offset_y_beginning = m_nominal_module_centerpos["T1X"][1] -21.0 + 42.0 * uniform(m_mersenne_twister);
-	double dist_a_to_d = m_nominal_module_centerpos["T3aX"][0] - m_nominal_module_centerpos["T3dX"][0];
-	double offset_x_end = m_nominal_module_centerpos["T3dX"][0] + dist_a_to_d * uniform(m_mersenne_twister);
-	double offset_y_end = m_nominal_module_centerpos["T3dX"][1] - 75.0 + 150.0 * uniform(m_mersenne_twister);
+	double downstream_station_width = m_nominal_module_centerpos["T4aX"][0] - m_nominal_module_centerpos["T4dX"][0] + 42.0;
+	double offset_x_end = m_nominal_module_centerpos["T4dX"][0] - 21.0 + downstream_station_width * uniform(m_mersenne_twister);
+	double offset_y_end = m_nominal_module_centerpos["T4dX"][1] - 75.0 + 150.0 * uniform(m_mersenne_twister);
 
 	double z_beginning = 17.0;
 	double z_end = 739.0;
