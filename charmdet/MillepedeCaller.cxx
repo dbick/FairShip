@@ -114,12 +114,6 @@ MillepedeCaller::MillepedeCaller(const char* out_file_name)
 	{
 		m_nominal_module_centerpos[entry.first] = calc_module_centerpos(entry);
 	}
-
-	//Print module center positions:
-	for(auto it = m_nominal_module_centerpos.begin(); it != m_nominal_module_centerpos.end(); ++it)
-	{
-		it->second.Print();
-	}
 }
 
 
