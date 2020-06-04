@@ -70,7 +70,7 @@ private:
 
 	//helper methods
 	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
-	std::vector<gbl::GblPoint> list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, TTree* tree);
+	std::vector<gbl::GblPoint> list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, TTree* tree = nullptr);
 	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
 
 	/*
