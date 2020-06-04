@@ -1512,7 +1512,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 	for(auto entry : m_tube_id_to_module)
 	{
 		int id = entry.first;
-		MufluxSpectrometer::TubeEndPoints(id, wire_end_top, wire_end_bottom);
+		m_survey.TubeEndPointsSurvey(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
 //			TVector3 translation(-0.5, 0, -0.2); //testing
@@ -1540,9 +1540,9 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 
 	//sort with lambda comparison
 	sort(result.begin(), result.end(), [&](pair<int,double> element1, pair<int,double> element2){
-		MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_top, wire_end_bottom);
+		m_survey.TubeEndPointsSurvey(element1.first, wire_end_top, wire_end_bottom);
 		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
-		MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_top, wire_end_bottom);
+		m_survey.TubeEndPointsSurvey(element2.first, wire_end_top, wire_end_bottom);
 		double z2 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		return z1 < z2;
 		});
