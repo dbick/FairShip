@@ -548,6 +548,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 
 	unsigned int fitted = 0;
+	#pragma omp parallel for
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
@@ -562,6 +563,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
 		perform_GBL_refit(seed, 350e-4, pede_corrections);
 
+		#pragma omp atomic
 		++fitted;
 	}
 	file.close();
