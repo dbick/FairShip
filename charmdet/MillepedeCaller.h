@@ -69,15 +69,8 @@ private:
 	MufluxSpectrometerDTSurvey m_survey;
 
 	//helper methods
-	std::vector<gbl::GblPoint> list_hits(const genfit::Track* track, const alignment_mode& mode, double sigma_spatial, TTree* tree);
 	std::vector<gbl::GblPoint> list_hits(const GBL_seed_track* track, const alignment_mode& mode, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, TTree* tree = nullptr);
 	void add_measurement_info(gbl::GblPoint& point, const TVector3& closest_approach, const double measurement, const double sigma_spatial) const;
-
-	/*
-	 * Helpers for jacobian calculation
-	 */
-	TMatrixD* calc_jacobian(const genfit::Track* track, const unsigned int hit_id_1, const unsigned int hit_id_2) const;
-	std::pair<double,TMatrixD*> single_jacobian_with_arclength(const genfit::Track& track, const unsigned int hit_id) const;
 
 	/*
 	 * Helpers for projection and residuals
@@ -100,8 +93,6 @@ private:
 	std::vector<int> calc_labels(const alignment_mode mode, const int channel_id) const;
 	std::vector<int> labels_case_module(const int channel_id) const;
 	TMatrixD* calc_global_parameters(const TVector3& measurement_prediction, const TVector3& closest_approach, const std::vector<TVector3>& linear_model, const TVector3& wire_bot_to_top) const;
-	void apply_pede_correction(TVector3& vbot, TVector3& vtop, const std::vector<double>& corrections);
-
 
 	/*
 	 * Checks for consistency and debugging
@@ -115,14 +106,12 @@ private:
 	/*
 	 * Monte-Carlo Tracks for testing
 	 */
-	std::vector<gbl::GblPoint> MC_list_hits(const std::vector<TVector3>& mc_track_model, const alignment_mode& mode, double smearing_sigma, unsigned int min_hits, std::map<int,double>* pede_corrections = nullptr, TTree* output_tree = nullptr);
 	std::vector<TVector3> MC_gen_track();
 	std::vector<TVector3> MC_gen_track_boosted();
 	std::vector<std::pair<int,double>> MC_gen_clean_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	void smear_hits(std::vector<std::pair<int,double>>& unsmeared, const double sigma);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;
 	std::vector<TVector3> rotate_tube_in_module(const int tube_id, const TRotation& rot);
-	void save_previous_rotations_to_disk(const char* filename);
 	TTree* create_output_tree();
 
 };
