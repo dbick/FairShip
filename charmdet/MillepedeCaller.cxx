@@ -765,7 +765,17 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		{
 			continue;
 		}
+		cout << "Printing unsmeared hits:" << endl;
+		for(auto hit : hits)
+		{
+			cout << hit.first << "\t" << hit.second << endl;
+		}
 		smear_hits(hits,350e-6);
+		cout << "Printing smeared hits:" << endl;
+		for(auto hit : hits)
+		{
+			cout << hit.first << "\t" << hit.second << endl;
+		}
 		GBL_seed_track seed(track, hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
 		perform_GBL_refit(seed, 350e-6);
