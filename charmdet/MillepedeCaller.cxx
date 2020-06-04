@@ -471,11 +471,11 @@ double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sig
 
 }
 
-double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, const char* spillname)
+double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial,map<int,double>* pede_corrections, const char* spillname)
 {
 	try
 	{
-		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, nullptr, m_output_tree);
+		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, pede_corrections, m_output_tree);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
@@ -559,7 +559,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 		GBL_seed_track seed(track, hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
-		perform_GBL_refit(seed, 350e-6);
+		perform_GBL_refit(seed, 350e-6, pede_corrections);
 
 		++fitted;
 	}
