@@ -976,10 +976,11 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 	 * Module: T4dX Centerpos = -74.48      9.92025 748.4325
 	 */
 	uniform_real_distribution<double> uniform(0.0, 1.0);
-	double offset_x_beginning = -19.1775 + 42.0 * uniform(m_mersenne_twister);
-	double offset_y_beginning = -22.995 + 42.0 * uniform(m_mersenne_twister);
-	double offset_x_end = -95.48 + 193.22 * uniform(m_mersenne_twister);
-	double offset_y_end = -65.0 + 150.0 * uniform(m_mersenne_twister);
+	double offset_x_beginning = m_nominal_module_centerpos["T1X"][0] - 21.0 + 42.0 * uniform(m_mersenne_twister);
+	double offset_y_beginning = m_nominal_module_centerpos["T1X"][1] -21.0 + 42.0 * uniform(m_mersenne_twister);
+	double dist_a_to_d = m_nominal_module_centerpos["T3aX"][0] - m_nominal_module_centerpos["T3dX"][0];
+	double offset_x_end = m_nominal_module_centerpos["T3dX"][0] + dist_a_to_d * uniform(m_mersenne_twister);
+	double offset_y_end = m_nominal_module_centerpos["T3dX"][1] - 75.0 + 150.0 * uniform(m_mersenne_twister);
 
 	double z_beginning = 17.0;
 	double z_end = 739.0;
@@ -1054,7 +1055,6 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 		m_survey.TubeEndPointsSurvey(id, wire_end_top, wire_end_bottom);
 		if(shifted_det_ids)
 		{
-//			TVector3 translation(-0.5, 0, -0.2); //testing
 			TVector3 translation(0.03536, 0, -0.03536); //realistic
 			TRotation rot;
 			rot.RotateZ(6.25e-4); //0.036 deg, means 500um offset at wire end
