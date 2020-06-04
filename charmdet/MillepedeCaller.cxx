@@ -1560,7 +1560,7 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 	return result;
 }
 
-void MillepedeCaller::smear_hits(std::vector<std::pair<int,double>> unsmeared, const double sigma)
+void MillepedeCaller::smear_hits(vector<pair<int,double>>& unsmeared, const double sigma)
 {
 	normal_distribution<double> gaussian_smear(0,sigma);
 	for(size_t i = 0; i < unsmeared.size(); ++i)
