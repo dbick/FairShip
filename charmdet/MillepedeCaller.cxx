@@ -284,7 +284,7 @@ void MillepedeCaller::add_measurement_info(gbl::GblPoint& point, const TVector3&
 	TMatrixD rot_mat = rot_to_matrix(rotation_global_to_measurement);
 	TMatrixD projection_matrix = calc_projection_matrix(fit_system_base_vectors,rot_mat);
 	TVectorD rotated_residual(2);
-	rotated_residual[0] =  measurement - closest_approach.Mag();
+	rotated_residual[0] = measurement - closest_approach.Mag();
 	rotated_residual[1] = 0;
 
 	TVectorD precision(rotated_residual);
@@ -542,7 +542,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 	unsigned int fitted = 0;
 	#pragma omp parallel for
-	for(int i = 0; i < tracks.size(); ++i)
+	for(size_t i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
 		vector<pair<int,double>> hits = MC_gen_clean_hits(track[0], track[1],&shifted_det_ids);
@@ -1094,9 +1094,11 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 void MillepedeCaller::smear_hits(vector<pair<int,double>>& unsmeared, const double sigma)
 {
 	normal_distribution<double> gaussian_smear(0,sigma);
+	double smear;
 	for(size_t i = 0; i < unsmeared.size(); ++i)
 	{
-		unsmeared[i].second = TMath::Abs(unsmeared[i].second + gaussian_smear(m_mersenne_twister));
+		smear = gaussian_smear(m_mersenne_twister);
+		unsmeared[i].second = TMath::Abs(unsmeared[i].second + smear);
 	}
 }
 
