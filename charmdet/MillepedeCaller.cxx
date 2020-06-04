@@ -183,14 +183,14 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
 			double correction_x = (*pede_corrections)[labels_for_tube[0]];
 			double correction_z = (*pede_corrections)[labels_for_tube[2]];
-			vbot[0] = vbot[0] - correction_x;
-			vtop[0] = vtop[0] - correction_x;
-			vbot[2] = vbot[2] - correction_z;
-			vtop[2] = vtop[2] - correction_z;
+			vbot[0] = vbot[0] + correction_x;
+			vtop[0] = vtop[0] + correction_x;
+			vbot[2] = vbot[2] + correction_z;
+			vtop[2] = vtop[2] + correction_z;
 			double rotation_gamma = (*pede_corrections)[labels_for_tube[5]];
 			//apply rotation
 			TRotation rot;
-			rot.RotateZ(-rotation_gamma);
+			rot.RotateZ(rotation_gamma);
 			string module_name = m_tube_id_to_module[point.first];
 			TVector3 mod_center = m_nominal_module_centerpos[module_name];
 			TVector3 new_top = mod_center + (rot * (vtop - mod_center));
