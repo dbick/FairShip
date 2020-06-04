@@ -820,7 +820,7 @@ TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& 
 	int n_tubes = 0;
 	for(int id : module_name_id_list_pair.second)
 	{
-		m_survey.TubeEndPointsSurvey(id, wire_bot, wire_top);
+		m_survey.TubeEndPointsSurvey(id, wire_top, wire_bot);
 		//calculate centerpos of single wire
 		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
 		center_pos += wire_center;
