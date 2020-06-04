@@ -524,10 +524,10 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		}
 	}
 	vector<int> shifted_det_ids = { };
-//	vector<string> shifted_modules = { "T3aX", "T3bX", "T3cX", "T3dX", "T4aX", "T4bX", "T4cX", "T4dX" };
+	vector<string> shifted_modules = { "T3aX", "T3bX", "T3cX", "T3dX", "T4aX", "T4bX", "T4cX", "T4dX" };
 	//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
 	//	vector<string> shifted_modules = {"T3bX"};
-		vector<string> shifted_modules = {};
+//		vector<string> shifted_modules = {};
 	for (string mod : shifted_modules)
 	{
 		for (int id : m_modules[mod])
