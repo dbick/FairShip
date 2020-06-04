@@ -316,7 +316,10 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		//	continue;
 		//}
 
+
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
+
+		//reject hit if seed track is too far off the wire
 		if(closest_approach.Mag() > 2.00)
 		{
 			continue;
@@ -730,8 +733,8 @@ double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double si
 //TODO document
 double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits, map<int,double>* pede_corrections)
 {
-	TFile debuggingfile("debugging_data.root","RECREATE");
-	TTree* tree = create_output_tree();
+//	TFile debuggingfile("debugging_data.root","RECREATE");
+//	TTree* tree = create_output_tree();
 
 	if(pede_corrections)
 	{
@@ -741,7 +744,6 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		{
 			cout << it->first << " " << it->second << endl;
 		}
-		save_previous_rotations_to_disk("Previous_det_id_rotations.root");
 	}
 	double chi2, lostweight;
 	int ndf;
@@ -751,32 +753,41 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 //		tracks[i] = MC_gen_track_boosted();
 		tracks[i] = MC_gen_track();
 	}
+	ofstream file("MC_slopes.txt");
+
 
 	unsigned int fitted = 0;
 	for(int i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
-		vector<gbl::GblPoint> hitlist = MC_list_hits(track,MODULE,smearing_sigma,min_hits,pede_corrections,tree);
-		if(hitlist.size() < min_hits)
+		vector<pair<int,double>> hits = MC_gen_clean_hits(track[0], track[1]);
+		if(hits.size() < min_hits)
 		{
 			continue;
 		}
-		gbl::GblTrajectory traj(hitlist, false);
-		traj.milleOut(*m_gbl_mille_binary);
-		traj.fit(chi2, ndf, lostweight);
-//		cout << "Printing fitted trajectory parameters" << endl;
-//		print_fitted_track(traj);
-//		print_model_parameters(track);
-		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
-		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
-//		print_fitted_residuals(traj);
+		smear_hits(hits,350e-6);
+		GBL_seed_track seed(track, hits);
+		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
+		perform_GBL_refit(seed, 350e-6);
+
+//		vector<gbl::GblPoint> hitlist = MC_list_hits(track,MODULE,smearing_sigma,min_hits,pede_corrections,tree);
+//		gbl::GblTrajectory traj(hitlist, false);
+//		traj.milleOut(*m_gbl_mille_binary);
+//		traj.fit(chi2, ndf, lostweight);
+////		cout << "Printing fitted trajectory parameters" << endl;
+////		print_fitted_track(traj);
+////		print_model_parameters(track);
+//		cout << "MC chi2: " << chi2 << " Ndf: " << ndf << endl;
+//		cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+////		print_fitted_residuals(traj);
 		++fitted;
 	}
-	cout << "Fitted " << fitted << " out of " << n_tracks << " tracks." << endl;
-
-	tree->Write();
-	debuggingfile.Close();
-
+	file.close();
+//	cout << "Fitted " << fitted << " out of " << n_tracks << " tracks." << endl;
+//
+//	tree->Write();
+//	debuggingfile.Close();
+//
 	return 0.0;
 }
 
@@ -1186,7 +1197,7 @@ vector<gbl::GblPoint> MillepedeCaller::MC_list_hits(const vector<TVector3>& mc_t
 			shifted_det_ids.push_back(id);
 		}
 	}
-	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1], &shifted_det_ids);
+	vector<pair<int,double>> hits = MC_gen_clean_hits(mc_track_model[0], mc_track_model[1], &shifted_det_ids);
 //	vector<pair<int,double>> hits = MC_gen_hits(mc_track_model[0], mc_track_model[1]);
 	if(hits.size() < min_hits)
 	{
@@ -1434,8 +1445,8 @@ vector<TVector3> MillepedeCaller::MC_gen_track()
 	double z_beginning = 17.0;
 	double z_end = 739.0;
 
-	TVector3 beginning = TVector3(offset_x_beginning, offset_y_beginning, z_beginning);
-	TVector3 end = TVector3(offset_x_end, offset_y_end, z_end);
+	TVector3 beginning(offset_x_beginning, offset_y_beginning, z_beginning);
+	TVector3 end(offset_x_end, offset_y_end, z_end);
 	TVector3 direction = end - beginning;
 	vector<TVector3> result = {beginning, direction};
 
@@ -1489,7 +1500,7 @@ vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
  *
  * @return std::vector<std::pair<int,double>> list of pairs of int and double, the first one being the detectorID, the second one the rt distance
  */
-vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, const TVector3& direction, const vector<int>* shifted_det_ids)
+vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& start, const TVector3& direction, const vector<int>* shifted_det_ids)
 {
 //	cout << "Beginning unsmeared hit generation" << endl;
 	vector<pair<int,double>> result(0);
@@ -1537,6 +1548,15 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_hits(const TVector3& start, con
 		});
 
 	return result;
+}
+
+void MillepedeCaller::smear_hits(std::vector<std::pair<int,double>> unsmeared, const double sigma)
+{
+	normal_distribution<double> gaussian_smear(0,sigma);
+	for(size_t i = 0; i < unsmeared.size(); ++i)
+	{
+		unsmeared[i].second = TMath::Abs(unsmeared[i].second + gaussian_smear(m_mersenne_twister));
+	}
 }
 
 /**

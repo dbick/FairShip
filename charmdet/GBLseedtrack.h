@@ -15,6 +15,8 @@ class GBL_seed_track
 {
 public:
 	GBL_seed_track(const genfit::Track& track);
+	GBL_seed_track(const std::vector<TVector3>& pos_mom, const std::vector<std::pair<int,double>> hits);
+
 	virtual ~GBL_seed_track();
 
 	const size_t get_number_of_hits() const;

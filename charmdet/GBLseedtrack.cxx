@@ -32,6 +32,18 @@ GBL_seed_track::GBL_seed_track(const genfit::Track& track)
 	m_direction = track.getFittedState().getMom();
 }
 
+GBL_seed_track::GBL_seed_track(const vector<TVector3>& pos_mom, const vector<pair<int,double>> hits)
+{
+	m_position = pos_mom[0];
+	m_direction = pos_mom[1];
+	m_hits.resize(hits.size());
+	//TODO copy ctor invokation
+	for(size_t i = 0; i < m_hits.size(); ++i)
+	{
+		m_hits[i] = hits[i];
+	}
+}
+
 GBL_seed_track::GBL_seed_track::~GBL_seed_track()
 {
 	// TODO Auto-generated destructor stub
