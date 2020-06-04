@@ -183,7 +183,6 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
 			double correction_x = (*pede_corrections)[labels_for_tube[0]];
 			double correction_z = (*pede_corrections)[labels_for_tube[2]];
-			cout << "Correcting: " << point.first << " x +" << correction_x << " z +" << correction_z << endl;
 
 			vbot[0] = vbot[0] + correction_x;
 			vtop[0] = vtop[0] + correction_x;
