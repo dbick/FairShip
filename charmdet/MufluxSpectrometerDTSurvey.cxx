@@ -569,7 +569,8 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
  * @version 1.0
  *
  */
-void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 &vtop, TVector3 &vbot){
+void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 &vtop, TVector3 &vbot) const
+{
   vtop=DTSurveyEndPointMap[DetectorID].top;
   vbot=DTSurveyEndPointMap[DetectorID].bot;
 }
