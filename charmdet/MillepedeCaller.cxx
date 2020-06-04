@@ -180,6 +180,7 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
 		if (pede_corrections)
 		{
+			cout << "Applying" << endl;
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
 			double correction_x = (*pede_corrections)[labels_for_tube[0]];
 			double correction_z = (*pede_corrections)[labels_for_tube[2]];
@@ -199,7 +200,6 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 			vbot = new_bot;
 
 		}
-//		MufluxSpectrometer::TubeEndPoints(point.first, vtop, vbot);
 		double measurement = point.second; //rt distance [cm]
 
 		//if(measurement < 0.5)
@@ -212,10 +212,10 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
 
 		//reject hit if seed track is too far off the wire
-		if(closest_approach.Mag() > 2.00)
-		{
-			continue;
-		}
+//		if(closest_approach.Mag() > 2.00)
+//		{
+//			continue;
+//		}
 
 		TMatrixD* jacobian;
 		if (i != 0)
@@ -489,7 +489,7 @@ double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double si
 
 		int rc, ndf;
 		double chi2, lostWeight;
-		cout << "Seed slope (dx,dy): " << track.get_direction()[0]/track.get_direction()[2] << ", " << track.get_direction()[1]/track.get_direction()[2] << endl;
+//		cout << "Seed slope (dx,dy): " << track.get_direction()[0]/track.get_direction()[2] << ", " << track.get_direction()[1]/track.get_direction()[2] << endl;
 
 		cout << "------------performing refit--------------" << endl;
 //		cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
