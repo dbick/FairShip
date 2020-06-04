@@ -464,10 +464,10 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 /**
  *
  */
-double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial, const char* spillname)
+double MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial, map<int,double>* pede_corrections, const char* spillname)
 {
 	GBL_seed_track seed(track);
-	return perform_GBL_refit(seed, sigma_spatial, spillname);
+	return perform_GBL_refit(seed, sigma_spatial, pede_corrections, spillname);
 
 }
 
