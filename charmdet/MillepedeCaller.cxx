@@ -698,7 +698,7 @@ double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double si
 {
 	try
 	{
-		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, m_output_tree);
+		vector <gbl::GblPoint> points = list_hits(&track, MODULE, sigma_spatial, nullptr, m_output_tree);
 		gbl::GblTrajectory traj(points,false); //param false for B=0
 
 		traj.milleOut(*m_gbl_mille_binary);
