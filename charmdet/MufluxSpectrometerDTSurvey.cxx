@@ -574,6 +574,27 @@ void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 
   vbot=DTSurveyEndPointMap[DetectorID].bot;
 }
 
+
+/**
+ * Gives you the position of the wire top and bottom calculated from survey
+ *
+ * @brief returns position of the wire 
+ *
+ * @param DetectorID ID of the tube in the module
+ *
+ * @author Daniel Bick
+ * @date June 05, 2020
+ * @version 1.0
+ *
+ */
+TubeEndPoints MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID){
+  return DTSurveyEndPointMap[DetectorID];
+}
+
+
+
+
+
 /**
  * Calculates the rotation of the module around z from the two long sides (distance of the survey points)
  *
