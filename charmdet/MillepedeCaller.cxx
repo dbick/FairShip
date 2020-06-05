@@ -179,7 +179,9 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		TVector3 vtop;
 //		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
 		#pragma omp critical
-		MufluxSpectrometer::TubeEndPoints(point.first, vbot, vtop);
+		{
+			MufluxSpectrometer::TubeEndPoints(point.first, vbot, vtop);
+		}
 		if (pede_corrections)
 		{
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
@@ -821,7 +823,9 @@ TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& 
 	{
 //		m_survey.TubeEndPointsSurvey(id, wire_top, wire_bot);
 		#pragma omp critical
-		MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
+		{
+			MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
+		}
 		//calculate centerpos of single wire
 		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
 		center_pos += wire_center;
@@ -1055,7 +1059,9 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 		int id = entry.first;
 //		m_survey.TubeEndPointsSurvey(id, wire_end_top, wire_end_bottom);
 		#pragma omp critical
-		MufluxSpectrometer::TubeEndPoints(id, wire_end_bottom, wire_end_top);
+		{
+			MufluxSpectrometer::TubeEndPoints(id, wire_end_bottom, wire_end_top);
+		}
 		if(shifted_det_ids)
 		{
 			TVector3 translation(0.03536, 0, -0.03536); //realistic
@@ -1081,14 +1087,19 @@ vector<pair<int,double>> MillepedeCaller::MC_gen_clean_hits(const TVector3& star
 	}
 
 	//sort with lambda comparison
+
 	sort(result.begin(), result.end(), [&](pair<int,double> element1, pair<int,double> element2){
 //		m_survey.TubeEndPointsSurvey(element1.first, wire_end_top, wire_end_bottom);
 		#pragma omp critical
-		MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_bottom, wire_end_top);
+		{
+			MufluxSpectrometer::TubeEndPoints(element1.first, wire_end_bottom, wire_end_top);
+		}
 		double z1 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 //		m_survey.TubeEndPointsSurvey(element2.first, wire_end_top, wire_end_bottom);
 		#pragma omp critical
-		MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_bottom, wire_end_top);
+		{
+			MufluxSpectrometer::TubeEndPoints(element2.first, wire_end_bottom, wire_end_top);
+		}
 		double z2 = (wire_end_bottom + ((wire_end_top - wire_end_bottom)* 0.5)).Z();
 		return z1 < z2;
 		});
@@ -1157,7 +1168,9 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 	TVector3 vtop, vbot;
 //	m_survey.TubeEndPointsSurvey(tube_id, vtop, vbot);
 	#pragma omp critical
-	MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
+	{
+		MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
+	}
 
 	TVector3 new_top = module_center + rot * (vtop - module_center);
 	TVector3 new_bot = module_center + rot * (vbot - module_center);
