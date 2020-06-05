@@ -156,17 +156,7 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 	double track_distance, rt, residual;
 	if(tree)
 	{
-		tree->SetBranchAddress("detectorID",&detID);
-		tree->SetBranchAddress("driftside",&driftside);
-		tree->SetBranchAddress("trackDistance",&track_distance);
-		tree->SetBranchAddress("rt",&rt);
-		tree->SetBranchAddress("residual",&residual);
-		tree->SetBranchAddress("wire_pca_x",&PCA_wire[0]);
-		tree->SetBranchAddress("wire_pca_y",&PCA_wire[1]);
-		tree->SetBranchAddress("wire_pca_z",&PCA_wire[2]);
-		tree->SetBranchAddress("meas_x",&closest_approach[0]);
-		tree->SetBranchAddress("meas_y",&closest_approach[1]);
-		tree->SetBranchAddress("meas_z",&closest_approach[2]);
+
 	}
 
 	//#pragma omp parallel for
@@ -257,14 +247,29 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		result.back().addGlobals(label, *globals);
 		delete globals;
 		delete jacobian;
-		if(tree)
+
+		#pragma omp critical
 		{
-			detID = point.first;
-			driftside = closest_approach[0] < 0 ? -1 : 1;
-			track_distance = closest_approach.Mag();
-			rt = measurement;
-			residual = measurement - closest_approach.Mag();
-			tree->Fill();
+			if (tree)
+			{
+				tree->SetBranchAddress("detectorID", &detID);
+				tree->SetBranchAddress("driftside", &driftside);
+				tree->SetBranchAddress("trackDistance", &track_distance);
+				tree->SetBranchAddress("rt", &rt);
+				tree->SetBranchAddress("residual", &residual);
+				tree->SetBranchAddress("wire_pca_x", &PCA_wire[0]);
+				tree->SetBranchAddress("wire_pca_y", &PCA_wire[1]);
+				tree->SetBranchAddress("wire_pca_z", &PCA_wire[2]);
+				tree->SetBranchAddress("meas_x", &closest_approach[0]);
+				tree->SetBranchAddress("meas_y", &closest_approach[1]);
+				tree->SetBranchAddress("meas_z", &closest_approach[2]);
+				detID = point.first;
+				driftside = closest_approach[0] < 0 ? -1 : 1;
+				track_distance = closest_approach.Mag();
+				rt = measurement;
+				residual = measurement - closest_approach.Mag();
+				tree->Fill();
+			}
 		}
 	}
 
