@@ -154,10 +154,6 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 	TVector3 closest_approach(0,0,0);
 	int detID,driftside;
 	double track_distance, rt, residual;
-	if(tree)
-	{
-
-	}
 
 	//#pragma omp parallel for
 	for(size_t i = 0; i < n_points; ++i)
