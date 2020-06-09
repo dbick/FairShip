@@ -549,7 +549,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		TVector3 direction = tracks[i][1] - tracks[i][0];
 		double x = direction[0] / direction[2];
 		double exponent = - TMath::Power((x-mu),2) / (2 * TMath::Power(sigma,2));
-		double gauss = TMath::Exp(exponent);
+		double gauss = a * TMath::Exp(exponent);
 		double draw_func = 1. / gauss;
 		uniform_real_distribution<double> uniform(0.0,1e-12);
 		double test_val = uniform(m_mersenne_twister);
@@ -1051,8 +1051,8 @@ vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
 	TVector3 end(x_end, y_end, 17);
 
 	vector<TVector3> result = {beginning, end};
-	cout << "Beg: (" << beginning[0] << "," << beginning[1] << "," << beginning[2] << ")"
-					<< "End : (" << end[0] << "," << end[1] << "," << end[2] << ")" << endl;
+//	cout << "Beg: (" << beginning[0] << "," << beginning[1] << "," << beginning[2] << ")"
+//					<< "End : (" << end[0] << "," << end[1] << "," << end[2] << ")" << endl;
 	return result;
 }
 
