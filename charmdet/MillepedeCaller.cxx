@@ -547,7 +547,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		double sigma = 0.0645181813405861;
 
 		TVector3 direction = tracks[i][1] - tracks[i][0];
-		double x = tracks[i][1][0];
+		double x = direction[0] / direction[2];
 		double exponent = - TMath::Power((x-mu),2) / (2 * TMath::Power(sigma,2));
 		double gauss = TMath::Exp(exponent);
 		double draw_func = 1. / gauss;
