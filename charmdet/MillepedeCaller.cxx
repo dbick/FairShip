@@ -557,10 +557,15 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		{
 			sampled_tracks.push_back(tracks[i]);
 		}
+		if( i % 10000 == 0)
+		{
+			cout << "Drawfunc: "<< draw_func << ", testval: " << test_val << endl;
+		}
 
 
 //		tracks[i] = MC_gen_track();
 	}
+	sampled_tracks.shrink_to_fit();
 	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
 	ofstream file("MC_slopes.txt");
 
