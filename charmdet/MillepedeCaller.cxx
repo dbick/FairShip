@@ -548,8 +548,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 		TVector3 direction = tracks[i][1] - tracks[i][0];
 		double x = tracks[i][1][0];
-		double exponent = - TMath.Power((x-mu),2) / (2 * TMath.Power(sigma,2));
-		double gauss = TMath.Exp(exponent);
+		double exponent = - TMath::Power((x-mu),2) / (2 * TMath::Power(sigma,2));
+		double gauss = TMath::Exp(exponent);
 		double draw_func = 1. / gauss;
 		uniform_real_distribution<double> uniform(0.0,1e-12);
 		double test_val = uniform(m_mersenne_twister);
