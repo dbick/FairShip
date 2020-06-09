@@ -551,7 +551,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		double exponent = - TMath::Power((x-mu),2) / (2 * TMath::Power(sigma,2));
 		double gauss = a * TMath::Exp(exponent);
 		double draw_func = 1. / gauss;
-		uniform_real_distribution<double> uniform(0.0,1e-12);
+		uniform_real_distribution<double> uniform(0.0,1e-19);
 		double test_val = uniform(m_mersenne_twister);
 		if(test_val < draw_func)
 		{
