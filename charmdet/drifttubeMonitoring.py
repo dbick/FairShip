@@ -7993,6 +7993,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
     mom = ROOT.TVector3()
     eventRange = [0,sTree.GetEntries()]
     genfit_tracklist = []
+    start_time = time.time()
     if not nEvent<0: eventRange = [nEvent,nEvent+nTot]
     for Nr in range(eventRange[0],eventRange[1]):
         getEvent(Nr)
@@ -8036,18 +8037,25 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                     stations[s]+=1
                 if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
                 genfit_tracks.append(ROOT.genfit.Track(aTrack))
+        end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
-    
+    genfit_time = end_time - start_time
+    gbl_start_time = time.time()
+    for aTrack in genfit_tracks:
         """
         refit
         """
+        
         print("Processing event number {}".format(Nr))
         chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,sTree.GetCurrentFile().GetName())              
         if(chi2_gbl == -1):
             aborted_gbl_refits += 1
         else:
             valid_gbl_refits += 1
+    gbl_end_time = time.time()
+    gbl_time = gbl_end_time - gbl_start_time
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    print("Runtimes: genfit: {}, GBL: {}".format(genfit_time, gbl_time))
     
     
 def read_pede_corrections(pede_filename):

@@ -536,12 +536,36 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
+	vector<vector<TVector3>> sampled_tracks(0);
+	sampled_tracks.reserve(n_tracks);
+
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		tracks[i] = MC_gen_track_boosted();
+		double a = 1.7393733001414783e+19;
+		double mu = -0.005966197744590303;
+		double sigma = 0.0645181813405861;
+
+		TVector3 direction = tracks[i][1] - tracks[i][0];
+		double x = tracks[i][1][0];
+		double exponent = - TMath.Power((x-mu),2) / (2 * TMath.Power(sigma,2));
+		double gauss = TMath.Exp(exponent);
+		double draw_func = 1. / gauss;
+		uniform_real_distribution<double> uniform(0.0,1e-12);
+		double test_val = uniform(m_mersenne_twister);
+		if(test_val < draw_func)
+		{
+			sampled_tracks.push_back(tracks[i]);
+		}
+
+
 //		tracks[i] = MC_gen_track();
 	}
+	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
 	ofstream file("MC_slopes.txt");
+
+	//use resampled tracks with different spectral shape
+	tracks = sampled_tracks;
 
 
 	unsigned int fitted = 0;
