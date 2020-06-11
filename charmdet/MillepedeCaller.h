@@ -24,6 +24,7 @@
 #include <iostream>
 #include "GBLseedtrack.h"
 #include "MufluxSpectrometerDTSurvey.h"
+#include "TH1D.h"
 
 //includes for MC testing
 #include <random>

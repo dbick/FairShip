@@ -538,33 +538,46 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	vector<vector<TVector3>> tracks(n_tracks);
 	vector<vector<TVector3>> sampled_tracks(0);
 	sampled_tracks.reserve(n_tracks);
-
+	double min_slope = -100;
+	double max_slope = 100;
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
+		//case for boosted tracks
 		tracks[i] = MC_gen_track_boosted();
-		double a = 1.7393733001414783e+19;
-		double mu = -0.005966197744590303;
-		double sigma = 0.0645181813405861;
-
-		TVector3 direction = tracks[i][1] - tracks[i][0];
-		double x = direction[0] / direction[2];
-		double exponent = - TMath::Power((x-mu),2) / (2 * TMath::Power(sigma,2));
-		double gauss = a * TMath::Exp(exponent);
-		double draw_func = 1. / gauss;
-		uniform_real_distribution<double> uniform(0.0,1e-19);
-		double test_val = uniform(m_mersenne_twister);
-		if(test_val < draw_func)
-		{
-			sampled_tracks.push_back(tracks[i]);
-		}
-		if( i % 10000 == 0)
-		{
-			cout << "Drawfunc: "<< draw_func << ", testval: " << test_val << endl;
-		}
-
+		//resampling to generate more homogeneous distribution of slopes
+		//find min and max slope in x:
+		double slope_x = tracks[i][1][0] / tracks[i][1][2];
+		min_slope = slope_x < min_slope ? slope_x : min_slope;
+		max_slope = slope_x > max_slope ? slope_x : max_slope;
 
 //		tracks[i] = MC_gen_track();
 	}
+	TH1D slopes("slopes","slope distribution",200,min_slope -0.1 * min_slope,max_slope + 0.1 * max_slope);
+	for(auto track: tracks)
+	{
+		double slope = track[1][0] / track[1][2];
+		slopes.Fill(slope);
+	}
+	TH1D sampling_probability(slopes);
+	sampling_probability.SetNameTitle("prob", "sampling probability");
+	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
+	{
+		sampling_probability[i] = 100. / slopes[i];
+	}
+	uniform_real_distribution<double> uniform(0,1);
+	for(auto track: tracks)
+	{
+		double p = uniform(m_mersenne_twister);
+		double slope = track[1][0] / track[1][2];
+		int bin = sampling_probability.FindBin(slope);
+		if(p < sampling_probability[bin])
+		{
+			sampled_tracks.push_back(track);
+		}
+	}
+	slopes.SaveAs("slope_dist.pdf");
+	sampling_probability.SaveAs("sampling_prob.pdf");
+
 	sampled_tracks.shrink_to_fit();
 	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
 	ofstream file("MC_slopes.txt");
