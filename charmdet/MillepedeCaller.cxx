@@ -575,8 +575,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 			sampled_tracks.push_back(track);
 		}
 	}
-	slopes.SaveAs("slope_dist.pdf");
-	sampling_probability.SaveAs("sampling_prob.pdf");
+	slopes.Draw("slope_dist.pdf");
+	sampling_probability.Draw("sampling_prob.pdf");
 
 	sampled_tracks.shrink_to_fit();
 	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
