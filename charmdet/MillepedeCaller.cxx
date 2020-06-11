@@ -562,7 +562,7 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	sampling_probability.SetNameTitle("prob", "sampling probability");
 	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
 	{
-		sampling_probability[i] = 100. / slopes[i];
+		sampling_probability[i] = 200. / slopes[i];
 	}
 	uniform_real_distribution<double> uniform(0,1);
 	for(auto track: tracks)

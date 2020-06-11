@@ -8230,7 +8230,7 @@ elif options.command == "test":
     print "finished"
 elif options.command == "GBL_MC":
     n_mc_tracks = int(5e5)
-    n_min_hits = 3 #Minimum number of hits (total)
+    n_min_hits = 6 #Minimum number of hits (total)
     filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
     milleCaller = ROOT.MillepedeCaller(filename)
     if cpp_pede_results != None:
