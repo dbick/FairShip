@@ -538,8 +538,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	vector<vector<TVector3>> tracks(n_tracks);
 	vector<vector<TVector3>> sampled_tracks(0);
 	sampled_tracks.reserve(n_tracks);
-	double min_slope = -100;
-	double max_slope = 100;
+	double min_slope = 100;
+	double max_slope = -100;
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		//case for boosted tracks
