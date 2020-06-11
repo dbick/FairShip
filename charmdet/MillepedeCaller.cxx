@@ -560,9 +560,11 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	}
 	TH1D sampling_probability(slopes);
 	sampling_probability.SetNameTitle("prob", "sampling probability");
+	unsigned int mean_bin_content = (int)(0.1 * slopes[slopes.GetMaximumBin()]); //10 percent of maximum bin content of unsampled slope dist
+	cout << "Resampling with " << mean_bin_content << " tracks per bin in average" << endl;
 	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
 	{
-		sampling_probability[i] = 200. / slopes[i];
+		sampling_probability[i] = mean_bin_content / slopes[i];
 	}
 	uniform_real_distribution<double> uniform(0,1);
 	for(auto track: tracks)
