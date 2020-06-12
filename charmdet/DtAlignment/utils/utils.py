@@ -364,13 +364,15 @@ def reshape_spectrum(tracks,n_selected_tracks):
     selection_probability = TH1D(slope_dist) #make a copy of slope distribution to have same bins
     for i in range(selection_probability.GetNbinsX()):
         selection_probability[i] = entries_per_bin / slope_dist[i]
+        print("Probability for bin {}: {}".format(i,selection_probability[i]))
         
     # 3. Select the tracks
+    print("Beginning track selection")
     selected_tracks = []
     for slope in slope_list:
         bin = selection_probability.FindBin(slope[0])
         probabily = selection_probability[bin]
-        rnd = np.random.uniform()
+        rnd = np.random.uniform(0.0,1.0)
         if rnd < probabily:
             selected_tracks.append(slope[1])
             
