@@ -339,13 +339,13 @@ def reshape_spectrum(tracks,n_selected_tracks):
     min_slope_x = 100
     max_slope_x = -100
     slope_list = []
-    for track in tracks:
+    for i in range(len(tracks)):
         n_hits = track.getNumPointsWithMeasurement()
         first_hit = track.getFittedState(0)
         last_hit = track.getFittedState(n_hits - 1)
         direction = last_hit - first_hit
         slope_x = direction[0] / direction[2]
-        slope_list.append((slope_x,track))
+        slope_list.append((slope_x,i))
         
         if slope_x < min_slope_x:
             min_slope_x = slope_x
@@ -357,10 +357,12 @@ def reshape_spectrum(tracks,n_selected_tracks):
     bin_width = slope_dist.GetBinWidth(0)
     entries_per_bin = n_selected_tracks / n_bins
     
+    # 2. Calculate probabilty to select a track whose slope is in a certain bin of the slope distribution
     selection_probability = TH1D(slope_dist) #make a copy of slope distribution to have same bins
     for i in range(selection_probability.GetNbinsX()):
         selection_probability[i] = entries_per_bin / slope_dist[i]
         
+    # 3. Select the tracks
     selected_tracks = []
     for slope in slope_list:
         bin = selection_probability.FindBin(slope[0])

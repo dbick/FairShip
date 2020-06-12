@@ -8042,9 +8042,11 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
     genfit_time = end_time - start_time
     print("Reshaping spectrum to uniform distribution")
     selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,len(genfit_tracks) * 0.05)
+    print("Number of sampled tracks: {}".format(len(selected_tracks)))
     
     gbl_start_time = time.time()
-    for aTrack in selected_tracks:
+    for i in selected_tracks:
+        aTrack = genfit_tracks[i]
         """
         refit
         """
