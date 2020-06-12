@@ -359,6 +359,8 @@ def reshape_spectrum(tracks,n_selected_tracks):
     bin_width = slope_dist.GetBinWidth(0)
     entries_per_bin = n_selected_tracks / n_bins
     print("Using {} bins with width {}, each containing ca. {} entries".format(n_bins,bin_width,entries_per_bin))
+    for slope in slope_list:
+        slope_dist.Fill(slope[0])
     
     # 2. Calculate probabilty to select a track whose slope is in a certain bin of the slope distribution
     selection_probability = TH1D(slope_dist) #make a copy of slope distribution to have same bins
