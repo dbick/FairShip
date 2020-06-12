@@ -345,17 +345,19 @@ def reshape_spectrum(tracks,n_selected_tracks):
         last_hit = track.getFittedState(n_hits - 1)
         direction = last_hit - first_hit
         slope_x = direction[0] / direction[2]
-        slope_list.append((slope_x,i))
+        slope_list.append([slope_x,i])
         
         if slope_x < min_slope_x:
             min_slope_x = slope_x
         if slope_x > max_slope_x:
             max_slope_x = slope_x
-    
+            
+    print("Minimum slope: {}, maximum slope: {}".format(min_slope_x,max_slope_x))
     n_bins = 200
     slope_dist = TH1D("Genfit slope distribution","slope distribution",n_bins,min_slope_x,max_slope_x)
     bin_width = slope_dist.GetBinWidth(0)
     entries_per_bin = n_selected_tracks / n_bins
+    print("Using {} bins with width {}, each containing ca. {} entries".format(n_bins,bin_width,entries_per_bin))
     
     # 2. Calculate probabilty to select a track whose slope is in a certain bin of the slope distribution
     selection_probability = TH1D(slope_dist) #make a copy of slope distribution to have same bins
