@@ -275,8 +275,11 @@ void dtPatAna(TTreeReader *t){
 
  
 
-  Double_t yslope,yslope1,yslope2;
-  Double_t y0,y01,y02;
+  Double_t yslope,yslope1,yslope2,xslope12,xslope;
+  Double_t y0,y01,y02,x012,x0;
+
+  Double_t yslope1_front,yslope2_front,xslope_front,xslope_back;
+  Double_t y01_front,y02_front,x0_front,x0_back;
 
   int event=0;
   
@@ -294,9 +297,22 @@ void dtPatAna(TTreeReader *t){
   TPat->Branch("yslope",&yslope,"yslope/D");
   TPat->Branch("yslope1",&yslope1,"yslope1/D");
   TPat->Branch("yslope2",&yslope2,"yslope2/D");
+  TPat->Branch("xslope12",&xslope12,"xslope12/D");
+  TPat->Branch("xslope",&xslope,"xslope/D");
   TPat->Branch("y0",&y0,"y0/D");
   TPat->Branch("y01",&y01,"y01/D");
   TPat->Branch("y02",&y02,"y02/D");
+  TPat->Branch("x012",&x012,"x012/D");
+  TPat->Branch("x0",&x0,"x0/D");
+
+  TPat->Branch("yslope1_front",&yslope1_front,"yslope1_front/D");
+  TPat->Branch("yslope2_front",&yslope2_front,"yslope2_front/D");
+  TPat->Branch("xslope_front",&xslope_front,"xslope_front/D");
+  TPat->Branch("xslope_back",&xslope_back,"xslope_back/D");
+  TPat->Branch("y01_front",&y01_front,"y01_front/D");
+  TPat->Branch("y02_front",&y02_front,"y02_front/D");
+  TPat->Branch("x0_front",&x0_front,"x0_front/D");
+  TPat->Branch("x0_back",&x0_back,"x0_back/D");
   
   
   //t->Next();
@@ -316,30 +332,82 @@ void dtPatAna(TTreeReader *t){
   if(stereo1.p>=0&&stereo2.p>=0){
     yslope = YslopeFromProjections(stereo1.alpha, beta1, stereo2.alpha, beta2);
     y0 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, stereo2.alpha, stereo2.p, beta2);
+    xslope12 = XslopeFromProjections(stereo1.alpha, beta1, stereo2.alpha, beta2);
+    x012 = X0FromProjections(stereo1.alpha, stereo1.p, beta1, stereo2.alpha, stereo2.p, beta2);
   }
   else{
     yslope=0;
     y0=0;
+    xslope12=0;
+    x012=0;
   }
 
-  if(stereo1.p>=0&&front.p>=0){
-  yslope1 = YslopeFromProjections(stereo1.alpha, beta1, front.alpha, 0);
-  y01 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, front.alpha, front.p, 0);
+  if(stereo1.p>=0&&all.p>=0){
+    yslope1 = YslopeFromProjections(stereo1.alpha, beta1, all.alpha, 0);
+    y01 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, all.alpha, all.p, 0);
   }
   else{
     yslope1=0;
-    y0=0;
+    y01=0;
   }
 
 
-  if(stereo2.p>=0&&front.p>=0){
-    yslope2 = YslopeFromProjections(stereo2.alpha, beta2, front.alpha, 0);
-    y02 = Y0FromProjections(stereo2.alpha, stereo2.p, beta2, front.alpha, front.p, 0);}
+  if(stereo2.p>=0&&all.p>=0){
+    yslope2 = YslopeFromProjections(stereo2.alpha, beta2, all.alpha, 0);
+    y02 = Y0FromProjections(stereo2.alpha, stereo2.p, beta2, all.alpha, all.p, 0);}
   else{
     yslope2=0;
     y02=0;
   }
 
+  
+  if(stereo1.p>=0&&front.p>=0){
+    yslope1_front = YslopeFromProjections(stereo1.alpha, beta1, front.alpha, 0);
+    y01_front = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, front.alpha, front.p, 0);
+  }
+  else{
+    yslope1_front=0;
+    y01_front=0;
+  }
+  
+  
+  if(stereo2.p>=0&&front.p>=0){
+    yslope2_front = YslopeFromProjections(stereo2.alpha, beta2, front.alpha, 0);
+    y02_front = Y0FromProjections(stereo2.alpha, stereo2.p, beta2, front.alpha, front.p, 0);}
+  else{
+    yslope2_front=0;
+    y02_front=0;
+  }
+
+
+  if(all.p>=0){
+    xslope=-tan(all.alpha);
+    x0=all.p/cos(all.alpha);
+  }
+  else{
+    xslope=0;
+    x0=0;
+  }
+
+  if(front.p>=0){
+    xslope_front=-tan(front.alpha);
+    x0_front=front.p/cos(front.alpha);
+  }
+  else{
+    xslope_front=0;
+    x0_front=0;
+  }
+
+  
+   if(back.p>=0){
+    xslope_back=-tan(back.alpha);
+    x0_back=back.p/cos(back.alpha);
+  }
+  else{
+    xslope_back=0;
+    x0_back=0;
+  }
+  
   
   TPat->Fill();
   event++;
@@ -348,11 +416,139 @@ void dtPatAna(TTreeReader *t){
 
   }
 
+
+  //create quality plots
+
+
+
+   TCanvas *c5 = new TCanvas("c5","y0",800,800);
+
+  TPat->Draw("y01:y02>>h3(200,-100,100,200,-100,100)","p>=0&&s1p>=0&&s2p>=0","colz");
+  
+  TH1 *h3=TPat->GetHistogram();
+  h3->SetTitle("Comparison of y_{0} calculated individually for each stereo module");
+  h3->GetXaxis()->SetTitle("y_{0} [cm] from T2a and vertical modules");
+  h3->GetYaxis()->SetTitle("y_{0} [cm] from T1b and vertical modules");
+  h3->GetYaxis()->SetTitleOffset(1.2); 
+  
+
+  TCanvas *c5b = new TCanvas("c5b","y0 stereo stereo",800,800);
+    
+  TPat->Draw("y02:y0>>h3b(200,-100,100,200,-100,100)","p>=0&&s1p>=0&&s2p>=0","colz");
+  
+  TH1 *h3b=TPat->GetHistogram();
+  h3b->SetTitle("Comparison of y_{0} T2a-vertical vs. T1b-T2a");
+  h3b->GetXaxis()->SetTitle("y_{0} [cm] from T2a and T1b");
+  h3b->GetYaxis()->SetTitle("y_{0} [cm] from T2a and vertical modules");
+  h3b->GetYaxis()->SetTitleOffset(1.2);
+
+
+  TCanvas *c5c = new TCanvas("c5c","y0 stereo stereo",800,800);
+  
+  
+  TPat->Draw("y01:y0>>h3c(200,-100,100,200,-100,100)","p>=0&&s1p>=0&&s2p>=0","colz");
+  
+  TH1 *h3c=TPat->GetHistogram();
+  h3c->SetTitle("Comparison of y_{0} T1b-vertical vs. T1b-T2a");
+  h3c->GetXaxis()->SetTitle("y_{0} [cm] from T2a and T1b");
+  h3c->GetYaxis()->SetTitle("y_{0} [cm] from T1b and vertical modules");
+  h3c->GetYaxis()->SetTitleOffset(1.2);
+  
+  
+  TCanvas *c6 = new TCanvas("c6","#Delta y",800,800);
+ 
+  TPat->Draw("yslope1:yslope2>>h4(100,-.3,.3,100,-.3,.3)","p>=0&&s1p>=0&&s2p>=0","colz");
+  TH1 *h4=TPat->GetHistogram();
+
+  h4->SetTitle("Comparison of #Delta y calculated individually for each stereo module");
+  h4->GetXaxis()->SetTitle("#Delta y from T2a and vertical modules");
+  h4->GetYaxis()->SetTitle("#Delta y from T1b and vertical modules");
+  h4->GetYaxis()->SetTitleOffset(1.4);
+
+
+
+
+  
+  TCanvas *c6b = new TCanvas("c6b","#Delta y stereo",800,800);
+
+  TPat->Draw("yslope1:yslope>>h4b(100,-.3,.3,100,-.3,.3)","p>=0&&s1p>=0&&s2p>=0","colz");
+  TH1 *h4b=TPat->GetHistogram();
+
+  h4b->SetTitle("Comparison of #Delta y calculated from  T1b-vertical vs. T1b-T2a");
+  h4b->GetXaxis()->SetTitle("#Delta y from T1b and T2a");
+  h4b->GetYaxis()->SetTitle("#Delta y from T1b and vertical modules");
+  h4b->GetYaxis()->SetTitleOffset(1.4);
+
+  
+  TCanvas *c6c = new TCanvas("c6c","#Delta y stereo",800,800);
+
+  TPat->Draw("yslope2:yslope>>h4c(100,-.3,.3,100,-.3,.3)","p>=0&&s1p>=0&&s2p>=0","colz");
+  TH1 *h4c=TPat->GetHistogram();
+
+  h4c->SetTitle("Comparison of #Delta y calculated from  T2a-vertical vs. T1b-T2a");
+  h4c->GetXaxis()->SetTitle("#Delta y from T1b and T2a");
+  h4c->GetYaxis()->SetTitle("#Delta y from T2a and vertical modules");
+  h4c->GetYaxis()->SetTitleOffset(1.4);
+
+  TCanvas *c7 = new TCanvas("c7","#Delta x",800,800);
+  
+  TPat->Draw("xslope12:-tan(alpha)>>h5(100,-.3,.3,100,-.3,.3)","p>=0&&s1p>=0&&s2p>=0","colz");
+  TH1 *h5=TPat->GetHistogram();
+
+  h5->SetTitle("Comparison of #Delta x calculated from vertical modules vs. T1b-T2a");
+  h5->GetXaxis()->SetTitle("#Delta x from T1b and T2a");
+  h5->GetYaxis()->SetTitle("#Delta x from vertical modules");
+  h5->GetYaxis()->SetTitleOffset(1.4);
+
+
+
+  TCanvas *c8 = new TCanvas("c8","x0",800,800);
+  
+  TPat->Draw("x012:p/cos(alpha)>>h6(200,-100,100,200,-100,100)","p>=0&&s1p>=0&&s2p>=0","colz");
+  
+  TH1 *h6=TPat->GetHistogram();
+  h6->SetTitle("Comparison of x_{0} vertical vs. T1b-T2a");
+  h6->GetXaxis()->SetTitle("x_{0} [cm] from T2a and T1b");
+  h6->GetYaxis()->SetTitle("x_{0} [cm] vertical modules");
+  h6->GetYaxis()->SetTitleOffset(1.2);
+  
+  
+  h3->Write();
+  h3b->Write();
+  h3c->Write();
+  h4->Write();
+  h4b->Write();
+  h4c->Write();
+  h5->Write();
+  h6->Write();
+
   
   fout->Write();
   fout->Close();
 }
 
+
+
+void dtPatSeed(TTreeReader *t){
+
+  
+  MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+  surv->Init();
+  Double_t beta1=surv->DTSurveyStereoAngle(11002001);
+  Double_t beta2=surv->DTSurveyStereoAngle(20002001);
+  
+  TH1D *HDriftTimes = FilterDTSpectrum(t);
+
+  MufluxSpectrometerRTRelation *RTRel = new MufluxSpectrometerRTRelation(*HDriftTimes);
+
+
+  TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
+  while (t->Next()) {
+    GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+
+    delete seed;
+  }
+}
 
 
 
@@ -553,3 +749,21 @@ void drawModule(Int_t module){
 
   
 }
+
+
+void test(){
+  
+  MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+  surv->Init();
+
+  TVector3 *v1=new TVector3();
+  TVector3 *v2=new TVector3();
+  TubeEndPoints pp=surv->TubeEndPointsSurvey(10012001);
+  surv->TubeEndPointsSurvey(10012001,*v1,*v2);
+
+  
+  std::cout << pp.top.x() << " " << v1->x() << std::endl;
+  
+
+}
+  

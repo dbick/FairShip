@@ -10,7 +10,7 @@
 #include "ScintillatorHit.h"
 #include "MufluxSpectrometerRTRelation.h"
 #include "MufluxSpectrometerDTTools.h"
-
+#include "GBLseedtrack.h"
 
 
 void helloDaniel();
@@ -18,6 +18,8 @@ void dtAna(TTree *TData);
 void dtAnaChain(TTreeReader *t);
 void dtAnaChain(TTreeReader *t, int event);
 void dtPatAna(TTreeReader *t);
+
+void dtPatSeed(TTreeReader *t);
 
 TH1D *FilterDTSpectrum(TTreeReader *&t);
 
@@ -28,4 +30,5 @@ void PrintScintillatorHit(ScintillatorHit &hit);
 
 void checkAlignment();
 void drawModule(Int_t module);
+void test();
 #endif
