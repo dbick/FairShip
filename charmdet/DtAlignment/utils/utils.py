@@ -363,9 +363,8 @@ def reshape_spectrum(tracks,n_selected_tracks):
         slope_dist.Fill(slope[0])
     print("Entries in slope distribution: {}".format(slope_dist.GetEntries()))
     
-    
     # 2. Calculate probabilty to select a track whose slope is in a certain bin of the slope distribution
-    selection_probability = TH1D("prob","sampling probability",n_bins, min_slope, max_slope)
+    selection_probability = TH1D("resampling prob","sampling probability",n_bins, min_slope_x, max_slope_x)
     print("New hist constructed, nBins: {}, entries: {}".format(selection_probability.GetNbinsX(),selection_probability.GetEntries()))
     print("Beginning to fill")
     for i in range(selection_probability.GetNbinsX()):
