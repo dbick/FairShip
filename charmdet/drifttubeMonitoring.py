@@ -8036,7 +8036,22 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                         print "error with rawM", rawM.getDetId()
                     stations[s]+=1
                 if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
+                print("Invoking genfit::Track copy ctor:")
                 genfit_tracks.append(ROOT.genfit.Track(aTrack))
+                print("Original track's initial and end positions:")
+                n_hits = aTrack.getNumPointsWithMeasurement()
+                pos0 = aTrack.getFittedState(0).getPos()
+                pos1 = aTrack.getFittedState(n_hits - 1).getPos()
+                print("Pos at hit 0: ({}, {}, {})".format(pos0[0],pos0[1],pos0[2]))
+                print("Pos at hit {}: ({}, {}, {})".format(n_hits -1,pos1[0],pos1[1],pos1[2]))
+                print("Copied track's initial and end positions:")
+                copied = genfit_tracks[len(genfit_tracks) -1]
+                n_hits = copied.getNumPointsWithMeasurement()
+                pos0 = copied.getFittedState(0).getPos()
+                pos1 = copied.getFittedState(n_hits - 1).getPos()
+                print("Pos at hit 0: ({}, {}, {})".format(pos0[0],pos0[1],pos0[2]))
+                print("Pos at hit {}: ({}, {}, {})".format(n_hits -1,pos1[0],pos1[1],pos1[2]))
+                
         end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
     genfit_time = end_time - start_time
