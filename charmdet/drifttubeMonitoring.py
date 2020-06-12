@@ -8251,7 +8251,7 @@ elif options.command == "GBL_refit":
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results)
+    GBL_refit(nEvent = 0, nTot = 2000, pede_results=python_pede_results)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
