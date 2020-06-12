@@ -368,8 +368,11 @@ def reshape_spectrum(tracks,n_selected_tracks):
     print("New hist constructed, nBins: {}, entries: {}".format(selection_probability.GetNbinsX(),selection_probability.GetEntries()))
     print("Beginning to fill")
     for i in range(selection_probability.GetNbinsX()):
-        print("Filling bin {}. Slope distribution at that bin: {}".format(i, slope_dist[i]))
-        selection_probability[i] = entries_per_bin / slope_dist[i]
+        n_slopes_in_bin = slope_dist[i]
+        if n_slopes_in_bin > 0:
+            selection_probability[i] = entries_per_bin / slope_dist[i]
+        else:
+            selection_probability[i] = 1
         print("Probability for bin {}: {}".format(i,selection_probability[i]))
         
     # 3. Select the tracks
