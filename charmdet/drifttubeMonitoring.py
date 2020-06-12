@@ -8039,6 +8039,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                 print("Invoking genfit::Track copy ctor:")
                 genfit_tracks.append(ROOT.genfit.Track(aTrack))
                 print("Original track's initial and end positions:")
+                print("Track at: {}".format(hex(id(aTrack))))
                 n_hits = aTrack.getNumPointsWithMeasurement()
                 pos0 = aTrack.getFittedState(0).getPos()
                 pos1 = aTrack.getFittedState(n_hits - 1).getPos()
@@ -8046,6 +8047,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                 print("Pos at hit {}: ({}, {}, {})".format(n_hits -1,pos1[0],pos1[1],pos1[2]))
                 print("Copied track's initial and end positions:")
                 copied = genfit_tracks[len(genfit_tracks) -1]
+                print("Track at: {}".format(hex(id(copied))))
                 n_hits = copied.getNumPointsWithMeasurement()
                 pos0 = copied.getFittedState(0).getPos()
                 pos1 = copied.getFittedState(n_hits - 1).getPos()
