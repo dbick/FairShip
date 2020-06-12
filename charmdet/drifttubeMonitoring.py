@@ -8051,7 +8051,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
         refit
         """
         print("Processing event number {}".format(i))
-        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,sTree.GetCurrentFile().GetName())              
+        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
         if(chi2_gbl == -1):
             aborted_gbl_refits += 1
         else:
