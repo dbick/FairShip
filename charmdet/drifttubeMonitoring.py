@@ -8036,29 +8036,20 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                         print "error with rawM", rawM.getDetId()
                     stations[s]+=1
                 if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
-                print("Invoking genfit::Track copy ctor:")
-                genfit_tracks.append(ROOT.genfit.Track(aTrack))
-                print("Original track's initial and end positions:")
-                print("Track at: {}".format(hex(id(aTrack))))
-                n_hits = aTrack.getNumPointsWithMeasurement()
-                pos0 = aTrack.getFittedState(0).getPos()
-                pos1 = aTrack.getFittedState(n_hits - 1).getPos()
-                print("Pos at hit 0: ({}, {}, {})".format(pos0[0],pos0[1],pos0[2]))
-                print("Pos at hit {}: ({}, {}, {})".format(n_hits -1,pos1[0],pos1[1],pos1[2]))
-                print("Copied track's initial and end positions:")
-                copied = genfit_tracks[len(genfit_tracks) -1]
-                print("Track at: {}".format(hex(id(copied))))
-                n_hits = copied.getNumPointsWithMeasurement()
-                pos0 = copied.getFittedState(0).getPos()
-                pos1 = copied.getFittedState(n_hits - 1).getPos()
-                print("Pos at hit 0: ({}, {}, {})".format(pos0[0],pos0[1],pos0[2]))
-                print("Pos at hit {}: ({}, {}, {})".format(n_hits -1,pos1[0],pos1[1],pos1[2]))
-                
+                genfit_tracks.append(ROOT.genfit.Track(aTrack))                
         end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
     genfit_time = end_time - start_time
+    print("Reading copied tracklist")
+    print("length:", len(genfit_tracks))
+    for t in range(len(genfit_tracks)):
+        print("Reading track {}".format(t))
+        copied = genfit_tracks[t]
+        print("Getting n Points from track at {}".format(hex(id(copied))))
+        n_points = copied.getNumPointsWithMeasurement()
+        print("Read {} hits".format(n_points))
     print("Reshaping spectrum to uniform distribution")
-    selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,len(genfit_tracks) * 0.05)
+    selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.05))
     print("Number of sampled tracks: {}".format(len(selected_tracks)))
     
     gbl_start_time = time.time()
@@ -8268,7 +8259,7 @@ elif options.command == "GBL_refit":
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results)
+    GBL_refit(nEvent = 0, nTot = 1000, pede_results=python_pede_results)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
