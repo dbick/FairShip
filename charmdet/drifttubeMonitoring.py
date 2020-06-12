@@ -8040,19 +8040,6 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
         end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
     genfit_time = end_time - start_time
-    print("Reading copied tracklist")
-    print("length:", len(genfit_tracks))
-    for t in range(len(genfit_tracks)):
-        print("Reading track {}".format(t))
-        copied = genfit_tracks[t]
-        print("Getting n Points from track at {}".format(hex(id(copied))))
-        n_points = copied.getNumPointsWithMeasurement()
-        print("Read {} hits".format(n_points))
-        pos0 = copied.getFittedState(0).getPos()
-        pos1 = copied.getFittedState(n_points - 1).getPos()
-        dir = pos1 - pos0
-        slope_x = dir[0]/dir[2]
-        print("Slope: {}".format(slope_x))
     print("Reshaping spectrum to uniform distribution")
     selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.05))
     print("Number of sampled tracks: {}".format(len(selected_tracks)))
@@ -8264,7 +8251,7 @@ elif options.command == "GBL_refit":
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(nEvent = 0, nTot = 1000, pede_results=python_pede_results)
+    GBL_refit(pede_results=python_pede_results)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"

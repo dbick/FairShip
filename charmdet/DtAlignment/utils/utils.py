@@ -346,7 +346,6 @@ def reshape_spectrum(tracks,n_selected_tracks):
         last_hit = track.getFittedState(n_hits - 1)
         direction = last_hit.getPos() - first_hit.getPos()
         slope_x = direction[0] / direction[2]
-        print(slope_x)
         slope_list.append([slope_x,i])
         
         if slope_x < min_slope_x:
