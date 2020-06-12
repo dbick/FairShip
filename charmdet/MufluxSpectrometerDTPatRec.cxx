@@ -20,18 +20,16 @@ int GetView(int DetectorID){
 
 
 Double_t YslopeFromProjections(Double_t alpha1, Double_t stereo1, Double_t alpha2, Double_t stereo2){
-  return (tan(alpha2)/cos(stereo2)-tan(alpha1)/cos(stereo1))/(tan(stereo2)-tan(stereo1));
+  return (tan(alpha2)/cos(stereo2)-tan(alpha1)/cos(stereo1))/(tan(stereo1)-tan(stereo2));
 }
 Double_t XslopeFromProjections(Double_t alpha1, Double_t stereo1, Double_t alpha2, Double_t stereo2){
-  //ToDo implement
-  return 0;
+  return (tan(alpha2)/sin(stereo2)-tan(alpha1)/sin(stereo1))/(1/tan(stereo1)-1/tan(stereo2));
 }
 Double_t Y0FromProjections(Double_t alpha1, Double_t p1, Double_t stereo1, Double_t alpha2, Double_t p2, Double_t stereo2){
-  return (p1/(cos(stereo1)*cos(alpha1))-p2/(cos(stereo2)*cos(alpha2)))/(tan(stereo2)-tan(stereo1));
+  return (p1/(cos(stereo1)*cos(alpha1))-p2/(cos(stereo2)*cos(alpha2)))/(tan(stereo1)-tan(stereo2));
 }
 Double_t X0FromProjections(Double_t alpha1, Double_t p1, Double_t stereo1, Double_t alpha2, Double_t p2, Double_t stereo2){
-  //ToDo implement 
-  return 0;
+  return (p1/(sin(stereo1)*cos(alpha1))-p2/(sin(stereo2)*cos(alpha2)))/(1/tan(stereo1)-1/tan(stereo2));
 }
 
 
@@ -246,4 +244,75 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
   
   return listoftangents.front();
 																							
+}
+
+
+GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel){
+
+  MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+  
+  Double_t beta1=surv->DTSurveyStereoAngle(11002001);
+  Double_t beta2=surv->DTSurveyStereoAngle(20002001);
+  
+  MufluxSpectrometerHit* hit;
+  
+  
+  //front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
+  //back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
+  tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b1111,0);
+  
+  tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b0011,1);
+  tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b0011,2);
+
+  Double_t xslope=-tan(all.alpha);
+  Double_t x0=all.p/cos(all.alpha);
+  
+  Double_t yslope = YslopeFromProjections(stereo1.alpha, beta1, stereo2.alpha, beta2);
+  Double_t y0 = Y0FromProjections(stereo1.alpha, stereo1.p, beta1, stereo2.alpha, stereo2.p, beta2);
+  
+  
+  TVector3 position,direction;
+  position.SetXYZ(x0,y0,0);
+  direction.SetXYZ(xslope,yslope,1);
+ 
+  GBL_seed_track *seed=new GBL_seed_track(position, direction);
+  int view;
+
+  TVector3 *vtop=new TVector3();
+  TVector3 *vbot=new TVector3();
+  
+  for(int ii=0;ii<Digi_MufluxSpectrometerHits.GetSize();ii++){
+    hit = &(Digi_MufluxSpectrometerHits[ii]);
+
+    surv->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
+
+    tangent2d tangent=all;
+    
+    if(int view=GetView(hit->GetDetectorID())!=0){
+      Double_t angle = surv->DTSurveyStereoAngle(hit->GetDetectorID());
+      vbot->RotateZ(-angle);
+      vtop->RotateZ(-angle);
+      if(view==1)tangent=stereo1;
+      else tangent=stereo2;
+    }
+    
+    
+    Double_t xhit=(vtop->x()+vbot->x())/2;
+    Double_t zhit=(vtop->z()+vbot->z())/2;
+    
+    Double_t track_distance = xhit*cos(tangent.alpha)+zhit*sin(tangent.alpha)-tangent.p;
+    Double_t residual = fabs(track_distance)-RTRel.GetRadius(hit->GetDigi());
+    if(fabs(residual)<.9&&fabs(track_distance)<2.385){ //2.1 referes to half tube distance... realistic is 1.815, but for pattern reco ok, 4.2-1.815 means that git is not in next tube
+      seed->add_hit(hit->GetDetectorID(),RTRel.GetRadius(hit->GetDigi()));
+    }
+
+  }
+  
+
+
+  delete vtop;
+  delete vbot;
+  delete surv;
+  return seed;
+  
 }

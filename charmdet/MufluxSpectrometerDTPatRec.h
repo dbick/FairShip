@@ -6,6 +6,7 @@
 #include "MufluxSpectrometerHit.h"
 #include "MufluxSpectrometer.h"
 #include "TTreeReaderArray.h"
+#include "GBLseedtrack.h"
 
 struct tangent2d {
   double alpha;
@@ -29,5 +30,7 @@ Double_t X0FromProjections(Double_t alpha1, Double_t p1, Double_t beta1, Double_
 
 
 tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel, int bin_station, int view);
+
+GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits, MufluxSpectrometerRTRelation &RTRel);
 
 #endif
