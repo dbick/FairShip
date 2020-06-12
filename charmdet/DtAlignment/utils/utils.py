@@ -340,6 +340,7 @@ def reshape_spectrum(tracks,n_selected_tracks):
     max_slope_x = -100
     slope_list = []
     for i in range(len(tracks)):
+        track = tracks[i]
         n_hits = track.getNumPointsWithMeasurement()
         first_hit = track.getFittedState(0)
         last_hit = track.getFittedState(n_hits - 1)
