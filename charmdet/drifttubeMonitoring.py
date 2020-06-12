@@ -7992,7 +7992,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
     pos = ROOT.TVector3()
     mom = ROOT.TVector3()
     eventRange = [0,sTree.GetEntries()]
-    genfit_tracklist = []
+    genfit_tracks = []
     start_time = time.time()
     if not nEvent<0: eventRange = [nEvent,nEvent+nTot]
     for Nr in range(eventRange[0],eventRange[1]):
