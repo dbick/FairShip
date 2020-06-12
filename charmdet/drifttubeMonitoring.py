@@ -958,8 +958,8 @@ def print_modules(dt_modules_dict):
         center = mod.get_center_position()
         print("Centerpos = {}\t{}\t{}".format(center[0],center[1],center[2]))
                   
-print_layers(dt_modules)
-print_modules(dt_modules)
+# print_layers(dt_modules)
+# print_modules(dt_modules)
         
 
 def compareAlignment():
