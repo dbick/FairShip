@@ -56,6 +56,7 @@ ReProcessAbsorber.cxx
 RPCTrack.cxx
 MufluxReco.cxx
 MillepedeCaller.cxx
+GBLseedtrack.cxx
 )
 
 Set(HEADERS )
