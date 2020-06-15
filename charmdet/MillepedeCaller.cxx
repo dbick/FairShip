@@ -496,12 +496,11 @@ double MillepedeCaller::perform_GBL_refit(const GBL_seed_track& track, double si
 //	cout << "Seed slope (dx,dy): " << track.get_direction()[0]/track.get_direction()[2] << ", " << track.get_direction()[1]/track.get_direction()[2] << endl;
 
 	cout << "------------performing refit--------------" << endl;
-//	cout << "Seed track chi2: " << track.getFitStatus()->getChi2() << " Ndf: " << track.getFitStatus()->getNdf() << endl;
-
 
 	rc = traj.fit(chi2,ndf,lostWeight);
 	cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
 	cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
+	print_fitted_residuals(traj);
 
 	return chi2;
 }
