@@ -104,3 +104,22 @@ const vector<int> GBL_seed_track::get_hit_detIDs() const
 
 	return result;
 }
+
+/*
+ * When the seed track is created with direcion and momentum only, hits can be added from the pattern reco
+ *
+ * @brief Adding hits from pattern reco
+ *
+ * @param detectorID The detector ID of the hit
+ * @param driftradius The drift radius of the hit
+ *
+ * @author Daniel Bick
+ * @date 12.06.2020
+ * @version 1.0
+ *
+ */
+void GBL_seed_track::add_hit(int detectorID, double driftradius)
+{
+  std::pair<int, double> hit(detectorID, driftradius);
+  m_hits.push_back(hit);
+}
