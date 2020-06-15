@@ -814,5 +814,8 @@ def GBL_refit(max_spills=None,pedefile=None):
     print(refitted_files)
     
     pool = multiprocessing.Pool(ncpus)
-    pool.map(GBL_refit_single_rootfile, refitted_files)
+    if pedefile != None:
+        pool.map(GBL_refit_single_rootfile, refitted_files,pedefile)
+    else:
+        pool.map(GBL_refit_single_rootfile, refitted_files)
 
