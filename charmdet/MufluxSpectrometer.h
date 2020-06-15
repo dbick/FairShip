@@ -45,8 +45,8 @@ class MufluxSpectrometer:public FairDetector
     void SetTr12XDim(Double_t tr12xdim); 
     void SetTr34XDim(Double_t tr34xdim);   
     void SetMuonFlux(Bool_t muonflux);   
-    void TubeDecode(Int_t detID,int &statnb,int &vnb,int &pnb,int &lnb, int &snb);
-    void TubeEndPoints(Int_t detID, TVector3 &top, TVector3 &bot);
+    static void TubeDecode(Int_t detID,int &statnb,int &vnb,int &pnb,int &lnb, int &snb);
+    static void TubeEndPoints(Int_t detID, TVector3 &top, TVector3 &bot);
     void SetDistStereo(Double_t diststereoT1,Double_t diststereoT2);
     void SetDistT1T2(Double_t distT1T2);
     void SetDistT3T4(Double_t distT3T4);

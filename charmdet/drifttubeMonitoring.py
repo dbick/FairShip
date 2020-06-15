@@ -1,9 +1,15 @@
 #import yep
 import ROOT,os,time,sys,operator,atexit
 ROOT.gROOT.ProcessLine('typedef std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, std::vector<MufluxSpectrometerHit*>>>> nestedList;')
+ROOT.gROOT.ProcessLine('typedef std::vector<MufluxSpectrometerHit> muflux_hitlist;')
+ROOT.gROOT.ProcessLine('typedef std::map<int,double> pede_result_cpp;')
 
 from decorators import *
 import __builtin__ as builtin
+import DtAlignment.DriftTube as DriftTube
+import DtAlignment.DtModule as DtModule
+import DtAlignment
+import numpy as np
 ROOT.gStyle.SetPalette(ROOT.kGreenPink)
 PDG = ROOT.TDatabasePDG.Instance()
 # -----Timer--------------------------------------------------------
@@ -14,15 +20,19 @@ from argparse import ArgumentParser
 import shipunit as u
 import rootUtils as ut
 from array import array
+from MufluxPatRec import decodeDetectorID
 
 ########
-zeroField    = False
+zeroField    = True
 DAFfitter    = True
 withMaterial = True
 MCdata = False
+cpp_pede_results = None
+python_pede_results = None
 ########
 # before RT correction: MCsmearing=0.04  #  + 0.027**2 -> 0.05  
 MCsmearing=0.022  #  + 0.027**2 -> 0.035
+
 ####### 
 cuts={}
 cuts['Ndf'] = 9
@@ -73,6 +83,7 @@ parser.add_argument("-u", "--update", dest="updateFile", help="update file", def
 parser.add_argument("-i", "--input", dest="inputFile", help="input histo file", default='residuals.root')
 parser.add_argument("-g", "--geofile", dest="geoFile", help="input geofile", default='')
 parser.add_argument("-s", "--smearing", dest="MCsmearing", help="additional MC smearing", default=MCsmearing)
+parser.add_argument("-p", "--pedefile", dest="pede_file", help="read pede alignment", default=None)
 
 options = parser.parse_args()
 MCsmearing = options.MCsmearing
@@ -339,6 +350,11 @@ rn['T2_MC_02'] = rn['T1_MB_02']
 rn['T2_MC_04'] = rn['T1_MB_04']
 rn['T2_MC_03'] = rn['T1_MB_03']
 
+#Stefan: Build set of DT modules
+dt_modules = {}
+tubes = {}
+
+tubes['T1X'] = []
 #overall z positioning
 #T1X:
 zpos['T1X'] = (daniel['T1_MA_01'][2]+daniel['T1_MA_02'][2]+daniel['T1_MA_03'][2]+daniel['T1_MA_04'][2])/4. + 3.03
@@ -354,25 +370,36 @@ for i in range(12):
     xpos[n-i] = start - delta * i
     ypos[n-i] = ypos['T1X']
     zpos[n-i] = zpos['T1X']-deltaZ
+    y_center = ypos[n-i][1] + ((ypos[n-i][0]-ypos[n-i][1]) / 2)
+    tubes['T1X'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 10012001
 start =  daniel['T1_MA_02'][0] +1.1 #   (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. +1.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T1X']
     zpos[n+i] = zpos['T1X']+3.64-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 10102001
 start = start -1.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2.
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T1X']
     zpos[n+i] = zpos['T1X']+3.64+4.06-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 10112001
 start = start - 2.1 #  (daniel['T1_MA_02'][0]+daniel['T1_MA_03'][0])/2. - 2.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T1X']
     zpos[n+i] = zpos['T1X']+3.64+4.06+3.64-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T1X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T1X'])
+dt_modules['T1X'] = DtModule(tubes['T1X'],mod_center[0],mod_center[1],mod_center[2])
+tubes['T1U'] = []
 #T1u: take survey corrected points
 zpos['T1U'] = (daniel['T1_MB_01'][2]+daniel['T1_MB_02'][2]+daniel['T1_MB_03'][2]+daniel['T1_MB_04'][2])/4. - 3.03 -3.64 -4.06 -3.64
 angleu1 = ROOT.TMath.ATan2((daniel['T1_MB_01'][0]-daniel['T1_MB_04'][0]),(daniel['T1_MB_01'][1]-daniel['T1_MB_04'][1]))
@@ -380,6 +407,9 @@ angleu2 = ROOT.TMath.ATan2((daniel['T1_MB_02'][0]-daniel['T1_MB_03'][0]),(daniel
 angleu = (angleu1+angleu2)/2.
 
 angle = -angleu # 60.208/180.*ROOT.TMath.Pi()  ???
+#Stefan: convert angle to Euler angles
+phi,theta,psi = DtAlignment.utils.z_rotation_to_euler_angles(angle)
+
 tx,ty=0,0
 for i in range(1,5):
     p = 'T1_MB_0'+str(i)
@@ -405,6 +435,11 @@ for i in range(12):
     xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n-i] = zpos['T1U']-deltaZ
+    #build DriftTube object
+    top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+    bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T1U'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
 n = 11012001
 start = (rn['T1_MB_02'][0]+rn['T1_MB_03'][0])/2.+1.1
 for i in range(12): 
@@ -416,6 +451,10 @@ for i in range(12):
     xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n+i] = zpos['T1U']+3.64-deltaZ
+    top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+    bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 11102001
 start = (rn['T1_MB_02'][0]+rn['T1_MB_03'][0])/2.
 for i in range(12): 
@@ -427,6 +466,10 @@ for i in range(12):
     xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n+i] = zpos['T1U']+3.64+4.06 -deltaZ
+    top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+    bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 11112001
 start = start - 2.1
 for i in range(12): 
@@ -438,8 +481,16 @@ for i in range(12):
     xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n+i] = zpos['T1U']+3.64+4.06+3.64-deltaZ
+    top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+    bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T1U'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T1U'])
+dt_modules['T1U'] = DtModule(tubes['T1U'],mod_center[0],mod_center[1],mod_center[2],phi,theta,psi)
 
 # T2X:
+tubes['T2X'] = []
 zpos['T2X'] = (daniel['T2_MD_01'][2]+daniel['T2_MD_02'][2]+daniel['T2_MD_03'][2]+daniel['T2_MD_04'][2])/4. - 3.03 - 3.64 - 4.06 - 3.6480
 ypos['T2X'] = [(daniel['T2_MD_01'][1]+daniel['T2_MD_02'][1])/2.,(daniel['T2_MD_04'][1]+daniel['T2_MD_03'][1])/2.]
 n = 21112001
@@ -451,33 +502,47 @@ for i in range(12):
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T2X']
     zpos[n+i] = zpos['T2X']+3.64+4.06+3.64-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21102001
 start = start - 2.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T2X']
     zpos[n+i] = zpos['T2X']+3.64+4.06-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21012001
 start = start + 1.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T2X']
     zpos[n+i] = zpos['T2X']+3.64-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 21002001
 start = start + 2.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     ypos[n+i] = ypos['T2X']
     zpos[n+i] = zpos['T2X']-deltaZ
+    y_center = ypos[n+i][1] + ((ypos[n+i][0]-ypos[n+i][1]) / 2)
+    tubes['T2X'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T2X'])
+dt_modules['T2X'] = DtModule(tubes['T2X'],mod_center[0],mod_center[1],mod_center[2])
 
 #T2v:take survey corrected points
+tubes['T2V'] = []
 anglev1 = ROOT.TMath.ATan2((daniel['T2_MC_02'][0]-daniel['T2_MC_03'][0]),(daniel['T2_MC_02'][1]-daniel['T2_MC_03'][1]))
 anglev2 = ROOT.TMath.ATan2((daniel['T2_MC_01'][0]-daniel['T2_MC_04'][0]),(daniel['T2_MC_01'][1]-daniel['T2_MC_04'][1]))
 anglev = (anglev1+anglev2)/2.
 
+
 zpos['T2V'] = (daniel['T2_MC_01'][2]+daniel['T2_MC_02'][2]+daniel['T2_MC_03'][2]+daniel['T2_MC_04'][2])/4. + 3.03
 L =  110.
 angle = -anglev # ???
+phi, theta, psi = DtAlignment.utils.z_rotation_to_euler_angles(angle)
 tx,ty=0,0
 for i in range(1,5):
     p = 'T2_MC_0'+str(i)
@@ -502,6 +567,11 @@ for i in range(12):
     xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n+i] = zpos['T2V']+3.64+4.06+3.64-deltaZ
+    #Build tubes
+    top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+    bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T2V'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 20102001
 start = start - 2.1
 for i in range(12): 
@@ -513,6 +583,11 @@ for i in range(12):
     xposb[n+i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n+i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n+i] = zpos['T2V']+3.64+4.06-deltaZ
+    #Build tubes
+    top_pos = ROOT.TVector3(xpos[n+i],ypos[n+i],zpos[n+i])
+    bot_pos = ROOT.TVector3(xposb[n+i],yposb[n+i],zpos[n+i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T2V'].append(DriftTube(n+i,center[0],center[1],center[2],phi,theta,psi))
 n = 20012012
 start = (rn['T2_MC_01'][0]+rn['T2_MC_04'][0])/2.
 for i in range(12): 
@@ -524,6 +599,11 @@ for i in range(12):
     xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n-i] = zpos['T2V']+3.64-deltaZ
+    #Build tubes
+    top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+    bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T2V'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
 n = 20002012
 start = start + 2.1
 for i in range(12): 
@@ -535,10 +615,20 @@ for i in range(12):
     xposb[n-i] = xnom *ROOT.TMath.Cos(angle) - ynom*ROOT.TMath.Sin(angle) + tx
     yposb[n-i] = xnom *ROOT.TMath.Sin(angle) + ynom*ROOT.TMath.Cos(angle) + ty
     zpos[n-i] = zpos['T2V']-deltaZ
+    #Build tubes
+    top_pos = ROOT.TVector3(xpos[n-i],ypos[n-i],zpos[n-i])
+    bot_pos = ROOT.TVector3(xposb[n-i],yposb[n-i],zpos[n-i])
+    center = DtAlignment.utils.calculate_center(top_pos, bot_pos)
+    tubes['T2V'].append(DriftTube(n-i,center[0],center[1],center[2],phi,theta,psi))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T2V'])
+dt_modules['T2V'] = DtModule(tubes['T2V'],mod_center[0],mod_center[1],mod_center[2],phi,theta,psi)
 
 #T3aX:
+tubes['T3aX'] = []
 zpos['T3aX'] = (( daniel['T3_T01'][2] + daniel['T3_B01'][2] + daniel['T3_T02'][2] + daniel['T3_B02'][2])/4. + 4.33)
 ypos['T3aX'] = [(daniel['T3_T01'][1]+daniel['T3_T02'][1])/2.,(daniel['T3_B01'][1]+daniel['T3_B02'][1])/2.]
+y_center = ypos['T3aX'][1] + ((ypos['T3aX'][0]-ypos['T3aX'][1]) / 2)
 
 delta = ( (daniel['T3_T01'][0] + daniel['T3_B01'][0])/2. - (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. )/8.
 delta = 4.2
@@ -548,25 +638,33 @@ start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta +2.1 -delta
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3aX']-deltaZ
+    tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3aX']+3.64-deltaZ
+    tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta -1.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3aX']+3.64+4.06-deltaZ
+    tubes['T3aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112037
 start = (daniel['T3_T02'][0] + daniel['T3_B02'][0])/2. -delta -1.1 -2.1
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3aX']+3.64+4.06+3.64-deltaZ
 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3aX'])
+dt_modules['T3aX'] = DtModule(tubes['T3aX'],mod_center[0],mod_center[1],mod_center[2])
+
 #T3bX:
+tubes['T3bX'] = []
 zpos['T3bX'] = (( daniel['T3_T03'][2] + daniel['T3_B03'][2] + daniel['T3_T04'][2] + daniel['T3_B04'][2])/4. + 4.33)
 ypos['T3bX'] = [(daniel['T3_T03'][1]+daniel['T3_T04'][1])/2.,(daniel['T3_B03'][1]+daniel['T3_B04'][1])/2.]
+y_center = ypos['T3bX'][1] + ((ypos['T3bX'][0]-ypos['T3bX'][1]) / 2)
 
 delta = ( (daniel['T3_T03'][0] + daniel['T3_B03'][0])/2. - (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2. )/8.
 delta = 4.2
@@ -576,25 +674,34 @@ start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta +2.1 -delta
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3bX']-deltaZ
+    tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta 
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3bX']+3.64-deltaZ
+    tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta -1.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3bX']+3.64+4.06-deltaZ
+    tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112025
 start =  (daniel['T3_T04'][0] + daniel['T3_B04'][0])/2.  -delta -1.1 -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3bX']+3.64+4.06+3.64-deltaZ
+    tubes['T3bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3bX'])
+dt_modules['T3bX'] = DtModule(tubes['T3bX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T3cX:
+tubes['T3cX'] = []
 zpos['T3cX'] = (( daniel['T3_T05'][2] + daniel['T3_B05'][2] + daniel['T3_T06'][2] + daniel['T3_B06'][2])/4. + 4.33)
 ypos['T3cX'] = [(daniel['T3_T05'][1]+daniel['T3_T06'][1])/2.,(daniel['T3_B05'][1]+daniel['T3_B06'][1])/2.]
+y_center = ypos['T3cX'][1] + ((ypos['T3cX'][0]-ypos['T3cX'][1]) / 2)
 
 delta = ( (daniel['T3_T05'][0] + daniel['T3_B05'][0])/2. - (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. )/8.
 delta = 4.2
@@ -604,25 +711,34 @@ start = (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. -delta +2.1 -delta
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3cX']-deltaZ
+    tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012013
 start = (daniel['T3_T06'][0] + daniel['T3_B06'][0])/2. -delta 
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3cX']+3.64-deltaZ
+    tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102013
 start = start -1.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3cX']+3.64+4.06-deltaZ
+    tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112013
 start = start -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3cX']+3.64+4.06+3.64-deltaZ
+    tubes['T3cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3cX'])
+dt_modules['T3cX'] = DtModule(tubes['T3cX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T3dX:
+tubes['T3dX'] = []
 zpos['T3dX'] = (( daniel['T3_T07'][2] + daniel['T3_B07'][2] + daniel['T3_T08'][2] + daniel['T3_B08'][2])/4. + 4.33)
 ypos['T3dX'] = [(daniel['T3_T07'][1]+daniel['T3_T08'][1])/2.,(daniel['T3_B07'][1]+daniel['T3_B08'][1])/2.]
+y_center = ypos['T3dX'][1] + ((ypos['T3dX'][0]-ypos['T3dX'][1]) / 2)
 
 delta = ( (daniel['T3_T07'][0] + daniel['T3_B07'][0])/2. - (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. )/8.
 delta = 4.2
@@ -633,25 +749,34 @@ start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta +2.1 -delta
 for i in range(12): 
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3dX'] -deltaZ
+    tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30012001
 start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta 
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3dX']+3.64-deltaZ
+    tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30102001
 start =(daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta -1.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3dX']+3.64+4.06-deltaZ
+    tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 30112001
 start = (daniel['T3_T08'][0] + daniel['T3_B08'][0])/2. -delta -1.1 -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T3dX']+3.64+4.06+3.64-deltaZ
+    tubes['T3dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T3dX'])
+dt_modules['T3dX'] = DtModule(tubes['T3dX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4aX:
+tubes['T4aX'] = []
 zpos['T4aX'] = (( daniel['T4_T01'][2] + daniel['T4_B01'][2] + daniel['T4_T02'][2] + daniel['T4_B02'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4aX'] = [(daniel['T4_T01'][1]+daniel['T4_T02'][1])/2.,(daniel['T4_B01'][1]+daniel['T4_B02'][1])/2.]
+y_center = ypos['T4aX'][1] + ((ypos['T4aX'][0]-ypos['T4aX'][1]) / 2)
 
 delta = ( (daniel['T4_T01'][0] + daniel['T4_B01'][0])/2. - (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2. )/8.
 delta = 4.2
@@ -661,25 +786,34 @@ start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta +45.2
 for i in range(12):
     xpos[n-i] = start - delta * i
     zpos[n-i] = zpos['T4aX']-deltaZ
+    tubes['T4aX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta +1.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4aX']+3.64-deltaZ
+    tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta  
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4aX']+3.64+4.06-deltaZ
+    tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112037
 start = (daniel['T4_T02'][0] + daniel['T4_B02'][0])/2.  -delta  -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4aX']+3.64+4.06+3.64-deltaZ
+    tubes['T4aX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4aX'])
+dt_modules['T4aX'] = DtModule(tubes['T4aX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4bX:
+tubes['T4bX'] = []
 zpos['T4bX'] = (( daniel['T4_T03'][2] + daniel['T4_B03'][2] + daniel['T4_T04'][2] + daniel['T4_B04'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4bX'] = [(daniel['T4_T03'][1]+daniel['T4_T04'][1])/2.,(daniel['T4_B03'][1]+daniel['T4_B04'][1])/2.]
+y_center = ypos['T4bX'][1] + ((ypos['T4bX'][0]-ypos['T4bX'][1]) / 2)
 
 delta = ( (daniel['T4_T03'][0] + daniel['T4_B03'][0])/2. - (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. )/8.
 delta = 4.2
@@ -689,25 +823,34 @@ start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta +45.2
 for i in range(12):
     xpos[n-i] = start - delta * i
     zpos[n-i] = zpos['T4bX']-deltaZ
+    tubes['T4bX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta +45.2 -10*delta-2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4bX']+3.64-deltaZ
+    tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta 
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4bX']+3.64+4.06-deltaZ
+    tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112025
 start = (daniel['T4_T04'][0] + daniel['T4_B04'][0])/2. -delta  -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4bX']+3.64+4.06+3.64-deltaZ
+    tubes['T4bX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4bX'])
+dt_modules['T4bX'] = DtModule(tubes['T4bX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4cX:
+tubes['T4cX'] = []
 zpos['T4cX'] = (( daniel['T4_T05'][2] + daniel['T4_B05'][2] + daniel['T4_T06'][2] + daniel['T4_B06'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4cX'] = [(daniel['T4_T05'][1]+daniel['T4_T06'][1])/2.,(daniel['T4_B05'][1]+daniel['T4_B06'][1])/2.]
+y_center = ypos['T4cX'][1] + ((ypos['T4cX'][0]-ypos['T4cX'][1]) / 2)
 
 delta = ( (daniel['T4_T05'][0] + daniel['T4_B05'][0])/2. - (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2. )/8.
 delta = 4.2
@@ -717,25 +860,34 @@ start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta +45.2
 for i in range(12):
     xpos[n-i] = start - delta * i
     zpos[n-i] = zpos['T4cX']-deltaZ
+    tubes['T4cX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta +45.2 -10*delta-2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4cX']+3.64-deltaZ
+    tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta  
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4cX']+3.64+4.06-deltaZ
+    tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112013
 start = (daniel['T4_T06'][0] + daniel['T4_B06'][0])/2.  -delta -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4cX']+3.64+4.06+3.64-deltaZ
+    tubes['T4cX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4cX'])
+dt_modules['T4cX'] = DtModule(tubes['T4cX'],mod_center[0],mod_center[1],mod_center[2])
 
 #T4dX:
+tubes['T4dX'] = []
 zpos['T4dX'] = (( daniel['T4_T07'][2] + daniel['T4_B07'][2] + daniel['T4_T08'][2] + daniel['T4_B08'][2])/4. - 4.33 -3.64-4.06-3.64)
 ypos['T4dX'] = [(daniel['T4_T07'][1]+daniel['T4_T08'][1])/2.,(daniel['T4_B07'][1]+daniel['T4_B08'][1])/2.]
+y_center = ypos['T4dX'][1] + ((ypos['T4dX'][0]-ypos['T4dX'][1]) / 2)
 
 delta = ( (daniel['T4_T07'][0] + daniel['T4_B07'][0])/2. - (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2. )/8.
 delta = 4.2
@@ -745,21 +897,28 @@ start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2. -delta +45.2
 for i in range(12):
     xpos[n-i] = start - delta * i
     zpos[n-i] = zpos['T4dX']-deltaZ
+    tubes['T4dX'].append(DriftTube(n-i,xpos[n-i],y_center,zpos[n-i]))
 n = 40012001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta +45.2 -10*delta-2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4dX']+3.64-deltaZ
+    tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40102001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4dX']+3.64+4.06-deltaZ
+    tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
 n = 40112001
 start = (daniel['T4_T08'][0] + daniel['T4_B08'][0])/2.  -delta -2.1
 for i in range(12):
     xpos[n+i] = start + delta * i
     zpos[n+i] = zpos['T4dX']+3.64+4.06+3.64-deltaZ
+    tubes['T4dX'].append(DriftTube(n+i,xpos[n+i],y_center,zpos[n+i]))
+ 
+mod_center = DtAlignment.utils.calculate_center_from_lot(tubes['T4dX'])
+dt_modules['T4dX'] = DtModule(tubes['T4dX'],mod_center[0],mod_center[1],mod_center[2])
 
 if debug:
     for a in Langle:
@@ -778,6 +937,30 @@ if debug:
 #rpc
 rpc={}
 DT={}
+
+def print_layers(dt_modules_dict):
+    for key in dt_modules_dict.keys():
+        mod = dt_modules_dict[key]
+        print("Module: {}".format(key))
+        for tube in mod.get_tubes():
+            top, bot = tube.wire_end_positions()
+            centerpos = tube.get_center_position()
+            dx_top = top[0] - centerpos[0]
+            dy_top = top[1] - centerpos[1]
+
+            angle = np.arctan(dx_top / dy_top)  * 180.0 / np.pi #angle w.r.t y axis
+            print("CH: {}\t z = {}\t alpha = {}".format(tube._ID,centerpos[2],angle))
+            
+def print_modules(dt_modules_dict):
+    for key in dt_modules_dict.keys():
+        mod = dt_modules_dict[key]
+        print("Module: {}".format(key))
+        center = mod.get_center_position()
+        print("Centerpos = {}\t{}\t{}".format(center[0],center[1],center[2]))
+                  
+# print_layers(dt_modules)
+# print_modules(dt_modules)
+        
 
 def compareAlignment():
     ut.bookHist(h,'alignCompare','compare Alignments',100,-120.,120.,100,-120.,120.)
@@ -1173,6 +1356,7 @@ DTEfficiencyFudgefactor(method=-1)
 if sTree.GetBranch('MCTrack'):  
       muflux_Reco.setNoisyChannels(deadChannels4MC)
       muflux_Reco.setDeadChannels(deadChannelsRPC4MC)
+      
 def MakeKeysToDThits(minToT=-999):
     keysToDThits={}
     key = -1
@@ -2104,13 +2288,18 @@ def momDisplay():
         h[t].Update()
 
 sigma_spatial = 0.25 # almost binary resolution! (ShipGeo.MufluxSpectrometer.InnerTubeDiameter/2.)/ROOT.TMath.Sqrt(12) 
+sigma_spatial = 0.05
 
 def bestTracks():
     theTracks1 = findTracks(PR=11)
     theTracks2 = findTracks(PR=12)
     bestTracks = cloneKiller(theTracks1 + theTracks2)
     return bestTracks
-def fitTrack(hitlist,Pstart=3.):
+
+spect_survey = ROOT.MufluxSpectrometerDTSurvey()
+spect_survey.Init()
+
+def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # need measurements
     global fitter
     hitPosLists={}
@@ -2120,10 +2309,12 @@ def fitTrack(hitlist,Pstart=3.):
 # approximate covariance
     covM = ROOT.TMatrixDSym(6)
     resolution   = sigma_spatial
+    res2 = resolution**2
+    cov_entry = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
     if not withTDC: resolution = 10*sigma_spatial
-    for  i in range(3):   covM[i][i] = resolution*resolution
+    for  i in range(3):   covM[i][i] = res2
     # covM[0][0]=resolution*resolution*100.
-    for  i in range(3,6): covM[i][i] = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
+    for  i in range(3,6): covM[i][i] = cov_entry
     rep = ROOT.genfit.RKTrackRep(13)
 # start state
     state = ROOT.genfit.MeasuredStateOnPlane(rep)
@@ -2158,7 +2349,22 @@ def fitTrack(hitlist,Pstart=3.):
                         found = True
                         break
                 if not found: print "fittrack: digi not found, something wrong here",tdc
-        vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
+        vbot = ROOT.TVector3()
+        vtop = ROOT.TVector3()
+        spect_survey.TubeEndPointsSurvey(hit.GetDetectorID(),vtop,vbot)
+        """
+        Apply pede corrections for fit by changing vbot, vtop to new values
+        """
+        if pede_corrections:
+            corr_labels = tube_id_module_pede_labels(hit.GetDetectorID())
+            x_corr = 0
+            z_corr = 0
+            for entry in pede_corrections:
+                if entry[0] % 10 > 3: continue #first only translations
+                if entry[0] in corr_labels:
+                    if entry[0] % 10 == 1: x_corr = -entry[1]
+                    elif entry[0] % 10 == 3: z_corr = -entry[1]
+            vbot, vtop = apply_pede_corrections(vbot, vtop, x_corr, z_corr, 0, 0, 0)
         s,v,p,l,view,channelID,tdcId,nRT = stationInfo(hit)
         distance = 0
         if withTDC: distance = RT(hit,tdc)
@@ -2528,16 +2734,11 @@ def findDTClustersDebug2(L):
         for hit in L[l]:
             print stationInfo(hit),hit.GetTimeOverThreshold() 
 
-def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True):
-    if PR == 3:
-        if sTree.GetBranch('FitTracks_refitted'): return sTree.FitTracks_refitted
-        print "findTracks called with PR=3 but FitTracks_refitted does not exist. "
-        return None
-    if PR == 1:
-        if sTree.GetBranch('FitTracks'): return sTree.FitTracks
-        print "findTracks called with PR=1 but FitTracks does not exist. "
-        return None
-    if PR == 12 :
+
+def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True,pede_results = None):
+    if PR < 3  and sTree.GetBranch('FitTracks'): return sTree.FitTracks
+    if PR == 3 and sTree.GetBranch('FitTracks_refitted'): return sTree.FitTracks_refitted
+    if PR%2==0 : 
         trackCandidates = testPR()
         if len(trackCandidates)>1: trackCandidates=cloneKiller(trackCandidates)
         return trackCandidates
@@ -2559,7 +2760,7 @@ def findTracks(PR = 1,linearTrackModel = False,withCloneKiller=True):
            for n in range(trInfo.N()):
               detID = trInfo.detId(n)
               hitList.append(keysToDThits[detID][0])
-           aTrack = fitTrack(hitList,P)
+           aTrack = fitTrack(hitList,P,pede_corrections=pede_results)
            if type(aTrack) == type(1): continue
            trackCandidates.append(aTrack)
         return trackCandidates
@@ -2966,6 +3167,18 @@ def printResiduals(aTrack):
 # make TDC plots for hits matched to tracks)
 def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=11,onlyPlotting=False,minP=3.):
     timerStats = {'fit':0,'analysis':0,'prepareTrack':0,'extrapTrack':0,'fillRes':0}
+    module_residuals = {}
+    valid_gbl_refits = 0
+    aborted_gbl_refits = 0
+    for key in dt_modules.keys():
+        module_residuals[key] = {} #use this if you call calculate_residuals_lr
+        module_residuals[key]['l'] = [] #use this if you call calculate_residuals_lr
+        module_residuals[key]['r'] = [] #use this if you call calculate_residuals_lr
+#   #module_residuals[key] = [] #use this if you call calculate_residuals
+    
+    #debugging
+    mille_filename = sTree.GetCurrentFile().GetName() + ".mille_out"
+    milleCaller = ROOT.MillepedeCaller(mille_filename)
     if not onlyPlotting:
         h['biasResDist'].Reset()
         h['biasResDist2'].Reset()
@@ -3005,6 +3218,8 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=11,onlyPlotting=False,minP=3.):
                     if not fst.isFitConverged(): continue
                     try:
                         sta = aTrack.getFittedState(0)
+                        mom = sta.getMom()
+                        pos = sta.getPos()
                     except:
                         print "problem with getting state, event",sTree.GetCurrentFile().GetName(),Nr
                         continue
@@ -3034,6 +3249,29 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=11,onlyPlotting=False,minP=3.):
                     rc = h['biasResTrackMom'].Fill(sta.getMomMag())
                     timerStats['prepareTrack']+=timer.RealTime()
                     timer.Start()
+                    """
+                    refit
+                    """
+                    nHits = sTree.Digi_MufluxSpectrometerHits.GetEntries()
+                    raw_hits = ROOT.muflux_hitlist()
+                    raw_hits.resize(nHits)
+                    for hit in range(nHits):
+                        raw_hits[hit] = sTree.Digi_MufluxSpectrometerHits[hit]
+
+                    print("Testing: Processing event number", Nr)
+                    chi2_gbl = milleCaller.perform_GBL_refit(aTrack,raw_hits)
+                    del(raw_hits)                    
+                    if(chi2_gbl == -1):
+                        aborted_gbl_refits += 1
+                    else:
+                        valid_gbl_refits += 1
+                    """
+                    New calculation of residuals
+                    """
+                    #DtAlignment.utils.calculate_residuals_lr(aTrack,dt_modules,module_residuals)
+                    """
+                    End of new calculation
+                    """
                     for s in range(1,5):
                         for view in viewsI[s]:
                             for l in range(4):
@@ -3229,6 +3467,33 @@ def plotBiasedResiduals(nEvent=-1,nTot=1000,PR=11,onlyPlotting=False,minP=3.):
     myPrint(h['biasedResidualsX'],'biasedResidualsX')
     momDisplay()
     print "timing:",timerStats
+
+    """ File output with new residuals"""
+    """ Case calculate_residuals
+    for key in module_residuals.keys():
+        residual_filename = key + "_residuals"
+        ALG_f = open(residual_filename,"w")
+        for res in module_residuals[key]:
+            ALG_f.write("{}\n".format(res))
+        ALG_f.close()
+    """
+    """ Case calculate_residuals_lr """
+#  for key in module_residuals.keys():
+#      residual_filename_l = key + "_residuals_l"
+#      residual_filename_r = key + "_residuals_r"
+#      ALG_fl = open(residual_filename_l,"w")
+#      for res in module_residuals[key]['l']:
+#          ALG_fl.write("{}\n".format(res))
+#      ALG_fl.close()
+#      ALG_fr = open(residual_filename_r,"w")
+#      for res in module_residuals[key]['r']:
+#          ALG_fr.write("{}\n".format(res))
+#      ALG_fr.close()
+    
+    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    
+
+   
 def investigateActiveArea():
     r = 1.815
     h['biasResDist2_projx'].Draw()
@@ -7823,6 +8088,176 @@ if options.command == "":
     withCorrections = False
     importAlignmentConstants()
 #
+
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = False):
+    """
+    Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
+    produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
+    
+    This is based on the function plotBiasedResiduals(...) in this script.
+    
+    
+    Parameters
+    ----------
+    nEvent: int
+        Number of event where to start the processing. By setting -1, all events are processed.
+    nTot: int
+        Number of events from the beginning (nEvent) to be processed. Only used if nEvent >= 0. 
+    PR: int
+        Code defining seed track origin. So far only 13 is tested to work, this means completely new trackfit using Kalman and GBL
+    minP: float
+        Minimum momentum that a track must have in order to be accepted
+    pede_results: list<tuple>
+        List of tuples with pede corrections. This is typically the (second) return of the function read_pede_corrections(...).
+    """
+    valid_gbl_refits = 0
+    aborted_gbl_refits = 0    
+    
+    #debugging
+    mille_filename = sTree.GetCurrentFile().GetName() + ".mille_out"
+    milleCaller = ROOT.MillepedeCaller(mille_filename)
+    pos = ROOT.TVector3()
+    mom = ROOT.TVector3()
+    eventRange = [0,sTree.GetEntries()]
+    genfit_tracks = []
+    start_time = time.time()
+    if not nEvent<0: eventRange = [nEvent,nEvent+nTot]
+    for Nr in range(eventRange[0],eventRange[1]):
+        getEvent(Nr)
+        if Nr%10000==0:   print "now at event",Nr,' of ',sTree.GetEntries(),sTree.GetCurrentFile().GetName(),time.ctime()
+        if not findSimpleEvent(sTree): continue
+        trackCandidates = findTracks(PR,pede_results=pede_results)
+        if len(trackCandidates)==1:
+            spectrHitsSorted = ROOT.nestedList()
+            muflux_Reco.sortHits(sTree.Digi_MufluxSpectrometerHits,spectrHitsSorted,True)
+            for aTrack in trackCandidates:
+                fst = aTrack.getFitStatus()
+                if not fst.isFitConverged(): continue
+                try:
+                    sta = aTrack.getFittedState(0)
+                    mom = sta.getMom()
+                    pos = sta.getPos()
+                except:
+                    print "problem with getting state, event",sTree.GetCurrentFile().GetName(),Nr
+                    continue
+                if sta.getMomMag() < minP and not zeroField: continue
+                # check for muon tag to remove ghost tracks
+                muonTag = False
+                RPCclusters, RPCtracks = muonTaggerClustering(PR=11)
+                if len(RPCtracks['X'])==1 and len(RPCtracks['Y'])==1:
+                    posRPC = ROOT.TVector3()
+                    momRPC = ROOT.TVector3()
+                    rc = muflux_Reco.extrapolateToPlane(aTrack,cuts["zRPC1"], posRPC, momRPC)
+                    Xpos = RPCtracks['X'][0][0]*cuts["zRPC1"]+RPCtracks['X'][0][1]
+                    distX = ROOT.TMath.Abs(posRPC[0]-Xpos)
+                    Ypos = RPCtracks['Y'][0][0]*cuts["zRPC1"]+RPCtracks['Y'][0][1]
+                    distY = ROOT.TMath.Abs(posRPC[1]-Ypos)
+                    if abs(distX)<cuts['muTrackMatchX'] and abs(distY)<cuts['muTrackMatchY']: muonTag = True
+                if not muonTag: continue
+                # check for hits in each station
+                stations={1:0,2:0,3:0,4:0}
+                for p in aTrack.getPoints():
+                    rawM = p.getRawMeasurement()
+                    s = rawM.getDetId()/10000000
+                    if s < 1 or s > 4: 
+                        print "error with rawM", rawM.getDetId()
+                    stations[s]+=1
+                if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
+                genfit_tracks.append(ROOT.genfit.Track(aTrack))                
+        end_time = time.time()
+        for aTrack in trackCandidates:   aTrack.Delete()
+    genfit_time = end_time - start_time
+    if reshape:
+        print("Reshaping spectrum to uniform distribution")
+        selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
+        print("Number of sampled tracks: {}".format(len(selected_tracks)))
+    else:
+        selected_tracks = [i for i in range(len(genfit_tracks))]
+    
+    gbl_start_time = time.time()
+    for i in selected_tracks:
+        aTrack = genfit_tracks[i]
+        """
+        refit
+        """
+        print("Processing event number {}".format(i))
+        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
+        if(chi2_gbl == -1):
+            aborted_gbl_refits += 1
+        else:
+            valid_gbl_refits += 1
+    gbl_end_time = time.time()
+    gbl_time = gbl_end_time - gbl_start_time
+    print("Runtimes: genfit: {}, GBL: {}".format(genfit_time, gbl_time))
+    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+    
+    
+def read_pede_corrections(pede_filename):
+    """ Read corrections calculated by the standalone program pede that are provided in a textfile. Per default pede
+    produces a resultfile called "millepede.res"    
+    """
+    import re
+    pede_pattern = re.compile("\s*(\d{4})\s*(-?\d*\.\d+[Ee]?[+-]?\d*)\s*(-?\d+\.\d*)\s*(-?\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d*\.\d+[Ee]?[+-]?\d*)?\s*(\d+)")
+
+    labels = []
+    corrections = []
+    errors = []
+
+    with open(pede_filename) as resultfile:
+        for line in resultfile:
+            match = pede_pattern.match(line)
+            if match:
+                if match.group(4):
+                    labels.append(int(match.group(1)))
+                    corrections.append(float(match.group(4)))
+                    errors.append(float(match.group(5)))
+        
+    pede_res = zip(labels,corrections,errors)
+    results_to_cpp = ROOT.pede_result_cpp()
+    for i in range(len(pede_res)):
+        entry = pede_res[i]
+        results_to_cpp[entry[0]] = entry[1]
+        
+    return results_to_cpp, pede_res
+    
+    
+def tube_id_module_pede_labels(id): 
+    station, view, pnb, layer, tube = decodeDetectorID(id)
+
+    labels = [0] * 6
+    base_label = 1000 * station
+    if station > 2:
+
+        if tube >= 37 and tube <= 48:
+            base_label += 10
+        elif tube >= 25 and tube <= 36:
+            base_label += 20
+        elif tube >= 13 and tube <= 24:
+            base_label += 30
+    else:
+        base_label += 100 * view
+
+    for i in range(len(labels)):
+        labels[i] = base_label + i + 1 
+        
+    return labels
+
+def apply_pede_corrections(vbot, vtop, dx, dz, alpha, beta, gamma):
+    """
+    Correct the wire end positions passed as via variables vbot and vtop to this function with the correction values from pede.
+    """
+    wire_dir = vtop - vbot
+    alignment_to_global = ROOT.TRotation()
+    alignment_to_global.SetYAxis(wire_dir)
+    translation_in_alignmentsystem = ROOT.TVector3(dx,0,dz)
+    translation_in_global_system = alignment_to_global * translation_in_alignmentsystem
+    
+    return ROOT.TVector3(vbot + translation_in_global_system), ROOT.TVector3(vtop + translation_in_global_system)
+
+if options.pede_file:
+    print("Using pede file: {}".format(options.pede_file))
+    cpp_pede_results, python_pede_results = read_pede_corrections(options.pede_file)
+
 if options.command == "recoStep0":
     withTDC=False
     print "make clean TDC distributions"
@@ -7927,4 +8362,29 @@ elif options.command == "test":
         rc=sTree.GetEvent(n)
     yep.stop()
     print "finished"
+elif options.command == "GBL_MC":
+    n_mc_tracks = int(5e7)
+    n_min_hits = 6 #Minimum number of hits (total)
+    filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
+    milleCaller = ROOT.MillepedeCaller(filename)
+    if cpp_pede_results != None:
+        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,cpp_pede_results)
+    else:
+        milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,0)
+elif options.command == "GBL_refit":
+    reshape = False #reshape spectrum to be more uniformly distributed
+    importRTrel()
+    withDefaultAlignment = True
+    withCorrections = False 
+    importAlignmentConstants()
+    if python_pede_results:
+        print("Refitting with python pede results:")
+        for entry in python_pede_results:
+            print(entry)
+    GBL_refit(pede_results=python_pede_results,reshape = reshape)
+        
+# elif options.command == "resolutionfunction":
+#     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
+#     create_resolutionfunction(res_fnc_fname)
+    
 #alignConstants.pop('strawPositions') # if recorded alignment constants should not be used.

@@ -50,3 +50,10 @@ c++
 cc
 config.sh
 lcgenv.sh
+
+# IDE project files
+.project
+.cproject
+.settings
+.pydevproject
+charmdet/DtAlignment/UML/*.html

@@ -439,12 +439,13 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
       distance.bot_sal.SetXYZ(-10*mm,70*mm,-143.7*mm);
 
       double stereo=DTSurveyStereoAngle(DetectorID);//-1.051;
-      
+
       distance.top_jur.RotateZ(stereo);
       distance.top_sal.RotateZ(stereo);
       
       distance.bot_jur.RotateZ(stereo);
       distance.bot_sal.RotateZ(stereo);
+
       
     }
 
@@ -458,11 +459,13 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
 
       double stereo=DTSurveyStereoAngle(DetectorID);
       
+
       distance.top_jur.RotateZ(stereo);
       distance.top_sal.RotateZ(stereo);
       
       distance.bot_jur.RotateZ(stereo);
       distance.bot_sal.RotateZ(stereo);
+
       
     }
 
@@ -569,7 +572,9 @@ DTSurveyPoints MufluxSpectrometerDTSurvey::DTSurveyDistanceToRefTube(Int_t Detec
  * @version 1.0
  *
  */
-void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 &vtop, TVector3 &vbot){
+
+void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 &vtop, TVector3 &vbot) const
+{
   vtop=DTSurveyEndPointMap[DetectorID].top;
   vbot=DTSurveyEndPointMap[DetectorID].bot;
 }
@@ -593,8 +598,6 @@ TubeEndPoints MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID){
 
 
 
-
-
 /**
  * Calculates the rotation of the module around z from the two long sides (distance of the survey points)
  *
@@ -615,6 +618,7 @@ Double_t MufluxSpectrometerDTSurvey::DTSurveyStereoAngle(Int_t DetectorID){
   
   Double_t angle_jur=-atan((spoint.top_jur.x()-spoint.bot_jur.x())/(spoint.top_jur.y()-spoint.bot_jur.y()));
   Double_t angle_sal=-atan((spoint.top_sal.x()-spoint.bot_sal.x())/(spoint.top_sal.y()-spoint.bot_sal.y()));
+
 
   //std::cout << angle_jur << " " << angle_sal << std::endl;
 

@@ -1,9 +1,9 @@
-import os,subprocess,ROOT,time,multiprocessing
+import os,subprocess,ROOT,time,multiprocessing,re
 from rootpyPickler import Unpickler
 from rootpyPickler import Pickler
 import pickle
 import pwd
-ncpus = int(multiprocessing.cpu_count()*3./4.)
+ncpus = int(multiprocessing.cpu_count())
 
 noField           = [2199,2200,2201]
 intermediateField = [2383,2388,2389,2390,2392,2395,2396]
@@ -797,6 +797,7 @@ def listMissingSpills(stats,runs=None):
                 break
           if not found: missingFiles[r].append(rfile)
    return missingFiles
+
 def printRunStats( stats ):
 #                 PSW :       0  1
 #                 SPW :       0
@@ -935,4 +936,53 @@ def compareInvMassNtuples(path=''):
     print "total",total,float(total[1]/(total[0]+1E-10))
     print "total good runs",gtotal,float(gtotal[1]/(gtotal[0]+1E-10))
     return stats
+
+  
+  
+def GBL_refit_single_rootfile(fname):
+    """ Perform a refit using the GBL fitter for a single root-file.
+    
+    Author: Stefan Bieschke
+    Version: 1.0
+    Date: Jan. 16, 2020
+    
+    Parameters
+    ----------
+    fname: string
+        filename of the rootfile (ending _RT.root or _RT_refit.root - not necessary but that file format that is conventionally
+        stored with such names). This must include the full path to that file relative to the current working directory from
+        where this script is called.
+    """
+    cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
+    if pedefile != None:
+        cmd = cmd + " -p " + pedefile
+    print("Running command: {}".format(cmd))
+    os.system(cmd)
+  
+def GBL_refit(max_spills=None):
+    """ Performs a refit using the GBL fitter for all files ending with "_RT_refit.root" in the current working directory
+    from where the script is called. For each refitted spill, a file is created, that appends ".mille_out" to the filename of the rootfile.
+    This file contains information about the misalignment of the drift tubes and can be aligned using the standalone program
+    mille.
+    
+    Note that this function is calculating with one CPU thread per .root file up to a limit of the value of the global variable
+    @c ncpus that is defined at the beginning of this script.
+    
+    Author: Stefan Bieschke
+    Version: 1.0
+    Date: Jan. 16, 2020
+    """
+    refitted_files = []
+    file_pattern = re.compile("SPILLDATA.+\_RT\_refit\.root")
+    for file in os.listdir('.'):
+        match = file_pattern.match(file)
+        if match:
+            refitted_files.append(match.group())
+    if max_spills:
+        refitted_files = refitted_files[:max_spills]
+    print(refitted_files)
+    
+    pool = multiprocessing.Pool(ncpus)
+    pool.map(GBL_refit_single_rootfile, refitted_files)
+
 

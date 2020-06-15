@@ -2,6 +2,9 @@
 # the array .
 # The extension is already found.  Any number of sources could be listed here.
 
+#add_compile_options("-fopenmp")
+#link_libraries("-fopenmp")
+
 set(INCLUDE_DIRECTORIES
 ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/shipdata
@@ -9,6 +12,7 @@ ${CMAKE_SOURCE_DIR}/charmdet
 ${CMAKE_SOURCE_DIR}/online
 ${CMAKE_SOURCE_DIR}/genfit/core/include
 ${CMAKE_SOURCE_DIR}/genfit/fitters/include
+${CMAKE_SOURCE_DIR}/genfit/GBL/include
 ${CMAKE_SOURCE_DIR}/genfit/trackReps/include
 ${CMAKE_SOURCE_DIR}/millepede
 ${ROOT_INCLUDE_DIR}

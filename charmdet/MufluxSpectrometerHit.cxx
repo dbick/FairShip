@@ -39,6 +39,15 @@ MufluxSpectrometerHit::MufluxSpectrometerHit(MufluxSpectrometerPoint* p, Double_
      time_over_threshold = 167.2;
 } 
 
+/** Copy constructor **/
+MufluxSpectrometerHit::MufluxSpectrometerHit(const MufluxSpectrometerHit &point)
+: ShipHit(point)
+{
+	time_over_threshold = point.time_over_threshold;
+	flags = point.flags;
+	channel = point.flags;
+}
+
 void MufluxSpectrometerHit::MufluxSpectrometerEndPoints(TVector3 &vbot, TVector3 &vtop)
 { 
      Int_t statnb = fDetectorID/10000000; 
@@ -154,6 +163,16 @@ void MufluxSpectrometerHit::Print() const
   std::cout << "  TDC " << fdigi << " ns" << std::endl; 
 } 
 // ------------------------------------------------------------------------- 
+
+MufluxSpectrometerHit& MufluxSpectrometerHit::operator=(const MufluxSpectrometerHit &point)
+{
+	time_over_threshold = point.time_over_threshold;
+	flags = point.flags;
+	channel = point.flags;
+	ShipHit::operator=(point);
+
+	return *this;
+}
 
  
  ClassImp(MufluxSpectrometerHit) 

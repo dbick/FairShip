@@ -18,13 +18,15 @@ class ShipHit : public TObject
 {
 
   public:
-
     /** Default constructor **/
     ShipHit();
 
 
     /** Constructor with hit parameters **/
     ShipHit(Int_t detID, Float_t digi);
+
+    /** Copy constructor **/
+    ShipHit(const ShipHit& original);
 
     /** Destructor **/
     virtual ~ShipHit();
@@ -40,6 +42,9 @@ class ShipHit : public TObject
 
     /*** Output to screen */
     virtual void Print(const Option_t* opt ="") const {;}
+
+    /** Assignment operator **/
+    ShipHit& operator=(const ShipHit& rhs);
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version)
