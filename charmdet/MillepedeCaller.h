@@ -50,8 +50,8 @@ public:
 	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
 
-	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
-	double perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
+	gbl::GblTrajectory perform_GBL_refit(const genfit::Track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
+	gbl::GblTrajectory perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3, std::map<int,double>* pede_corrections = nullptr);
 	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
