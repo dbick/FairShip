@@ -786,7 +786,7 @@ def GBL_refit_single_rootfile(fname):
     """
     cmd = "python "+pathToMacro+"drifttubeMonitoring.py -c GBL_refit -f "+fname
     if pedefile != None:
-        cmd = cmd + "-p " + pedefile
+        cmd = cmd + " -p " + pedefile
     print("Running command: {}".format(cmd))
     os.system(cmd)
   
