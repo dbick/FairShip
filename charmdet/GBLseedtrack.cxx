@@ -3,6 +3,8 @@
  *
  *  Created on: 29.04.2020
  *      Author: bieschke
+ *  Modified on: 12.06.2020
+ *      Author: Daniel Bick
  */
 
 #include "GBLseedtrack.h"
@@ -31,6 +33,28 @@ GBL_seed_track::GBL_seed_track(const genfit::Track& track)
 	m_position = track.getFittedState().getPos();
 	m_direction = track.getFittedState().getMom();
 }
+
+
+/*
+ * Constructor for seed track from pattern reco. Creates seedrack without hits yet, only momentum and direction is provided. Hits should then be added by add_hit(). 
+ *
+ * @brief Constructor
+ *
+ * @param position A point on the track
+ * @param direction Direction of the track
+ *
+ * @author Daniel Bick
+ * @date 12.06.2020
+ * @version 1.0
+ * 
+ */
+GBL_seed_track::GBL_seed_track(TVector3 position, TVector3 direction)
+{
+	m_position = position;
+	m_direction = direction;
+}
+
+
 
 GBL_seed_track::GBL_seed_track::~GBL_seed_track()
 {
@@ -70,4 +94,24 @@ const vector<int> GBL_seed_track::get_hit_detIDs() const
 	}
 
 	return result;
+}
+
+
+/*
+ * When the seed track is created with direcion and momentum only, hits can be added from the pattern reco
+ *
+ * @brief Adding hits from pattern reco
+ *
+ * @param detectorID The detector ID of the hit
+ * @param driftradius The drift radius of the hit
+ *
+ * @author Daniel Bick
+ * @date 12.06.2020
+ * @version 1.0
+ * 
+ */
+void GBL_seed_track::add_hit(int detectorID, double driftradius)
+{
+  std::pair<int, double> hit(detectorID, driftradius);
+  m_hits.push_back(hit);
 }

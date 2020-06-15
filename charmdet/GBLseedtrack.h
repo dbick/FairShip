@@ -15,6 +15,7 @@ class GBL_seed_track
 {
 public:
 	GBL_seed_track(const genfit::Track& track);
+	GBL_seed_track(TVector3 position, TVector3 direction);
 	virtual ~GBL_seed_track();
 
 	const size_t get_number_of_hits() const;
@@ -25,6 +26,9 @@ public:
 
 	const std::vector<int> get_hit_detIDs() const;
 
+	void add_hit(int detectorID, double driftradius);
+
+	
 private:
 	TVector3 m_position;
 	TVector3 m_direction;
