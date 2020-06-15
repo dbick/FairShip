@@ -31,6 +31,9 @@ ${GENFIT_LIBRARY_DIR}
 link_directories( ${LINK_DIRECTORIES})
 
 set(SRCS
+DanielAna.cxx
+MufluxSpectrometerRTRelation.cxx
+MufluxSpectrometerDTTools.cxx
 Box.cxx
 BoxPoint.cxx
 BoxContFact.cxx
@@ -41,6 +44,8 @@ PixelModulesPoint.cxx
 MufluxSpectrometer.cxx
 MufluxSpectrometerHit.cxx
 MufluxSpectrometerPoint.cxx
+MufluxSpectrometerDTSurvey.cxx
+MufluxSpectrometerDTPatRec.cxx
 SciFi.cxx
 SciFiPoint.cxx
 SciFiHit.cxx
@@ -56,7 +61,6 @@ RPCTrack.cxx
 MufluxReco.cxx
 MillepedeCaller.cxx
 GBLseedtrack.cxx
-MufluxSpectrometerDTSurvey.cxx
 )
 
 Set(HEADERS )

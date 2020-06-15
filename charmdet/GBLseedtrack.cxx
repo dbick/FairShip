@@ -34,6 +34,7 @@ GBL_seed_track::GBL_seed_track(const genfit::Track& track)
 	m_direction = track.getFittedState().getMom();
 }
 
+
 GBL_seed_track::GBL_seed_track(const vector<TVector3>& pos_mom, const vector<pair<int,double>> hits)
 {
 	m_position = pos_mom[0];
@@ -45,6 +46,7 @@ GBL_seed_track::GBL_seed_track(const vector<TVector3>& pos_mom, const vector<pai
 		m_hits[i] = hits[i];
 	}
 }
+
 
 /*
  * Constructor for seed track from pattern reco. Creates seedrack without hits yet, only momentum and direction is provided. Hits should then be added by add_hit(). 
@@ -64,6 +66,10 @@ GBL_seed_track::GBL_seed_track(TVector3 position, TVector3 direction)
 	m_position = position;
 	m_direction = direction;
 }
+
+
+
+
 
 GBL_seed_track::GBL_seed_track::~GBL_seed_track()
 {
@@ -105,6 +111,9 @@ const vector<int> GBL_seed_track::get_hit_detIDs() const
 	return result;
 }
 
+
+
+
 /*
  * When the seed track is created with direcion and momentum only, hits can be added from the pattern reco
  *
@@ -116,7 +125,6 @@ const vector<int> GBL_seed_track::get_hit_detIDs() const
  * @author Daniel Bick
  * @date 12.06.2020
  * @version 1.0
- *
  */
 void GBL_seed_track::add_hit(int detectorID, double driftradius)
 {

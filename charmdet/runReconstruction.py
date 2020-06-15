@@ -1,6 +1,7 @@
 import os,subprocess,ROOT,time,multiprocessing,re
 from rootpyPickler import Unpickler
 from rootpyPickler import Pickler
+import pickle
 import pwd
 ncpus = int(multiprocessing.cpu_count())
 
@@ -508,9 +509,9 @@ def makeDTEfficiency(eos=False,merge=False,refit=True):
         if merge: os.system(cmd)
     print "finished all the tasks."
 
-def runMufluxReco(path = "/eos/experiment/ship/user/truf/muflux-reco",merge=False,refit=True):
+def runMufluxReco(ncpus=6,path = "/eos/experiment/ship/user/truf/muflux-reco",merge=False,refit=True):
     sumHistos=[]
-    for d in os.listdir(path):
+    for d in os.listdir('.'):
         if d.find('RUN_8000')==0:
             hname = "sumHistos--"+d+".root"
             if refit: hname = "sumHistos--"+d+"_refit.root"
@@ -522,8 +523,8 @@ def runMufluxReco(path = "/eos/experiment/ship/user/truf/muflux-reco",merge=Fals
                 print "run ",d," not processed successfully"
             else:
                 if os.path.isdir(d):
-                    if refit: cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -t '' -A False -B False -C False -d "+d+" -c MufluxReco -p "+path+" &"
-                    else:     cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py    -t '' -A False -B False -C False -d "+d+" -c MufluxReco -p "+path+" &"
+                    if refit: cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -t '' -A False -B False -C False -d "+path+"/"+d+" -c MufluxReco -p "+path+" &"
+                    else:     cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py    -t '' -A False -B False -C False -d "+path+"/"+d+" -c MufluxReco -p "+path+" &"
                     os.system(cmd)
                     time.sleep(10)
                     while 1>0:
@@ -547,26 +548,38 @@ def checkNtuples(path = '.'):
                     if not test: notOK.append(path+'/'+d+'/'+n)
     return notOK
 
-def invMass(path = '.',merge=False,refit=True):
+def invMass(path = '.',merge=False,refit=True,overWrite=False,flagImfield=False):
     hname = "InvMass"
-    if refit: hname = "InvMass-refitted"
+    if refit: hname = hname+"-refitted"
+    if flagImfield: hname = hname+'_intermediateField'
     if merge:
         cmd = 'hadd -f sum'+hname+'.root '
         cmd2 = 'hadd -f ntuple-'+hname+'.root '
         for d in os.listdir(path):
-            if refit and d.find('refit')<0: continue
-            if d.find('invMass')==0:
-                r = int(d.split('_')[2])
-                if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
-                cmd += d+" "
-                cmd2 += 'ntuple-'+d+" "
+            if not d.find('invMass')==0:        continue
+            if refit and d.find('refit')<0:     continue
+            if not refit and d.find('refit')>0: continue
+            r = int(d.split('_')[2].split('.')[0])
+            if r in badRuns or r in noTracks or r in noField : continue
+            if r in intermediateField and not flagImfield : continue
+            if not r in intermediateField and flagImfield : continue
+            cmd += d+" "
+            cmd2 += 'ntuple-'+d+" "
         os.system(cmd)
         os.system(cmd2)
     else:
         for d in os.listdir(path):
-            if d.find('RUN_8000')==0 and os.path.isdir(path+'/'+d):              
-                if refit: cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -c invMass -A False -B False -C False -d "+d+" -p /eos/experiment/ship/user/truf/muflux-reco &"
-                else:     cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -c invMass -A False -B False -C False -d "+d+" -p /eos/experiment/ship/user/truf/muflux-reco &"
+            if d.find('RUN_8000')==0 and os.path.isdir(path+'/'+d):
+                if refit: 
+                    test = "ntuple-invMass-"+d+"_refit.root"
+                    cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -r -c invMass -A False -B False -C False -D True -d "+mufluxRecoDir+d+" -p "+mufluxRecoDir+d+" &"
+                else:     
+                    test = "ntuple-invMass-"+d+".root"
+                    cmd = "python $FAIRSHIP/charmdet/MufluxNtuple.py -c invMass -A False -B False -C False -D True -d "+mufluxRecoDir+d+" -p "+mufluxRecoDir+d+" &"
+                if os.path.isfile(test) and not overWrite:
+                    print "skip run",d
+                    continue
+                print "execute ",cmd
                 os.system(cmd)
                 time.sleep(10)
                 while 1>0:
@@ -610,7 +623,6 @@ def mergeGoodRuns(command="anaResiduals",refit=True,excludeRPC=False):
    else:     outFile = outFile+'.root '
    cmd = 'hadd -f '+outFile
    for f in os.listdir('.'):
-       if f.find('refit')<0 and refit or f.find('refit')>0 and not option.refit: continue
        if f.find('root')<0: continue
        k = f.find(commandToSum[command]+'-RUN_8000_')
        if k<0:continue
@@ -715,6 +727,13 @@ def importFromEos(source="/eos/experiment/ship/user/truf/muflux-reco",tag="root"
        cmd += " $EOSSHIP/"+afile+" "+destination[1:]
        print cmd
        os.system(cmd)
+
+noField           = [2199,2200,2201]
+intermediateField = [2383,2388,2389,2390,2392,2395,2396]
+noTracks          = [2334, 2335, 2336, 2337, 2345, 2389, 2390]
+RPCbad = [2144,2154,2183,2192,2210,2211,2217,2218,2235,2236,2237,2240,2241,2243,2291,2345,2359]
+badRuns = [2142, 2143, 2144, 2149]
+
 def HTCondorStats(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",refit=True):
     commandToHist = {"alignment":"histos-residuals-","anaResiduals":"histos-analysis-","momResolution":"histos-momentumResolution-","plotDTPoints":"histos-DTPoints-","hitmaps":"histos-HitmapsFromFittedTracks-"}
     stats = {}
@@ -725,10 +744,11 @@ def HTCondorStats(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",refit
             if x.find(keyword)<0: continue
             run = x[x.rfind('/')+1:]
             eospathRecoR = eospathReco[refit]+run
-            stats[run]={'recoFiles':[],'histoFiles':[]}
+            stats[run]={'recoFiles':[],'histoFiles':{}}
             temp = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls "+eospathRecoR,shell=True)
             for z in temp.split('\n'):
               if z.find('.root')<0: continue
+              if not z.find('sys')<0: continue
               stats[run]['recoFiles'].append( os.environ['EOSSHIP'] + z[z.find('/eos'):])
     # all RT files with tracks
             temp2 = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls "+mufluxRecoDir+run,shell=True)
@@ -736,24 +756,33 @@ def HTCondorStats(keyword = 'RUN_8000_23',fnames=[],command="anaResiduals",refit
               if not fname.find('sys')<0: continue
               hfile = commandToHist[command]+fname[fname.rfind('/')+1:]
               if not temp2.find(hfile)<0:
-                   stats[run]['histoFiles'].append(hfile)
+                   stats[run]['histoFiles'][hfile]={'entries':0,'withTracks':0,'SC01':0,'SC05':0,'Goliath':0,'David':0}
+                   f = ROOT.TFile.Open(fname)
+                   scalers = f.Get('scalers')
+                   if scalers:
+                      scalers.GetEvent(0)
+                      for x in ['SC01','SC05','Goliath','David']:
+                        stats[run]['histoFiles'][hfile][x]=eval('scalers.'+x)
+                   stats[run]['entries']=f.cbmsim.GetEntries()
+                   f = ROOT.TFile.Open(os.environ['EOSSHIP']+mufluxRecoDir+run+'/'+hfile)
+                   Trscalers = f.Get('Trscalers')
+                   if Trscalers:
+                      stats[run]['histoFiles'][hfile]['withTracks'] = Trscalers.GetBinContent(2)
     total = [0,0]
     goodTotal = [0,0]
-    noField           = [2199,2200,2201]
-    intermediateField = [2383,2388,2389,2390,2392,2395,2396]
-    noTracks          = [2334, 2335, 2336, 2337, 2345, 2389, 2390]
-    RPCbad = [2144,2154,2183,2192,2210,2211,2217,2218,2235,2236,2237,2240,2241,2243,2291,2345,2359]
-    badRuns = [2142, 2143, 2144, 2149]
     for x in stats:
       print x,len(stats[x]['recoFiles']),len(stats[x]['histoFiles']),'missing:',len(stats[x]['recoFiles'])-len(stats[x]['histoFiles'])
       z = int(x.split('_')[2])
-      if not z in badRuns and not z in noTracks  and not z in noField and not z in intermediateField:
-       goodTotal[0]+=len(stats[x]['recoFiles'])
-       goodTotal[1]+=len(stats[x]['histoFiles'])
       total[0]+=len(stats[x]['recoFiles'])
-      total[1]+=len(stats[x]['histoFiles'])
+      total[1]+=len(stats[x]['histoFiles'].keys())
+      if z in badRuns or z in noTracks  or z in noField or z in intermediateField: continue
+      goodTotal[0]+=len(stats[x]['recoFiles'])
+      goodTotal[1]+=len(stats[x]['histoFiles'].keys())
     print "summary total reco",total[0],' histos',total[1],' missing',total[0]-total[1]
     print "summary total reco good runs",goodTotal[0],' histos',goodTotal[1],' missing',goodTotal[0]-goodTotal[1]
+    fpkl=open('RunStatistic.pkl','w')
+    pickle.dump(stats,fpkl)
+    fpkl.close()
     return stats
 def listMissingSpills(stats,runs=None):
    if not runs: runs = stats.keys()
@@ -762,12 +791,152 @@ def listMissingSpills(stats,runs=None):
        missingFiles[r]=[]
        for rfile in stats[r]['recoFiles']:
           found = False
-          for hfile in stats[r]['histoFiles']:
+          for hfile in stats[r]['histoFiles'].keys():
              if hfile == 'histos-analysis-'+rfile.split('/')[11]:
                 found = True
                 break
           if not found: missingFiles[r].append(rfile)
    return missingFiles
+
+def printRunStats( stats ):
+#                 PSW :       0  1
+#                 SPW :       0
+#                SC00 :       0
+#                SC01 :       0
+#                SC02 :       0  5
+#                SC03 :       0
+#                SC04 :       0
+#                SC05 :       0
+#                SC06 :       0
+#                SC07 :       0 10
+#                SC08 :       0
+#                SC09 :       0
+#                SC10 :       0
+#             Goliath :       0
+#               David :       0 15
+#          spill_type :       0
+#                SC13 :       0
+#                SC14 :       0
+#                SC15 :       0
+   sumOfGoodRuns = {'spills':0,'entries':0,'withTracks':0,'SC01':0,'SC05':0,'Goliath':0,'David':0}
+   sumRunStat    = {}
+   for run in stats:
+       r = int(run.split('_')[2])
+       sumRunStat[run] = {'spills':0,'entries':0,'withTracks':0,'SC01':0,'SC05':0,'Goliath':0,'David':0}
+       for spill in stats[run]['histoFiles']:
+          print spill
+          for x in sumOfGoodRuns.keys():
+             if x == 'spills': sumRunStat[run][x]+=1
+             else: sumRunStat[run][x]+=stats[run]['histoFiles'][spill][x]
+   runs = sumRunStat.keys()
+   runs.sort()
+   for run in runs:
+     nspills = sumRunStat[run]['spills']
+     r = int(run.split('_')[2])
+     print "%12s %6i %10i %10i %10i %10i %10.5F %10.5F "%(run,nspills,sumRunStat[run]['entries'],sumRunStat[run]['withTracks'],sumRunStat[run]['SC01'],sumRunStat[run]['SC05'],
+           sumRunStat[run]['Goliath']/float(nspills),sumRunStat[run]['David']/float(nspills))
+     if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
+     for x in sumOfGoodRuns.keys():
+        sumOfGoodRuns[x]+=sumRunStat[run][x]
+   print "statistic for good runs"
+   nspills = sumOfGoodRuns['spills']
+   print "%6i %10i %10i %10i %10i %10.5F %10.5F "%(nspills,sumOfGoodRuns['entries'],sumOfGoodRuns['withTracks'],sumOfGoodRuns['SC01'],sumOfGoodRuns['SC05'],
+           sumOfGoodRuns['Goliath']/float(nspills),sumOfGoodRuns['David']/float(nspills))
+def compareOldAndRefitted():
+ runStats = pickle.load(open('RunStatistic.pkl'))
+ runStats_refitted = pickle.load(open('RunStatistic_refitted.pkl'))
+ spills = {}
+ spills_refitted = {}
+ for run in runStats:
+   spills[run]=[]
+   for s in runStats[run]['recoFiles']:
+      name =  s[s.rfind('/')+1:].split('_RT')[0]
+      if not name.find('sys')<0: continue
+      spills[run].append(name)
+   spills_refitted[run]=[]
+   for s in runStats_refitted[run]['recoFiles']:
+      name =  s[s.rfind('/')+1:].split('_RT')[0]
+      if not name.find('sys')<0: continue
+      spills_refitted[run].append(name)
+ diffs = {}
+ for run in runStats:
+   diffs[run] = list( set(spills[run]) - set(spills_refitted[run]) )
+   print run, diffs[run]
+ print "++++++++ histos ++++++"
+ spills = {}
+ spills_refitted = {}
+ for run in runStats:
+   spills[run]=[]
+   for s in runStats[run]['histoFiles']:
+      name =  s[s.rfind('/')+1:].split('_RT')[0]
+      if not name.find('sys')<0: continue
+      spills[run].append(name)
+   spills_refitted[run]=[]
+   for s in runStats_refitted[run]['histoFiles']:
+      name =  s[s.rfind('/')+1:].split('_RT')[0]
+      if not name.find('sys')<0: continue
+      spills_refitted[run].append(name)
+ diffs = {}
+ for run in runStats:
+   diffs[run] = list( set(spills[run]) - set(spills_refitted[run]) )
+   print run, diffs[run]
+
+def checkNtuples():
+    stats = {}
+    temp = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls "+mufluxRecoDir,shell=True)
+    runs = temp.split('\n')
+    for run in runs:
+        if run.find('RUN_8000')<0: continue
+        stats[run]={'':{},'refit':{}}
+        temp = subprocess.check_output("xrdfs "+os.environ['EOSSHIP']+" ls "+run,shell=True)
+        for z in temp.split('\n'):
+            if z.find('ntuple-SPILL')>0:
+                 f = ROOT.TFile.Open(os.environ['EOSSHIP']+z)
+                 stats[run]['refit'][z]=-1
+                 if f.Get('tmuflux'):
+                    N = f.tmuflux.GetEntries()
+                    if z.find('refit')<0: stats[run][''][z]=N
+                    else: stats[run]['refit'][z]=N
+# check1
+    for run in stats:
+       if len(stats[run]['']) != len(stats[run]['refit']):
+            print "different nr of ntuples ",run,len(stats[run]['']) ,len(stats[run]['refit'])
+# check2
+    for run in stats:
+        for spill in stats[run]['']:
+          rspill = spill.replace('.root','_refit.root')
+          if not rspill in stats[run]['refit']:
+              print "spill does not exist for refit",spill
+              continue
+          if stats[run][''][spill] != stats[run]['refit'][rspill] :
+            print "different nr of events in spill",spill,stats[run][''][spill] ,stats[run]['refit'][rspill]
+def compareInvMassNtuples(path=''):
+    stats = {}
+    for d in os.listdir('.'):
+        if not d.find('RUN_8000')==0: continue
+        n,nr = 0,0
+        name = "ntuple-invMass-"+d+".root"
+        r = int(d.split('_')[2].split('.')[0])
+        f  = ROOT.TFile(path+name)
+        if f: 
+          if f.Get('nt'): n = f.nt.GetEntries()        
+        fr = ROOT.TFile( path+name.replace('.root','_refit.root'))
+        if fr: 
+          if fr.Get('nt'):nr = fr.nt.GetEntries()
+        stats[r]=[n,nr]
+    runs = stats.keys()
+    runs.sort()
+    total = [0,0]
+    gtotal = [0,0]
+    for r in runs:
+        print r,stats[r],float(stats[r][1]/(stats[r][0]+1E-10))
+        for i in range(2): total[i]+=stats[r][i]
+        if r in badRuns or r in noTracks or r in intermediateField or r in noField : continue
+        for i in range(2): gtotal[i]+=stats[r][i]
+    print "total",total,float(total[1]/(total[0]+1E-10))
+    print "total good runs",gtotal,float(gtotal[1]/(gtotal[0]+1E-10))
+    return stats
+
   
   
 def GBL_refit_single_rootfile(fname):
@@ -815,4 +984,5 @@ def GBL_refit(max_spills=None):
     
     pool = multiprocessing.Pool(ncpus)
     pool.map(GBL_refit_single_rootfile, refitted_files)
+
 
