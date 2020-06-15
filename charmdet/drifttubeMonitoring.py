@@ -958,8 +958,8 @@ def print_modules(dt_modules_dict):
         center = mod.get_center_position()
         print("Centerpos = {}\t{}\t{}".format(center[0],center[1],center[2]))
                   
-print_layers(dt_modules)
-print_modules(dt_modules)
+# print_layers(dt_modules)
+# print_modules(dt_modules)
         
 
 def compareAlignment():
@@ -1356,6 +1356,7 @@ DTEfficiencyFudgefactor(method=-1)
 if sTree.GetBranch('MCTrack'):  
       muflux_Reco.setNoisyChannels(deadChannels4MC)
       muflux_Reco.setDeadChannels(deadChannelsRPC4MC)
+      
 def MakeKeysToDThits(minToT=-999):
     keysToDThits={}
     key = -1
@@ -2277,12 +2278,16 @@ def momDisplay():
         h[t].Update()
 
 sigma_spatial = 0.25 # almost binary resolution! (ShipGeo.MufluxSpectrometer.InnerTubeDiameter/2.)/ROOT.TMath.Sqrt(12) 
+sigma_spatial = 0.05
 
 def bestTracks():
     theTracks1 = findTracks(PR=11)
     theTracks2 = findTracks(PR=12)
     bestTracks = cloneKiller(theTracks1 + theTracks2)
     return bestTracks
+
+spect_survey = ROOT.MufluxSpectrometerDTSurvey()
+spect_survey.Init()
 
 def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # need measurements
@@ -2294,10 +2299,12 @@ def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
 # approximate covariance
     covM = ROOT.TMatrixDSym(6)
     resolution   = sigma_spatial
+    res2 = resolution**2
+    cov_entry = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
     if not withTDC: resolution = 10*sigma_spatial
-    for  i in range(3):   covM[i][i] = resolution*resolution
+    for  i in range(3):   covM[i][i] = res2
     # covM[0][0]=resolution*resolution*100.
-    for  i in range(3,6): covM[i][i] = ROOT.TMath.Power(resolution / (4.*2.) / ROOT.TMath.Sqrt(3), 2)
+    for  i in range(3,6): covM[i][i] = cov_entry
     rep = ROOT.genfit.RKTrackRep(13)
 # start state
     state = ROOT.genfit.MeasuredStateOnPlane(rep)
@@ -2332,7 +2339,9 @@ def fitTrack(hitlist,Pstart=3.,pede_corrections = None):
                         found = True
                         break
                 if not found: print "fittrack: digi not found, something wrong here",tdc
-        vbot,vtop = strawPositionsBotTop[hit.GetDetectorID()]
+        vbot = ROOT.TVector3()
+        vtop = ROOT.TVector3()
+        spect_survey.TubeEndPointsSurvey(hit.GetDetectorID(),vtop,vbot)
         """
         Apply pede corrections for fit by changing vbot, vtop to new values
         """
@@ -7953,7 +7962,7 @@ if options.command == "":
     importAlignmentConstants()
 #
 
-def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = False):
     """
     Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
     produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
@@ -7983,6 +7992,8 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
     pos = ROOT.TVector3()
     mom = ROOT.TVector3()
     eventRange = [0,sTree.GetEntries()]
+    genfit_tracks = []
+    start_time = time.time()
     if not nEvent<0: eventRange = [nEvent,nEvent+nTot]
     for Nr in range(eventRange[0],eventRange[1]):
         getEvent(Nr)
@@ -8025,17 +8036,32 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
                         print "error with rawM", rawM.getDetId()
                     stations[s]+=1
                 if not (stations[1]>1 and stations[2]>1 and stations[3]>1 and stations[4]>1) : continue
-                """
-                refit
-                """
-                print("Processing event number {}".format(Nr))
-                chi2_gbl = milleCaller.perform_GBL_refit(aTrack,3*0.05,sTree.GetCurrentFile().GetName())              
-                if(chi2_gbl == -1):
-                    aborted_gbl_refits += 1
-                else:
-                    valid_gbl_refits += 1
+                genfit_tracks.append(ROOT.genfit.Track(aTrack))                
+        end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
+    genfit_time = end_time - start_time
+    if reshape:
+        print("Reshaping spectrum to uniform distribution")
+        selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
+        print("Number of sampled tracks: {}".format(len(selected_tracks)))
+    else:
+        selected_tracks = [i for i in range(len(genfit_tracks))]
     
+    gbl_start_time = time.time()
+    for i in selected_tracks:
+        aTrack = genfit_tracks[i]
+        """
+        refit
+        """
+        print("Processing event number {}".format(i))
+        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
+        if(chi2_gbl == -1):
+            aborted_gbl_refits += 1
+        else:
+            valid_gbl_refits += 1
+    gbl_end_time = time.time()
+    gbl_time = gbl_end_time - gbl_start_time
+    print("Runtimes: genfit: {}, GBL: {}".format(genfit_time, gbl_time))
     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
     
     
@@ -8210,8 +8236,8 @@ elif options.command == "test":
     yep.stop()
     print "finished"
 elif options.command == "GBL_MC":
-    n_mc_tracks = int(5e6)
-    n_min_hits = 12 #Minimum number of hits (total)
+    n_mc_tracks = int(5e7)
+    n_min_hits = 6 #Minimum number of hits (total)
     filename = "GBL_MC_" + str(n_mc_tracks) + "_tracks.mille_bin"
     milleCaller = ROOT.MillepedeCaller(filename)
     if cpp_pede_results != None:
@@ -8219,6 +8245,7 @@ elif options.command == "GBL_MC":
     else:
         milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,0)
 elif options.command == "GBL_refit":
+    reshape = False #reshape spectrum to be more uniformly distributed
     importRTrel()
     withDefaultAlignment = True
     withCorrections = False 
@@ -8227,7 +8254,7 @@ elif options.command == "GBL_refit":
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results)
+    GBL_refit(pede_results=python_pede_results,reshape = reshape)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"

@@ -1,5 +1,6 @@
-from ROOT import TVector3, TRotation, TMatrixD, TVectorD, TDecompLU
+from ROOT import TVector3, TRotation, TMatrixD, TVectorD, TDecompLU, TH1D
 import shipunit as u
+import numpy as np
 
 def calculate_center_from_lot(list_of_tubes):
     '''Calculates the geometric center point of a DtModule from a given list of DriftTube objects
@@ -310,3 +311,80 @@ def residual_and_distance(track,wire_end_positions):
         print(type(e))
         
     return distances,residuals
+
+def reshape_spectrum(tracks,n_selected_tracks):
+    """ Returns a list of (genfit) tracks that are selected from a given, larger set to match a more or less uniform
+    slope distribution in the x-direction. The user can set the mean number of tracks that are part of the final, resampled
+    set.
+    
+    Parameters
+    ----------
+    tracks: list
+        list of genfit tracks from the the selection should happen
+    n_selected_tracks: int
+        number of tracks that should be part of the resampled set. This is just an average since the selection is random
+        
+    Returns
+    -------
+    list
+        List containing the genfit tracks that more or less match a uniform distribution
+    """
+    #Consistency check:
+    if n_selected_tracks >= len(tracks):
+        print("Resampling: set # selected tracks of {} is larger than the # of all tracks: {}".format(n_selected_tracks,len(tracks)))
+        n_selected_tracks = 0.05 * len(tracks)
+        print("Using instead: {}, according to 5% of original sample size".format(n_selected_tracks))
+    
+    # 1. Find minimum and maximum slope
+    min_slope_x = 100
+    max_slope_x = -100
+    slope_list = []
+    for i in range(len(tracks)):
+        track = tracks[i]
+        n_hits = track.getNumPointsWithMeasurement()
+        first_hit = track.getFittedState(0)
+        last_hit = track.getFittedState(n_hits - 1)
+        direction = last_hit.getPos() - first_hit.getPos()
+        slope_x = direction[0] / direction[2]
+        slope_list.append([slope_x,i])
+        
+        if slope_x < min_slope_x:
+            min_slope_x = slope_x
+        if slope_x > max_slope_x:
+            max_slope_x = slope_x
+            
+    print("Minimum slope: {}, maximum slope: {}".format(min_slope_x,max_slope_x))
+    n_bins = 100
+    slope_dist = TH1D("Genfit slope distribution","slope distribution",n_bins,min_slope_x,max_slope_x)
+    bin_width = slope_dist.GetBinWidth(0)
+    entries_per_bin = n_selected_tracks / n_bins
+    print("Using {} bins with width {}, each containing ca. {} entries".format(n_bins,bin_width,entries_per_bin))
+    for slope in slope_list:
+        slope_dist.Fill(slope[0])
+    print("Entries in slope distribution: {}".format(slope_dist.GetEntries()))
+    
+    # 2. Calculate probabilty to select a track whose slope is in a certain bin of the slope distribution
+    selection_probability = TH1D("resampling prob","sampling probability",n_bins, min_slope_x, max_slope_x)
+    print("New hist constructed, nBins: {}, entries: {}".format(selection_probability.GetNbinsX(),selection_probability.GetEntries()))
+    print("Beginning to fill")
+    for i in range(selection_probability.GetNbinsX()):
+        n_slopes_in_bin = slope_dist[i]
+        if n_slopes_in_bin > 0:
+            selection_probability[i] = entries_per_bin / slope_dist[i]
+        else:
+            selection_probability[i] = 1
+        print("Probability for bin {}: {}".format(i,selection_probability[i]))
+        
+    # 3. Select the tracks
+    print("Beginning track selection")
+    selected_tracks = []
+    for slope in slope_list:
+        bin = selection_probability.FindBin(slope[0])
+        probabily = selection_probability[bin]
+        rnd = np.random.uniform(0.0,1.0)
+        if rnd < probabily:
+            selected_tracks.append(slope[1])
+            
+    return selected_tracks
+    
+    

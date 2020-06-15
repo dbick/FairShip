@@ -2,6 +2,9 @@
 # the array .
 # The extension is already found.  Any number of sources could be listed here.
 
+#add_compile_options("-fopenmp")
+#link_libraries("-fopenmp")
+
 set(INCLUDE_DIRECTORIES
 ${BASE_INCLUDE_DIRECTORIES}
 ${CMAKE_SOURCE_DIR}/shipdata
@@ -53,6 +56,7 @@ RPCTrack.cxx
 MufluxReco.cxx
 MillepedeCaller.cxx
 GBLseedtrack.cxx
+MufluxSpectrometerDTSurvey.cxx
 )
 
 Set(HEADERS )
