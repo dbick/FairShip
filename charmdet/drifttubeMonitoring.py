@@ -7962,7 +7962,7 @@ if options.command == "":
     importAlignmentConstants()
 #
 
-def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = False):
     """
     Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
     produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
@@ -8040,9 +8040,12 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None):
         end_time = time.time()
         for aTrack in trackCandidates:   aTrack.Delete()
     genfit_time = end_time - start_time
-    print("Reshaping spectrum to uniform distribution")
-    selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
-    print("Number of sampled tracks: {}".format(len(selected_tracks)))
+    if reshape:
+        print("Reshaping spectrum to uniform distribution")
+        selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
+        print("Number of sampled tracks: {}".format(len(selected_tracks)))
+    else:
+        selected_tracks = [i for i in range(len(genfit_tracks))]
     
     gbl_start_time = time.time()
     for i in selected_tracks:
@@ -8242,6 +8245,7 @@ elif options.command == "GBL_MC":
     else:
         milleCaller.MC_GBL_refit(n_mc_tracks,350e-4,n_min_hits,0)
 elif options.command == "GBL_refit":
+    reshape = False #reshape spectrum to be more uniformly distributed
     importRTrel()
     withDefaultAlignment = True
     withCorrections = False 
@@ -8250,7 +8254,7 @@ elif options.command == "GBL_refit":
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results)
+    GBL_refit(pede_results=python_pede_results,reshape = reshape)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"

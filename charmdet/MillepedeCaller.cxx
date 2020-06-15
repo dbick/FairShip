@@ -163,11 +163,11 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		//get coords of upper and lower end of hit tube
 		TVector3 vbot;
 		TVector3 vtop;
-//		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
-		#pragma omp critical
-		{
-			MufluxSpectrometer::TubeEndPoints(point.first, vbot, vtop);
-		}
+		m_survey.TubeEndPointsSurvey(point.first, vtop, vbot);
+//		#pragma omp critical
+//		{
+//			MufluxSpectrometer::TubeEndPoints(point.first, vbot, vtop);
+//		}
 		if (pede_corrections)
 		{
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
@@ -202,10 +202,10 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
 
 		//reject hit if seed track is too far off the wire
-//		if(closest_approach.Mag() > 2.00)
-//		{
-//			continue;
-//		}
+		if(closest_approach.Mag() > 2.00)
+		{
+			continue;
+		}
 
 		TMatrixD* jacobian;
 		if (i != 0)
@@ -866,11 +866,11 @@ TVector3 MillepedeCaller::calc_module_centerpos(const pair<string,vector<int>>& 
 	int n_tubes = 0;
 	for(int id : module_name_id_list_pair.second)
 	{
-//		m_survey.TubeEndPointsSurvey(id, wire_top, wire_bot);
-		#pragma omp critical
-		{
-			MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
-		}
+		m_survey.TubeEndPointsSurvey(id, wire_top, wire_bot);
+//		#pragma omp critical
+//		{
+//			MufluxSpectrometer::TubeEndPoints(id, wire_bot, wire_top);
+//		}
 		//calculate centerpos of single wire
 		wire_center = wire_bot + 0.5 * (wire_top - wire_bot);
 		center_pos += wire_center;
@@ -1211,11 +1211,11 @@ vector<TVector3> MillepedeCaller::rotate_tube_in_module(const int tube_id, const
 	TVector3 module_center = m_nominal_module_centerpos[module];
 
 	TVector3 vtop, vbot;
-//	m_survey.TubeEndPointsSurvey(tube_id, vtop, vbot);
-	#pragma omp critical
-	{
-		MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
-	}
+	m_survey.TubeEndPointsSurvey(tube_id, vtop, vbot);
+//	#pragma omp critical
+//	{
+//		MufluxSpectrometer::TubeEndPoints(tube_id, vbot, vtop);
+//	}
 
 	TVector3 new_top = module_center + rot * (vtop - module_center);
 	TVector3 new_bot = module_center + rot * (vbot - module_center);
