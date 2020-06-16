@@ -472,7 +472,14 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial, map<int,double>* pede_corrections, const char* spillname)
 {
 	GBL_seed_track seed(track);
-	return perform_GBL_refit(seed, sigma_spatial, pede_corrections, spillname);
+	try
+	{
+		return perform_GBL_refit(seed, sigma_spatial, pede_corrections, spillname);
+	}
+	catch(const exception& e)
+	{
+		throw e;
+	}
 
 }
 
@@ -488,7 +495,7 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	{
 		cout << "Error, GBL trajectory is invalid." << endl;
 		cerr << "Error, GBL trajectory is invalid." << endl;
-		return -1;
+		throw runtime_error("GBL track is invalid");
 	}
 
 	int rc, ndf;
@@ -502,7 +509,7 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 	print_fitted_residuals(traj);
 
-	return chi2;
+	return traj;
 }
 
 //TODO document
