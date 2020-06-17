@@ -8045,8 +8045,11 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = 
         selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
         print("Number of sampled tracks: {}".format(len(selected_tracks)))
     else:
+        print("No resampling for GBL:")
         selected_tracks = [i for i in range(len(genfit_tracks))]
-    
+        print("Using {} tracks".format(len(genfit_tracks)))
+        
+    print("Fit with genfit complete: Took {} sec.".format(genfit_time))
     gbl_start_time = time.time()
     for i in selected_tracks:
         aTrack = genfit_tracks[i]
@@ -8054,15 +8057,15 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = 
         refit
         """
         print("Processing event number {}".format(i))
-        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
-        if(chi2_gbl == -1):
-            aborted_gbl_refits += 1
-        else:
-            valid_gbl_refits += 1
+        milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
+#         if(chi2_gbl == -1):
+#             aborted_gbl_refits += 1
+#         else:
+#             valid_gbl_refits += 1
     gbl_end_time = time.time()
     gbl_time = gbl_end_time - gbl_start_time
     print("Runtimes: genfit: {}, GBL: {}".format(genfit_time, gbl_time))
-    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+#     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
     
     
 def read_pede_corrections(pede_filename):
