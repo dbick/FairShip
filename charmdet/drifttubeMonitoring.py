@@ -8257,7 +8257,7 @@ elif options.command == "GBL_refit":
     withDefaultAlignment = True
     withCorrections = False 
     importAlignmentConstants()
-    if python_pede_results && cpp_pede_results:
+    if python_pede_results and cpp_pede_results:
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
