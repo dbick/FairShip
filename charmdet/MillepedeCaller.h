@@ -6,6 +6,7 @@
 #include "TTree.h"
 //includes for GBL fitter from genfit
 #include <vector>
+#include <stdexcept>
 #include "GblPoint.h"
 #include "GblTrajectory.h"
 #include "MilleBinary.h"

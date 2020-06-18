@@ -8089,7 +8089,7 @@ if options.command == "":
     importAlignmentConstants()
 #
 
-def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = False):
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, cpp_pede = None, reshape = False):
     """
     Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
     produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
@@ -8172,8 +8172,11 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = 
         selected_tracks = DtAlignment.utils.reshape_spectrum(genfit_tracks,int(len(genfit_tracks) * 0.2))
         print("Number of sampled tracks: {}".format(len(selected_tracks)))
     else:
+        print("No resampling for GBL:")
         selected_tracks = [i for i in range(len(genfit_tracks))]
-    
+        print("Using {} tracks".format(len(genfit_tracks)))
+        
+    print("Fit with genfit complete: Took {} sec.".format(genfit_time))
     gbl_start_time = time.time()
     for i in selected_tracks:
         aTrack = genfit_tracks[i]
@@ -8181,15 +8184,19 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = 
         refit
         """
         print("Processing event number {}".format(i))
-        chi2_gbl = milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
-        if(chi2_gbl == -1):
-            aborted_gbl_refits += 1
-        else:
-            valid_gbl_refits += 1
+        try:
+            milleCaller.perform_GBL_refit(aTrack,0.05, cpp_pede, sTree.GetCurrentFile().GetName())
+        except:
+            print("Exception in perform_GBL_refit, passing track")
+            continue              
+#         if(chi2_gbl == -1):
+#             aborted_gbl_refits += 1
+#         else:
+#             valid_gbl_refits += 1
     gbl_end_time = time.time()
     gbl_time = gbl_end_time - gbl_start_time
     print("Runtimes: genfit: {}, GBL: {}".format(genfit_time, gbl_time))
-    print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
+#     print("Success rate of seed fit: {}".format(1 - (float(aborted_gbl_refits) / valid_gbl_refits)))
     
     
 def read_pede_corrections(pede_filename):
@@ -8377,11 +8384,11 @@ elif options.command == "GBL_refit":
     withDefaultAlignment = True
     withCorrections = False 
     importAlignmentConstants()
-    if python_pede_results:
+    if python_pede_results and cpp_pede_results:
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results,reshape = reshape)
+    GBL_refit(pede_results=python_pede_results,cpp_pede = cpp_pede_results,reshape = reshape)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"

@@ -472,7 +472,14 @@ TMatrixD* MillepedeCaller::calc_global_parameters(const TVector3& measurement_pr
 gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const genfit::Track& track, double sigma_spatial, map<int,double>* pede_corrections, const char* spillname)
 {
 	GBL_seed_track seed(track);
-	return perform_GBL_refit(seed, sigma_spatial, pede_corrections, spillname);
+	try
+	{
+		return perform_GBL_refit(seed, sigma_spatial, pede_corrections, spillname);
+	}
+	catch(const exception& e)
+	{
+		throw e;
+	}
 
 }
 
@@ -488,7 +495,7 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	{
 		cout << "Error, GBL trajectory is invalid." << endl;
 		cerr << "Error, GBL trajectory is invalid." << endl;
-		return -1;
+		throw runtime_error("GBL track is invalid");
 	}
 
 	int rc, ndf;
@@ -502,14 +509,12 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 	print_fitted_residuals(traj);
 
-	return chi2;
+	return traj;
 }
 
 //TODO document
 double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits, map<int,double>* pede_corrections)
 {
-//	TFile debuggingfile("debugging_data.root","RECREATE");
-//	TTree* tree = create_output_tree();
 
 	if(pede_corrections)
 	{
@@ -521,10 +526,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		}
 	}
 	vector<int> shifted_det_ids = { };
-	vector<string> shifted_modules = { "T3aX", "T3bX", "T3cX", "T3dX", "T4aX", "T4bX", "T4cX", "T4dX" };
-	//	vector<string> shifted_modules = {"T3aX", "T3bX", "T3cX","T3dX"};
-	//	vector<string> shifted_modules = {"T3bX"};
-//		vector<string> shifted_modules = {};
+//	vector<string> shifted_modules = { "T3aX", "T3bX", "T3cX", "T3dX", "T4aX", "T4bX", "T4cX", "T4dX" };
+	vector<string> shifted_modules = {};
 	for (string mod : shifted_modules)
 	{
 		for (int id : m_modules[mod])
@@ -535,8 +538,8 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
-	vector<vector<TVector3>> sampled_tracks(0);
-	sampled_tracks.reserve(n_tracks);
+//	vector<vector<TVector3>> sampled_tracks(0);
+//	sampled_tracks.reserve(n_tracks);
 	double min_slope = 100;
 	double max_slope = -100;
 	for(unsigned int i = 0; i < n_tracks; ++i)
@@ -545,46 +548,46 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 		tracks[i] = MC_gen_track_boosted();
 		//resampling to generate more homogeneous distribution of slopes
 		//find min and max slope in x:
-		double slope_x = tracks[i][1][0] / tracks[i][1][2];
-		min_slope = slope_x < min_slope ? slope_x : min_slope;
-		max_slope = slope_x > max_slope ? slope_x : max_slope;
+//		double slope_x = tracks[i][1][0] / tracks[i][1][2];
+//		min_slope = slope_x < min_slope ? slope_x : min_slope;
+//		max_slope = slope_x > max_slope ? slope_x : max_slope;
 
 //		tracks[i] = MC_gen_track();
 	}
-	TH1D slopes("slopes","slope distribution",200,min_slope -0.1 * min_slope,max_slope + 0.1 * max_slope);
-	for(auto track: tracks)
-	{
-		double slope = track[1][0] / track[1][2];
-		slopes.Fill(slope);
-	}
-	TH1D sampling_probability(slopes);
-	sampling_probability.SetNameTitle("prob", "sampling probability");
-	unsigned int mean_bin_content = (int)(0.01 * slopes[slopes.GetMaximumBin()]); //10 percent of maximum bin content of unsampled slope dist
-	cout << "Resampling with " << mean_bin_content << " tracks per bin in average" << endl;
-	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
-	{
-		sampling_probability[i] = mean_bin_content / slopes[i];
-	}
-	uniform_real_distribution<double> uniform(0,1);
-	for(auto track: tracks)
-	{
-		double p = uniform(m_mersenne_twister);
-		double slope = track[1][0] / track[1][2];
-		int bin = sampling_probability.FindBin(slope);
-		if(p < sampling_probability[bin])
-		{
-			sampled_tracks.push_back(track);
-		}
-	}
-	slopes.Draw("slope_dist.pdf");
-	sampling_probability.Draw("sampling_prob.pdf");
-
-	sampled_tracks.shrink_to_fit();
-	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
+//	TH1D slopes("slopes","slope distribution",200,min_slope -0.1 * min_slope,max_slope + 0.1 * max_slope);
+//	for(auto track: tracks)
+//	{
+//		double slope = track[1][0] / track[1][2];
+//		slopes.Fill(slope);
+//	}
+//	TH1D sampling_probability(slopes);
+//	sampling_probability.SetNameTitle("prob", "sampling probability");
+//	unsigned int mean_bin_content = (int)(0.01 * slopes[slopes.GetMaximumBin()]); //10 percent of maximum bin content of unsampled slope dist
+//	cout << "Resampling with " << mean_bin_content << " tracks per bin in average" << endl;
+//	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
+//	{
+//		sampling_probability[i] = mean_bin_content / slopes[i];
+//	}
+//	uniform_real_distribution<double> uniform(0,1);
+//	for(auto track: tracks)
+//	{
+//		double p = uniform(m_mersenne_twister);
+//		double slope = track[1][0] / track[1][2];
+//		int bin = sampling_probability.FindBin(slope);
+//		if(p < sampling_probability[bin])
+//		{
+//			sampled_tracks.push_back(track);
+//		}
+//	}
+//	slopes.Draw("slope_dist.pdf");
+//	sampling_probability.Draw("sampling_prob.pdf");
+//
+//	sampled_tracks.shrink_to_fit();
+//	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
 	ofstream file("MC_slopes.txt");
-
-	//use resampled tracks with different spectral shape
-	tracks = sampled_tracks;
+//
+//	//use resampled tracks with different spectral shape
+//	tracks = sampled_tracks;
 
 
 	unsigned int fitted = 0;
