@@ -7962,7 +7962,7 @@ if options.command == "":
     importAlignmentConstants()
 #
 
-def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = False):
+def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, cpp_pede = None, reshape = False):
     """
     Perform a trackfit using the Kalman fitter from genfit and use these tracks as a seed for a refit using GBL. The GBL fit
     produces so called mille binary files as output that can then be used for alignment via the standalone program pede.
@@ -8057,7 +8057,7 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, reshape = 
         refit
         """
         print("Processing event number {}".format(i))
-        milleCaller.perform_GBL_refit(aTrack,0.05,pede_results, sTree.GetCurrentFile().GetName())              
+        milleCaller.perform_GBL_refit(aTrack,0.05, cpp_pede, sTree.GetCurrentFile().GetName())              
 #         if(chi2_gbl == -1):
 #             aborted_gbl_refits += 1
 #         else:
@@ -8253,11 +8253,11 @@ elif options.command == "GBL_refit":
     withDefaultAlignment = True
     withCorrections = False 
     importAlignmentConstants()
-    if python_pede_results:
+    if python_pede_results && cpp_pede_results:
         print("Refitting with python pede results:")
         for entry in python_pede_results:
             print(entry)
-    GBL_refit(pede_results=python_pede_results,reshape = reshape)
+    GBL_refit(pede_results=python_pede_results,cpp_pede = cpp_pede_results,reshape = reshape)
         
 # elif options.command == "resolutionfunction":
 #     res_fnc_fname = "resolutionfunc_" + sTree.GetCurrentFile().GetName() + ".ascii"
