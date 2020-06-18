@@ -8057,7 +8057,11 @@ def GBL_refit(nEvent=-1,nTot=1000,PR=13,minP=10.,pede_results = None, cpp_pede =
         refit
         """
         print("Processing event number {}".format(i))
-        milleCaller.perform_GBL_refit(aTrack,0.05, cpp_pede, sTree.GetCurrentFile().GetName())              
+        try:
+            milleCaller.perform_GBL_refit(aTrack,0.05, cpp_pede, sTree.GetCurrentFile().GetName())
+        except:
+            print("Exception in perform_GBL_refit, passing track")
+            continue              
 #         if(chi2_gbl == -1):
 #             aborted_gbl_refits += 1
 #         else:
