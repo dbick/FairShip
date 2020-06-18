@@ -8,6 +8,8 @@
 #include "MufluxSpectrometerDTTools.h"
 #include "MufluxSpectrometerDTSurvey.h"
 #include "MufluxSpectrometerDTPatRec.h"
+#include "MillepedeCaller.h"
+#include "GblTrajectory.h"
 
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
@@ -542,11 +544,116 @@ void dtPatSeed(TTreeReader *t){
   MufluxSpectrometerRTRelation *RTRel = new MufluxSpectrometerRTRelation(*HDriftTimes);
 
 
+  MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
+  
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
+  //t->SetEntry(15);
+  //{
   while (t->Next()) {
     GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+    if(seed!=nullptr){
+      gbl::GblTrajectory trajectory = mpc->perform_GBL_refit(*seed, 5e-2);
+      
+      if(trajectory.isValid()){
+	TVectorD localPar(5);
+	TMatrixDSym localCov(5,5);
+	
+	//std::vector<std::pair<int,double>> hits = seed->get_hits();
+	std::vector<int> hits = seed->get_hit_detIDs();
 
-    delete seed;
+	TVector3 vtop;//*vtop=new TVector3();
+	TVector3 vbot;//*vbot=new TVector3();
+
+	//TVector3 *pos=new TVector3();
+	//TVector3 *mom=new TVector3();
+
+	TVector3 pos=seed->get_position();
+	TVector3 mom=seed->get_direction();
+	
+	//TVector3 PCA_wire;//=new TVector3();
+	//TVector3 PCA_track;//=new TVector3();
+	
+
+	TVectorT<double> parameters(5);
+	TMatrixTSym<double> covariance(5, 5);
+	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i)
+	{
+	  Int_t detID=hits[i-1];
+	  //Int_t detID=hits[9];
+	  surv->TubeEndPointsSurvey(detID, vtop, vbot);
+	  //TVector3 closest_approach = mpc->calc_shortest_distance(vtop,vbot,pos,mom,&PCA_wire,&PCA_track);
+
+	  //////////////
+	  /*
+	  TVector3 wire_dir = vtop - vbot;
+	  
+	  //construct a helper plane that contains one of the straights and is parallel to the other one
+	  TVector3 plane_pos = pos - vbot;
+	  TVector3 plane_dir_1(mom);
+	  TVector3 plane_dir_2(-1 * wire_dir);
+	  
+	  //Construct components of equation system M * x = c where M is the coefficient matrix, x the solution and c the const_vector below
+	  TVectorD const_vector(2);
+	  TMatrixD coeff_matrix(2,2);
+	  
+	  const_vector[0] = -(plane_pos.Dot(mom));
+	  const_vector[1] = -(plane_pos.Dot(wire_dir));
+	  
+	  coeff_matrix[0][0] = plane_dir_1.Dot(mom);
+	  coeff_matrix[0][1] = plane_dir_2.Dot(mom);
+	  coeff_matrix[1][0] = plane_dir_1.Dot(wire_dir);
+	  coeff_matrix[1][1] = plane_dir_2.Dot(wire_dir);
+	  
+	  TDecompLU solvable_matrix(coeff_matrix);
+	  TVectorD result(const_vector);
+	  int rc = solvable_matrix.Solve(result);
+	  
+	  TVector3 PCA_track(pos + result[0] * mom);
+	  TVector3 PCA_wire(vbot + result[1] * wire_dir);
+	  */
+	  TVector3 PCA_track=seed->PCA_track(vbot,vtop);
+	  
+	  //////////////
+	  
+	  trajectory.getResults(i, parameters, covariance);
+
+
+	  TVector3 fitpos(parameters[3],parameters[4],0);
+	  fitpos+=PCA_track;
+	  TVector3 fitmom(parameters[1],parameters[2],0);
+	  fitmom+=mom;
+
+	  //fitpos=pos;
+	  //fitmom=mom;
+	  
+	  Double_t zfactor=-(fitpos[2])/(fitmom[2]);
+
+	  TVector3 reference=fitpos+zfactor*fitmom;
+
+	  std::cout << "Hit " << i << " \t" << detID << " \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;	
+	  /*
+	  std::cout << "Hit: " << i << std::endl;
+	  for (unsigned int j = 0; j < parameters.GetNrows(); ++j)
+	    {
+	      std::cout << "Parameter: " << j << " value: " << parameters[j] << std::endl;
+	    }
+	  */
+	}
+	
+	
+	//delete vtop;
+	//delete vbot;
+	//delete pos;
+	//delete mom;
+	//delete PCA_wire;
+	//delete PCA_track;
+	
+      }
+      
+    
+      delete seed;
+    }
+    
   }
 }
 
