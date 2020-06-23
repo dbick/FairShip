@@ -260,14 +260,10 @@ GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
   //front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
   //back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
   tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b1111,0);
-
-  if(all.p<0) return nullptr;
   
   tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b0011,1);
-  if(stereo1.p<0) return nullptr;
   tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,RTRel,0b0011,2);
-  if(stereo2.p<0) return nullptr;
-  
+
   Double_t xslope=-tan(all.alpha);
   Double_t x0=all.p/cos(all.alpha);
   
@@ -280,23 +276,19 @@ GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
   direction.SetXYZ(xslope,yslope,1);
  
   GBL_seed_track *seed=new GBL_seed_track(position, direction);
-  //int view;
+  int view;
 
   TVector3 *vtop=new TVector3();
   TVector3 *vbot=new TVector3();
-
-  //misuse of TVector3 to store hits before sorting by z, stores (z_PCA, detID, radius)
-  std::list<TVector3>hitlist;
-
+  
   for(int ii=0;ii<Digi_MufluxSpectrometerHits.GetSize();ii++){
     hit = &(Digi_MufluxSpectrometerHits[ii]);
 
     surv->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
 
     tangent2d tangent=all;
-
-    int view=GetView(hit->GetDetectorID());
-    if(view!=0){
+    
+    if(int view=GetView(hit->GetDetectorID())!=0){
       Double_t angle = surv->DTSurveyStereoAngle(hit->GetDetectorID());
       vbot->RotateZ(-angle);
       vtop->RotateZ(-angle);
@@ -307,27 +299,13 @@ GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
     
     Double_t xhit=(vtop->x()+vbot->x())/2;
     Double_t zhit=(vtop->z()+vbot->z())/2;
-
-
     
     Double_t track_distance = xhit*cos(tangent.alpha)+zhit*sin(tangent.alpha)-tangent.p;
     Double_t residual = fabs(track_distance)-RTRel.GetRadius(hit->GetDigi());
     if(fabs(residual)<.9&&fabs(track_distance)<2.385){ //2.1 referes to half tube distance... realistic is 1.815, but for pattern reco ok, 4.2-1.815 means that git is not in next tube
-      //seed->add_hit(hit->GetDetectorID(),RTRel.GetRadius(hit->GetDigi()));
-      surv->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
-      TVector3 hitinfo(seed->PCA_track(*vtop,*vbot).Z(),hit->GetDetectorID(),RTRel.GetRadius(hit->GetDigi()));
-      hitlist.push_back(hitinfo);
-      std::cout << "Keeping " << hit->GetDetectorID() << std::endl;
+      seed->add_hit(hit->GetDetectorID(),RTRel.GetRadius(hit->GetDigi()));
     }
-    else std::cout << "Rejecting " << hit->GetDetectorID() << std::endl;
 
-    
-  }
-  
-  hitlist.sort([](TVector3 first, TVector3 second){return first.X() < second.X();});
-
-  for(std::list<TVector3>::iterator it=hitlist.begin();it!=hitlist.end();++it){
-    seed->add_hit(it->Y(),it->Z());
   }
   
 
