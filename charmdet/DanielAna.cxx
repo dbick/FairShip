@@ -547,7 +547,7 @@ void dtPatSeed(TTreeReader *t){
   MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
   
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
-  t->SetEntry(15);
+  t->SetEntry(7);
   {
     //while (t->Next()) {
   
@@ -572,10 +572,6 @@ void dtPatSeed(TTreeReader *t){
 	TVectorT<double> parameters(5);
 	TMatrixTSym<double> covariance(5, 5);
 
-	std::cout << "Number of seedhits: " << hits.size() << " \t Number of GBL points " << trajectory.getNumPoints() << std::endl;
-	
-
-	
 	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
 
 	  Int_t detID=hits[i-1];
