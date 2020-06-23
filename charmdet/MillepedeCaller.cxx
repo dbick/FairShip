@@ -172,7 +172,8 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 		{
 			vector<int> labels_for_tube = calc_labels(MODULE, point.first);
 			double correction_x = (*pede_corrections)[labels_for_tube[0]];
-			double correction_z = (*pede_corrections)[labels_for_tube[2]];
+//			double correction_z = (*pede_corrections)[labels_for_tube[2]];
+			double correction_z = 0;
 
 			vbot[0] = vbot[0] + correction_x;
 			vtop[0] = vtop[0] + correction_x;
@@ -201,11 +202,13 @@ std::vector<gbl::GblPoint> MillepedeCaller::list_hits(const GBL_seed_track* trac
 
 		closest_approach = calc_shortest_distance(vtop,vbot,linear_model[0],linear_model[1],&PCA_wire,&PCA_track);
 
+		/*
 		//reject hit if seed track is too far off the wire
 		if(closest_approach.Mag() > 2.00)
 		{
 			continue;
 		}
+		*/
 
 		TMatrixD* jacobian;
 		if (i != 0)
@@ -495,7 +498,6 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	{
 		cout << "Error, GBL trajectory is invalid." << endl;
 		cerr << "Error, GBL trajectory is invalid." << endl;
-
 		return traj;
 	}
 
@@ -509,6 +511,7 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	cout << "Refit chi2: " << chi2 << " Ndf: " << ndf << endl;
 	cout << "Prob: " << TMath::Prob(chi2,ndf) << endl;
 	print_fitted_residuals(traj);
+	print_fitted_track(traj);
 
 	return traj;
 }
@@ -539,65 +542,23 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 	double chi2, lostweight;
 	int ndf;
 	vector<vector<TVector3>> tracks(n_tracks);
-//	vector<vector<TVector3>> sampled_tracks(0);
-//	sampled_tracks.reserve(n_tracks);
-	double min_slope = 100;
-	double max_slope = -100;
+
 	for(unsigned int i = 0; i < n_tracks; ++i)
 	{
 		//case for boosted tracks
 		tracks[i] = MC_gen_track_boosted();
-		//resampling to generate more homogeneous distribution of slopes
-		//find min and max slope in x:
-//		double slope_x = tracks[i][1][0] / tracks[i][1][2];
-//		min_slope = slope_x < min_slope ? slope_x : min_slope;
-//		max_slope = slope_x > max_slope ? slope_x : max_slope;
-
 //		tracks[i] = MC_gen_track();
 	}
-//	TH1D slopes("slopes","slope distribution",200,min_slope -0.1 * min_slope,max_slope + 0.1 * max_slope);
-//	for(auto track: tracks)
-//	{
-//		double slope = track[1][0] / track[1][2];
-//		slopes.Fill(slope);
-//	}
-//	TH1D sampling_probability(slopes);
-//	sampling_probability.SetNameTitle("prob", "sampling probability");
-//	unsigned int mean_bin_content = (int)(0.01 * slopes[slopes.GetMaximumBin()]); //10 percent of maximum bin content of unsampled slope dist
-//	cout << "Resampling with " << mean_bin_content << " tracks per bin in average" << endl;
-//	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
-//	{
-//		sampling_probability[i] = mean_bin_content / slopes[i];
-//	}
-//	uniform_real_distribution<double> uniform(0,1);
-//	for(auto track: tracks)
-//	{
-//		double p = uniform(m_mersenne_twister);
-//		double slope = track[1][0] / track[1][2];
-//		int bin = sampling_probability.FindBin(slope);
-//		if(p < sampling_probability[bin])
-//		{
-//			sampled_tracks.push_back(track);
-//		}
-//	}
-//	slopes.Draw("slope_dist.pdf");
-//	sampling_probability.Draw("sampling_prob.pdf");
-//
-//	sampled_tracks.shrink_to_fit();
-//	cout << "original sample size: " << tracks.size() << ", sampled size: " << sampled_tracks.size() << endl;
+
+
 	ofstream file("MC_slopes.txt");
 //
-//	//use resampled tracks with different spectral shape
+//	vector<vector<TVector3>> sampled_tracks = resample_tracks(tracks);
 //	tracks = sampled_tracks;
 
 
 	unsigned int fitted = 0;
-	//#pragma omp parallel for
-	MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
-	surv->Init();
-
-	TVector3 lastpos;
-	
+	#pragma omp parallel for
 	for(size_t i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
@@ -610,70 +571,9 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 		GBL_seed_track seed(track,hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
-		gbl::GblTrajectory trajectory = perform_GBL_refit(seed, 350e-4, pede_corrections);
-			
-		if(trajectory.isValid()){
-		  TVectorD localPar(5);
-		  TMatrixDSym localCov(5,5);
-		  
-		  std::vector<int> hits = seed.get_hit_detIDs();
-		  
-		  TVector3 vtop;
-		  TVector3 vbot;
-		  
-		  TVector3 pos=seed.get_position();
-		  TVector3 mom=seed.get_direction();
-		  
-		  
-		  TVectorT<double> parameters(5);
-		  TMatrixTSym<double> covariance(5, 5);
-		  
-		  for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
-		    
-		    Int_t detID=hits[i-1];
-		    surv->TubeEndPointsSurvey(detID, vtop, vbot);
-		    
-		    TVector3 PCA_track=seed.PCA_track(vbot,vtop);
-		    
-		    trajectory.getResults(i, parameters, covariance);
+		perform_GBL_refit(seed, 350e-4, pede_corrections);
 
-		    TVector3 fitpos(parameters[3],parameters[4],0);
-		    fitpos+=PCA_track;
-		    TVector3 fitmom(parameters[1],parameters[2],0);
-		    fitmom+=mom;
-
-		    Double_t zfactor=fitpos.Z()/fitmom.Z();
-		    
-		    TVector3 reference=fitpos-zfactor*fitmom;
-		    
-		    //std::cout << "Hit " << i << " \t" << detID << " \t" << reference.X() << "  \t" << reference.Y() << "  \t" << reference.Z() << std::endl;
-
-		    std::cout << "Hit " << i << " \t" << detID << " \t" << reference.X() << "  \t" << reference.Y() << "  \t" << reference.Z() << " \t" << parameters[1] << " \t" << parameters[2] << "  \t" << parameters[3] << "  \t" << parameters[4] << std::endl;
-
-
-		    //TVector3 diff=PCA_track-lastpos;
-		    TVector3 diff=fitpos-lastpos;
-		    TVector3 normdiff=1./diff.Z()*diff;
-		    TVector3 normmom=1./fitmom.Z()*fitmom;
-
-		    normdiff.Print();
-		    normmom.Print();
-		    TVector3 rat(normdiff.X()/normmom.X(),normdiff.Y()/normmom.Y(),normdiff.Z()/normmom.Z());
-		    rat.Print();
-
-		    //lastpos=PCA_track;
-		    lastpos=fitpos;
-		  }
-
-
-		  
-		}
-		
-     
-	       
-		
-		//up to the next
-		//#pragma omp atomic
+		#pragma omp atomic
 		++fitted;
 	}
 	file.close();
@@ -1137,6 +1037,52 @@ vector<TVector3> MillepedeCaller::MC_gen_track_boosted()
 	vector<TVector3> result = {beginning, end};
 //	cout << "Beg: (" << beginning[0] << "," << beginning[1] << "," << beginning[2] << ")"
 //					<< "End : (" << end[0] << "," << end[1] << "," << end[2] << ")" << endl;
+	return result;
+}
+
+
+vector<vector<TVector3>> MillepedeCaller::resample_tracks(const vector<vector<TVector3>>& tracks)
+{
+	vector<vector<TVector3>> result = {};
+	result.reserve(tracks.size());
+
+	//find min and max slope to define borders of probability histogram
+	double min_slope = 100;
+	double max_slope = -100;
+	for(size_t i = 0; i < tracks.size(); ++i)
+	{
+		double slope_x = tracks[i][1][0] / tracks[i][1][2];
+		min_slope = slope_x < min_slope ? slope_x : min_slope;
+		max_slope = slope_x > max_slope ? slope_x : max_slope;
+	}
+
+	TH1D slopes("slopes","slope distribution",200, 1.1 * min_slope, 1.1 * max_slope);
+	for(auto track: tracks)
+	{
+		double slope = track[1][0] / track[1][2];
+		slopes.Fill(slope);
+	}
+	TH1D sampling_probability(slopes);
+	sampling_probability.SetNameTitle("prob", "sampling probability");
+	unsigned int mean_bin_content = (int)(0.01 * slopes[slopes.GetMaximumBin()]); //10 percent of maximum bin content of unsampled slope dist
+	cout << "Resampling with " << mean_bin_content << " tracks per bin in average" << endl;
+	for(size_t i = 0; i < slopes.GetNbinsX(); ++i)
+	{
+		sampling_probability[i] = mean_bin_content / slopes[i];
+	}
+	uniform_real_distribution<double> uniform(0,1);
+	for(vector<TVector3> track: tracks)
+	{
+		double p = uniform(m_mersenne_twister);
+		double slope = track[1][0] / track[1][2];
+		int bin = sampling_probability.FindBin(slope);
+		if(p < sampling_probability[bin])
+		{
+			result.push_back(track);
+		}
+	}
+	result.shrink_to_fit();
+
 	return result;
 }
 
