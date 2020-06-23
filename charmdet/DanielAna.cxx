@@ -572,6 +572,26 @@ void dtPatSeed(TTreeReader *t){
 	TVectorT<double> parameters(5);
 	TMatrixTSym<double> covariance(5, 5);
 
+	Int_t detID=hits[0];
+	surv->TubeEndPointsSurvey(detID, vtop, vbot);
+	
+	TVector3 PCA_track=seed->PCA_track(vbot,vtop);
+	
+	trajectory.getResults(1, parameters, covariance);
+	
+	TVector3 fitpos(parameters[3],parameters[4],0);
+	fitpos+=PCA_track;
+	TVector3 fitmom(parameters[1],parameters[2],0);
+	fitmom+=mom;
+	
+	Double_t zfactor=-(fitpos[2])/(fitmom[2]);
+	
+	TVector3 reference=fitpos+zfactor*fitmom;
+
+	std::cout << "Track parameters position:  \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;
+	std::cout << "Track parameters direction: \t" << fitmom[0] << " \t" << fitmom[1] << " \t" << fitmom[2] << std::endl;	
+	
+	/*
 	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
 
 	  Int_t detID=hits[i-1];
@@ -591,16 +611,17 @@ void dtPatSeed(TTreeReader *t){
 
 	  TVector3 reference=fitpos+zfactor*fitmom;
 
-	  std::cout << "Hit " << i << " \t" << detID << " \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;	
-	  /*
-	  std::cout << "Hit: " << i << std::endl;
-	  for (unsigned int j = 0; j < parameters.GetNrows(); ++j)
-	    {
-	      std::cout << "Parameter: " << j << " value: " << parameters[j] << std::endl;
-	    }
-	  */
+	  //std::cout << "Hit " << i << " \t" << detID << " \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;	
+
+	  
+	  //std::cout << "Hit: " << i << std::endl;
+	  //for (unsigned int j = 0; j < parameters.GetNrows(); ++j)
+	  //  {
+	  //    std::cout << "Parameter: " << j << " value: " << parameters[j] << std::endl;
+	  //  }
+	  
 	}
-		
+	*/	
       }
       
     
