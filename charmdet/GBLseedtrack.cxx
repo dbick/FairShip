@@ -175,3 +175,37 @@ TVector3 GBL_seed_track::PCA_track(TVector3 vtop, TVector3 vbot){
   //in case PCA_wire is needed: return would be  (vbot + result[1] * wire_dir);
   
 }
+
+
+std::pair<TVector3,TVector3> GBL_seed_track::PCA(TVector3 vtop, TVector3 vbot){
+  TVector3 wire_dir = vtop - vbot;
+  
+  //construct a helper plane that contains one of the straights and is parallel to the other one
+  TVector3 plane_pos = m_position - vbot;
+  TVector3 plane_dir_1(m_direction);
+  TVector3 plane_dir_2(-1 * wire_dir);
+  
+  //Construct components of equation system M * x = c where M is the coefficient matrix, x the solution and c the const_vector below
+  TVectorD const_vector(2);
+  TMatrixD coeff_matrix(2,2);
+  
+  const_vector[0] = -(plane_pos.Dot(m_direction));
+  const_vector[1] = -(plane_pos.Dot(wire_dir));
+  
+  coeff_matrix[0][0] = plane_dir_1.Dot(m_direction);
+  coeff_matrix[0][1] = plane_dir_2.Dot(m_direction);
+  coeff_matrix[1][0] = plane_dir_1.Dot(wire_dir);
+  coeff_matrix[1][1] = plane_dir_2.Dot(wire_dir);
+  
+  TDecompLU solvable_matrix(coeff_matrix);
+  TVectorD result(const_vector);
+  int rc = solvable_matrix.Solve(result);
+  
+  TVector3 track = (m_position + result[0] * m_direction);
+  TVector3 wire = (vbot + result[1] * wire_dir);
+
+  std::pair<TVector3,TVector3> PCA_points(track, wire);
+  
+  return PCA_points;
+  
+}

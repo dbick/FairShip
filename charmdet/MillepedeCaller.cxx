@@ -495,7 +495,8 @@ gbl::GblTrajectory MillepedeCaller::perform_GBL_refit(const GBL_seed_track& trac
 	{
 		cout << "Error, GBL trajectory is invalid." << endl;
 		cerr << "Error, GBL trajectory is invalid." << endl;
-		throw runtime_error("GBL track is invalid");
+
+		return traj;
 	}
 
 	int rc, ndf;
@@ -591,7 +592,12 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 
 	unsigned int fitted = 0;
-	#pragma omp parallel for
+	//#pragma omp parallel for
+	MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+	surv->Init();
+
+	TVector3 lastpos;
+	
 	for(size_t i = 0; i < tracks.size(); ++i)
 	{
 		auto track = tracks[i];
@@ -604,9 +610,70 @@ double MillepedeCaller::MC_GBL_refit(unsigned int n_tracks, double smearing_sigm
 
 		GBL_seed_track seed(track,hits);
 		file << seed.get_direction()[0]/seed.get_direction()[2] << "\t" << seed.get_direction()[1]/seed.get_direction()[2] << endl;
-		perform_GBL_refit(seed, 350e-4, pede_corrections);
+		gbl::GblTrajectory trajectory = perform_GBL_refit(seed, 350e-4, pede_corrections);
+			
+		if(trajectory.isValid()){
+		  TVectorD localPar(5);
+		  TMatrixDSym localCov(5,5);
+		  
+		  std::vector<int> hits = seed.get_hit_detIDs();
+		  
+		  TVector3 vtop;
+		  TVector3 vbot;
+		  
+		  TVector3 pos=seed.get_position();
+		  TVector3 mom=seed.get_direction();
+		  
+		  
+		  TVectorT<double> parameters(5);
+		  TMatrixTSym<double> covariance(5, 5);
+		  
+		  for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
+		    
+		    Int_t detID=hits[i-1];
+		    surv->TubeEndPointsSurvey(detID, vtop, vbot);
+		    
+		    TVector3 PCA_track=seed.PCA_track(vbot,vtop);
+		    
+		    trajectory.getResults(i, parameters, covariance);
 
-		#pragma omp atomic
+		    TVector3 fitpos(parameters[3],parameters[4],0);
+		    fitpos+=PCA_track;
+		    TVector3 fitmom(parameters[1],parameters[2],0);
+		    fitmom+=mom;
+
+		    Double_t zfactor=fitpos.Z()/fitmom.Z();
+		    
+		    TVector3 reference=fitpos-zfactor*fitmom;
+		    
+		    //std::cout << "Hit " << i << " \t" << detID << " \t" << reference.X() << "  \t" << reference.Y() << "  \t" << reference.Z() << std::endl;
+
+		    std::cout << "Hit " << i << " \t" << detID << " \t" << reference.X() << "  \t" << reference.Y() << "  \t" << reference.Z() << " \t" << parameters[1] << " \t" << parameters[2] << "  \t" << parameters[3] << "  \t" << parameters[4] << std::endl;
+
+
+		    //TVector3 diff=PCA_track-lastpos;
+		    TVector3 diff=fitpos-lastpos;
+		    TVector3 normdiff=1./diff.Z()*diff;
+		    TVector3 normmom=1./fitmom.Z()*fitmom;
+
+		    normdiff.Print();
+		    normmom.Print();
+		    TVector3 rat(normdiff.X()/normmom.X(),normdiff.Y()/normmom.Y(),normdiff.Z()/normmom.Z());
+		    rat.Print();
+
+		    //lastpos=PCA_track;
+		    lastpos=fitpos;
+		  }
+
+
+		  
+		}
+		
+     
+	       
+		
+		//up to the next
+		//#pragma omp atomic
 		++fitted;
 	}
 	file.close();

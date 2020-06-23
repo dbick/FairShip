@@ -132,6 +132,12 @@ def patAna():
     f=ROOT.TFile.Open(options.listOfFiles)
     t=ROOT.TTreeReader("cbmsim",f)
     ROOT.dtPatAna(t)
+
+def patSeed():
+    f=ROOT.TFile.Open(options.listOfFiles)
+    t=ROOT.TTreeReader("cbmsim",f)
+    ROOT.dtPatSeed(t)
+
     
 def testEP():
     #m=ROOT.MufluxSpectrometer()
@@ -149,3 +155,4 @@ def testEP():
     
 #localAna()
 #testEP()
+patSeed();

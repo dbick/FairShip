@@ -30,6 +30,7 @@ public:
 
 	void add_hit(int detectorID, double driftradius);
 	TVector3 PCA_track(TVector3 vtop, TVector3 vbot);
+	std::pair<TVector3,TVector3 >PCA(TVector3 vtop, TVector3 vbot);
 
 	
 private:

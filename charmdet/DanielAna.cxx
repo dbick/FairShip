@@ -547,9 +547,11 @@ void dtPatSeed(TTreeReader *t){
   MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
   
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
-  //t->SetEntry(15);
-  //{
-  while (t->Next()) {
+  t->SetEntry(7);
+  {
+    //while (t->Next()) {
+  
+
     GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
     if(seed!=nullptr){
       gbl::GblTrajectory trajectory = mpc->perform_GBL_refit(*seed, 5e-2);
