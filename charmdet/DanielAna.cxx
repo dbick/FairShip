@@ -547,7 +547,7 @@ void dtPatSeed(TTreeReader *t){
   MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
   
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
-  t->SetEntry(7);
+  t->SetEntry(15);
   {
     //while (t->Next()) {
   
@@ -589,7 +589,41 @@ void dtPatSeed(TTreeReader *t){
 	TVector3 reference=fitpos+zfactor*fitmom;
 
 	std::cout << "Track parameters position:  \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;
-	std::cout << "Track parameters direction: \t" << fitmom[0] << " \t" << fitmom[1] << " \t" << fitmom[2] << std::endl;	
+	std::cout << "Track parameters direction: \t" << fitmom[0] << " \t" << fitmom[1] << " \t" << fitmom[2] << std::endl;
+
+	for(int i=0;i<hits.size();i++){
+	  std::cout << hits[i] << std::endl; 
+	}
+	
+	GBL_seed_track *fittrack=new GBL_seed_track(reference,fitmom);
+	for (auto const& tube : surv->TubeList()) {
+	  surv->TubeEndPointsSurvey(tube,vbot,vtop);
+	  
+	  std::pair<TVector3,TVector3> PCA=fittrack->PCA(vbot,vtop);
+
+	  TVector3 vdist=PCA.first-PCA.second;
+	  Double_t dist=vdist.Mag();
+
+	  if(dist<1.85){
+	    //std::cout << tube << " " << dist << std::endl;
+	    bool hit=false;
+	    //Do analysis here
+	    for(int i=0;i<hits.size();i++){
+	      if(hits[i]==tube){
+		hit=true;
+		continue;
+	      }
+	    }
+	    if(hit) std::cout << tube << " check!" << std::endl;
+	    else std::cout << tube << " fail!" << std::endl; 
+	  }
+
+	    
+	}
+	
+
+	delete fittrack;
+	
 	
 	/*
 	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
