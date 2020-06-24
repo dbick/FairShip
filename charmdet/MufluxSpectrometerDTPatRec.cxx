@@ -276,7 +276,6 @@ GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
   direction.SetXYZ(xslope,yslope,1);
  
   GBL_seed_track *seed=new GBL_seed_track(position, direction);
-  int view;
 
   TVector3 *vtop=new TVector3();
   TVector3 *vbot=new TVector3();
@@ -287,8 +286,8 @@ GBL_seed_track *seedtrack(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
     surv->TubeEndPointsSurvey(hit->GetDetectorID(), *vtop, *vbot);
 
     tangent2d tangent=all;
-    
-    if(int view=GetView(hit->GetDetectorID())!=0){
+    int view=GetView(hit->GetDetectorID());
+    if(view!=0){
       Double_t angle = surv->DTSurveyStereoAngle(hit->GetDetectorID());
       vbot->RotateZ(-angle);
       vtop->RotateZ(-angle);
