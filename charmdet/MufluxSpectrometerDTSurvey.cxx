@@ -86,7 +86,8 @@ void MufluxSpectrometerDTSurvey::Init(){
 	  endpoint.bot=reftube.bot+staggering;
 
 	  DTSurveyEndPointMap[DetectorID]=endpoint;
-
+	  DTSurveyDetIDs.push_back(DetectorID);
+	  
 	  /*
 	  std::cout << DetectorID << std::endl;
 	  std::cout << "\t" << endpoint.top.x() << "  \t" << endpoint.bot.x() << std::endl;

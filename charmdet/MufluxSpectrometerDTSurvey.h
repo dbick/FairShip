@@ -2,6 +2,7 @@
 #define MUFLUXSPECTROMETERDTSURVEY_H
 
 #include <map>
+#include <list>
 #include <TVector3.h>
 
 /**
@@ -47,7 +48,8 @@ typedef struct{
 }TubeEndPoints;
 
 
-static std::map<int,TubeEndPoints> DTSurveyEndPointMap; 
+static std::map<int,TubeEndPoints> DTSurveyEndPointMap;
+static std::list<int> DTSurveyDetIDs;
 static bool DTSurveyIsInitialized;
 
 /**
