@@ -38,6 +38,8 @@ MufluxSpectrometerDTSurvey::~MufluxSpectrometerDTSurvey(){}
  *
  */
 void MufluxSpectrometerDTSurvey::Init(){
+
+  if(DTSurveyIsInitialized) return;
   
   TubeEndPoints endpoints;
 
@@ -584,12 +586,14 @@ void MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID, TVector3 
 /**
  * Gives you the position of the wire top and bottom calculated from survey
  *
- * @brief returns position of the wire 
+ * @brief returns position of the wire
  *
  * @param DetectorID ID of the tube in the module
+ * @param vtop position of the top wire end
+ * @param vbot position of the bottom wire end
  *
  * @author Daniel Bick
- * @date June 05, 2020
+ * @date May 20, 2020
  * @version 1.0
  *
  */
@@ -597,6 +601,20 @@ TubeEndPoints MufluxSpectrometerDTSurvey::TubeEndPointsSurvey(Int_t DetectorID){
   return DTSurveyEndPointMap[DetectorID];
 }
 
+
+/**
+ * Returns a list of all detecotr IDs
+ *
+ * @brief Returns a list of all detecotr IDs
+ *
+ * @author Daniel Bick
+ * @date June 24, 2020
+ * @version 1.0
+ *
+ */
+std::list<int>  MufluxSpectrometerDTSurvey::TubeList(){
+  return DTSurveyDetIDs;
+}
 
 
 /**
