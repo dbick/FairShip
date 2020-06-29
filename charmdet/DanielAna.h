@@ -22,6 +22,7 @@ void dtPatAna(TTreeReader *t);
 void dtPatSeed(TTreeReader *t);
 
 bool TriggersGood(TTreeReaderArray <ScintillatorHit> Digi_Triggers);
+bool HitGood(TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits, Int_t DetectorID);
 TH1D *FilterDTSpectrum(TTreeReader *&t);
 
 void PrintSpectrometerHit(MufluxSpectrometerHit &hit);

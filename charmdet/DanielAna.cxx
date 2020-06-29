@@ -747,6 +747,21 @@ bool TriggersGood(TTreeReaderArray <ScintillatorHit> Digi_Triggers){
 }
 
 
+bool HitGood(TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits, Int_t DetectorID){
+
+  int late_n =  Digi_LateMufluxSpectrometerHits.GetSize();
+  for(int j=0;j<late_n;j++){
+    MufluxSpectrometerHit* latehit = &(Digi_LateMufluxSpectrometerHits[j]);
+    if(DetectorID==latehit->GetDetectorID()){
+      if(latehit->GetFlags()!=1){
+	return false;
+      }
+    }
+  }
+  
+  return true;
+}
+  
 TH1D *FilterDTSpectrum(TTreeReader *&t){
   
   
