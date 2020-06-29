@@ -11,6 +11,7 @@
 #include "MufluxSpectrometerRTRelation.h"
 #include "MufluxSpectrometerDTTools.h"
 #include "GBLseedtrack.h"
+#include "MillepedeCaller.h"
 
 
 void helloDaniel();
@@ -19,6 +20,7 @@ void dtAnaChain(TTreeReader *t);
 void dtAnaChain(TTreeReader *t, int event);
 void dtPatAna(TTreeReader *t);
 
+GBL_seed_track *FitGBL(GBL_seed_track *seed, MillepedeCaller *mpc);
 void dtPatSeed(TTreeReader *t);
 
 bool TriggersGood(TTreeReaderArray <ScintillatorHit> Digi_Triggers);
