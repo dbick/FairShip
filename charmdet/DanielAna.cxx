@@ -644,6 +644,8 @@ void dtPatSeed(TTreeReader *t){
       
       std::vector<std::pair<int,double>> seedhits = seed->get_hits() ;
       
+      int nprimary =  Digi_MufluxSpectrometerHits.GetSize();
+      
       for(int i=0;i<seedhits.size();i++){
 	surv->TubeEndPointsSurvey(seedhits[i].first,vbot,vtop);
 	std::pair<TVector3,TVector3> PCA=fittrack->PCA(vbot,vtop);
