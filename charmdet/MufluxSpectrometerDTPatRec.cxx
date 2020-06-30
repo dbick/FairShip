@@ -59,6 +59,8 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
     //int vnb=(hit->GetDetectorID()%10000000)/1000000;
     //if(station>2||station+vnb==2)continue; //only T1/2 no stereo
 
+    if(hit->GetTimeOverThreshold()<40)continue;
+    
     if(GetView(hit->GetDetectorID())!=view)continue;
     if(GetStationB(hit->GetDetectorID())&bin_station==0)continue;
     
@@ -207,7 +209,48 @@ tangent2d SimplePattern2D(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxS
 	      }
 	      tangent.avres/=tangent.closehits;
 	      //we need at least 3 hits for a valid tangent
-	      if(tangent.closehits>2)listoftangents.push_back(tangent);
+	      if(tangent.closehits>2){
+		int npass=0;
+		for (auto const& tube : survey->TubeList()) {
+		  
+		  if(GetView(tube)!=view)continue;
+		  if((GetStationB(tube)&bin_station)==0)continue;
+
+		  
+		  //TVector3 tubeaty0=survey->AtY(tube,0);
+		  TVector3 ttop;
+		  TVector3 tbot;
+		  survey->TubeEndPointsSurvey(tube, ttop, tbot);
+
+
+		  if(view!=0){//this can be done just once before since we only check on view/station
+		    Double_t angle;
+		    if(tube/10000000==1){
+		      if(b_survey) angle = survey->DTSurveyStereoAngle(tube);
+		      else angle=stereo_angle;
+		      tbot.RotateZ(-angle);
+		      ttop.RotateZ(-angle);
+		    }
+		    if(tube/10000000==2){
+		      if(b_survey) angle = survey->DTSurveyStereoAngle(tube);
+		      else angle=-stereo_angle;
+		      tbot.RotateZ(-angle);
+		      ttop.RotateZ(-angle);
+		    }
+		  }
+		  
+
+
+
+		  Double_t xwire=(ttop.x()+tbot.x())/2;
+		  Double_t zwire=(ttop.z()+tbot.z())/2;
+		  
+		  //double dist= tubeaty0.X()*cos(tangent.alpha)+tubeaty0.Z()*sin(tangent.alpha)-tangent.p;
+		  double dist= fabs(xwire*cos(tangent.alpha)+zwire*sin(tangent.alpha)-tangent.p);
+		  if(dist<1.815)npass++;
+		}
+		if(npass<2*tangent.closehits)listoftangents.push_back(tangent);
+	      }
 	      //std::cout << "\t\t\t" << tangent.closehits << " close hits, average " << tangent.avres << std::endl;
 	    }
 	  }
