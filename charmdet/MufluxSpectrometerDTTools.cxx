@@ -368,10 +368,10 @@ void DrawDTTTrackY(TVector3 pos, TVector3 dir, TCanvas *& disp){
   TVector3 dir1=dir;
   TVector3 dir2=dir;
 
-  pos1.RotateZ(beta1);
-  dir1.RotateZ(beta1);
-  pos2.RotateZ(beta2);
-  dir1.RotateZ(beta2);
+  pos1.RotateZ(-beta1);
+  dir1.RotateZ(-beta1);
+  pos2.RotateZ(-beta2);
+  dir1.RotateZ(-beta2);
   
   
   double z1=30;
