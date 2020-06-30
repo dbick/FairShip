@@ -340,7 +340,58 @@ void DrawDTHitsRT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrome
 }
 
 
+void DrawDTTTrackX(TVector3 pos, TVector3 dir, TCanvas *& disp){
 
+  disp->cd();
+
+  double z1=0;
+  double z2=800;
+  double x1=pos.x()+(z1-pos.z())*dir.x()/dir.z();
+  double x2=pos.x()+(z2-pos.z())*dir.x()/dir.z();
+  
+  TLine *track = new TLine(z1,x1,z2,x2);
+  track->Draw();
+
+}
+
+
+void DrawDTTTrackY(TVector3 pos, TVector3 dir, TCanvas *& disp){
+
+  disp->cd();
+
+  MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+  Double_t beta1=surv->DTSurveyStereoAngle(11002001);
+  Double_t beta2=surv->DTSurveyStereoAngle(20002001);
+
+  TVector3 pos1=pos;
+  TVector3 pos2=pos;
+  TVector3 dir1=dir;
+  TVector3 dir2=dir;
+
+  pos1.RotateZ(beta1);
+  dir1.RotateZ(beta1);
+  pos2.RotateZ(beta2);
+  dir1.RotateZ(beta2);
+  
+  
+  double z1=30;
+  double z2=80;
+  double x1=pos1.x()+(z1-pos1.z())*dir1.x()/dir1.z();
+  double x2=pos1.x()+(z2-pos1.z())*dir1.x()/dir1.z();
+  
+  TLine *track1 = new TLine(z1,x1,z2,x2);
+  track1->Draw();
+
+  z1=65;
+  z2=115;
+  x1=pos2.x()+(z1-pos2.z())*dir2.x()/dir2.z();
+  x2=pos2.x()+(z2-pos2.z())*dir2.x()/dir2.z();
+  
+  TLine *track2 = new TLine(z1,x1,z2,x2);
+  track2->Draw();
+
+  
+}
 
 void DrawDTTangent(tangent2d tangent, TCanvas *& disp){
   if(tangent.p<0) return; //ignore invalid hits
