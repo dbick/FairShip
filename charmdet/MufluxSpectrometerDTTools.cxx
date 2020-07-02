@@ -237,6 +237,57 @@ void DrawDTHits(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectromete
   }
 }
 
+void DrawDTHits(std::vector <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits,TCanvas *& disp){
+  
+  disp->cd();
+  
+  Int_t DetectorID;
+  
+  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
+  TVector3 *vtop = new TVector3();
+  TVector3 *vbot = new TVector3();
+    
+  //Draw Hits
+  
+  int n =  Digi_MufluxSpectrometerHits.size();
+  for(int i=0;i<n;i++){
+    MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[i]);
+    DetectorID = hit->GetDetectorID();
+    double radius=2;
+    //if(rtrel) radius = RTRel.GetRadius(hit->GetDigi());
+    
+    int station=DetectorID/10000000;
+    int vnb=(DetectorID%10000000)/1000000;
+    
+    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
+
+    //draw xy projection before rotation
+    if(station<3){
+      TLine *tube = new TLine(-vtop->x()+350,vtop->y(),-vbot->x()+350,vbot->y());
+      if(station+vnb==2)tube->SetLineColor(3+vnb);
+      else tube->SetLineColor(2);
+      tube->Draw();
+    }
+    
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+      
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
+    hitel->SetFillColor(2);
+    if(station+vnb==2)hitel->SetFillColor(3+vnb);
+    hitel->Draw();
+
+  }
+}
+
 
 void DrawDTHitsToT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,TCanvas *& disp){
   
@@ -293,6 +344,60 @@ void DrawDTHitsToT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrom
   }
 }
 
+void DrawDTHitsToT(std::vector <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,TCanvas *& disp){
+  
+  disp->cd();
+  gStyle->SetPalette(kRainBow);
+  
+  Int_t DetectorID;
+  
+  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
+  TVector3 *vtop = new TVector3();
+  TVector3 *vbot = new TVector3();
+    
+  //Draw Hits
+  
+  int n =  Digi_MufluxSpectrometerHits.size();
+  for(int i=0;i<n;i++){
+    MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[i]);
+    DetectorID = hit->GetDetectorID();
+    double radius=2;
+    //if(rtrel) radius = RTRel.GetRadius(hit->GetDigi());
+    
+    int station=DetectorID/10000000;
+    int vnb=(DetectorID%10000000)/1000000;
+    
+    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
+
+    //draw xy projection before rotation
+    /*
+    if(station<3){
+      TLine *tube = new TLine(-vtop->x()+350,vtop->y(),-vbot->x()+350,vbot->y());
+      if(station+vnb==2)tube->SetLineColor(3+vnb);
+      else tube->SetLineColor(2);
+      tube->Draw();
+    }
+    */    
+
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+      
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,2.,2.);
+    //hitel->SetFillColor(gROOT->GetColor(5));
+    //(short)hit->GetTimeOverThreshold()));
+    //if(station+vnb==2)hitel->SetFillColor(3+vnb);
+    hitel->Draw();
+
+  }
+}
 
 
 void DrawDTHitsRT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,MufluxSpectrometerRTRelation &RTRel, TCanvas *& disp){
@@ -340,6 +445,50 @@ void DrawDTHitsRT(TTreeReaderArray <MufluxSpectrometerHit> &Digi_MufluxSpectrome
 }
 
 
+void DrawDTHitsRT(std::vector <MufluxSpectrometerHit> &Digi_MufluxSpectrometerHits,MufluxSpectrometerRTRelation &RTRel, TCanvas *& disp){
+  
+  disp->cd();
+  
+  Int_t DetectorID;
+  
+  MufluxSpectrometer* mySpectrometer= new MufluxSpectrometer();
+  TVector3 *vtop = new TVector3();
+  TVector3 *vbot = new TVector3();
+    
+  //Draw Hits
+  
+  int n =  Digi_MufluxSpectrometerHits.size();
+  for(int i=0;i<n;i++){
+    MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[i]);
+    DetectorID = hit->GetDetectorID();
+    double radius=2;
+    radius = RTRel.GetRadius(hit->GetDigi());
+    
+    int station=DetectorID/10000000;
+    int vnb=(DetectorID%10000000)/1000000;
+    
+    mySpectrometer->TubeEndPoints(DetectorID, *vbot, *vtop);
+
+    if(station+vnb==2){
+      if(station==1){
+	vbot->RotateZ(-60./180*TMath::Pi());
+	vtop->RotateZ(-60./180*TMath::Pi());
+      }
+      if(station==2){
+	vbot->RotateZ(60./180*TMath::Pi());
+	vtop->RotateZ(60./180*TMath::Pi());
+      }
+    }
+    
+    
+    TEllipse *hitel = new TEllipse((vtop->z()+vbot->z())/2,(vtop->x()+vbot->x())/2,radius*2./1.8,radius*2./1.8);
+    hitel->SetFillColor(2);
+    if(station+vnb==2)hitel->SetFillColor(3+vnb);
+    hitel->Draw();
+
+  }
+}
+
 void DrawDTTTrackX(TVector3 pos, TVector3 dir, TCanvas *& disp){
 
   disp->cd();
@@ -350,6 +499,7 @@ void DrawDTTTrackX(TVector3 pos, TVector3 dir, TCanvas *& disp){
   double x2=pos.x()+(z2-pos.z())*dir.x()/dir.z();
   
   TLine *track = new TLine(z1,x1,z2,x2);
+  track->SetLineColor(kMagenta);
   track->Draw();
 
 }
@@ -363,6 +513,9 @@ void DrawDTTTrackY(TVector3 pos, TVector3 dir, TCanvas *& disp){
   Double_t beta1=surv->DTSurveyStereoAngle(11002001);
   Double_t beta2=surv->DTSurveyStereoAngle(20002001);
 
+  beta1=60./180*TMath::Pi();
+  beta2=-60./180*TMath::Pi();
+  
   TVector3 pos1=pos;
   TVector3 pos2=pos;
   TVector3 dir1=dir;
@@ -380,6 +533,7 @@ void DrawDTTTrackY(TVector3 pos, TVector3 dir, TCanvas *& disp){
   double x2=pos1.x()+(z2-pos1.z())*dir1.x()/dir1.z();
   
   TLine *track1 = new TLine(z1,x1,z2,x2);
+  track1->SetLineColor(kMagenta);
   track1->Draw();
 
   z1=65;
@@ -388,6 +542,7 @@ void DrawDTTTrackY(TVector3 pos, TVector3 dir, TCanvas *& disp){
   x2=pos2.x()+(z2-pos2.z())*dir2.x()/dir2.z();
   
   TLine *track2 = new TLine(z1,x1,z2,x2);
+  track2->SetLineColor(kMagenta);
   track2->Draw();
 
   
