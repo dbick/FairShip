@@ -149,30 +149,48 @@ void dtAnaChain(TTreeReader *t, int event){
 
   //t->Restart();
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
+  TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits(*t, "Digi_LateMufluxSpectrometerHits");
   
   
   //t->Next();
   //t->SetEntry(71832);
   //t->SetEntry(2);
   t->SetEntry(event);
+  
+  std::vector<MufluxSpectrometerHit> cleanlist;
+  MufluxSpectrometerHit* hit;
+  for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+    hit = &(Digi_MufluxSpectrometerHits[i]);
     
-  tangent2d front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
+    if(HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())){
+      if( hit->GetTimeOverThreshold() < 167.1 || hit->GetTimeOverThreshold() > 167.3){
+	cleanlist.push_back(Digi_MufluxSpectrometerHits[i]);					     
+      }
+    }
+  }
+  
+  //tangent2d front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
+  tangent2d front = SimplePattern2D(cleanlist,*RTRel,0b0011,0);
 
   TCanvas *fdisp;
   DrawDTGeomT12(fdisp);
-  DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,fdisp);
+  //DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,fdisp);
+  DrawDTHitsRT(cleanlist,*RTRel,fdisp);
   DrawDTTangent(front,fdisp);
 
   
-  tangent2d back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
+  //tangent2d back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
+  tangent2d back = SimplePattern2D(cleanlist,*RTRel,0b1100,0);
 
   TCanvas *bdisp;
   DrawDTGeomT34(bdisp);
-  DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,bdisp);
+  //DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,bdisp);
+  DrawDTHitsRT(cleanlist,*RTRel,bdisp);
   DrawDTTangent(back,bdisp);
 
   
-  tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
+  //tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
+  tangent2d all = SimplePattern2D(cleanlist,*RTRel,0b1111,0);
 
   TCanvas *disp;
   DrawDTGeom(disp);
@@ -190,8 +208,10 @@ void dtAnaChain(TTreeReader *t, int event){
  
   //SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
 
-  tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,1);
-  tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,2);
+  //tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,1);
+  //tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,2);
+  tangent2d stereo1 = SimplePattern2D(cleanlist,*RTRel,0b0011,1);
+  tangent2d stereo2 = SimplePattern2D(cleanlist,*RTRel,0b0011,2);
 
   DrawDTStereoTangent(stereo1,fdisp,1);
   DrawDTStereoTangent(stereo2,fdisp,2);
@@ -242,7 +262,27 @@ void dtAnaChain(TTreeReader *t, int event){
 
   std::cout << "Slope:\t" << yslope << " \t" << yslope1 << " \t" << yslope2 << std::endl;
   std::cout << "Y0:\t" << y0 << " \t" << y01 << " \t" << y02 << std::endl;
+
+
+  //GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+  GBL_seed_track *seed = seedtrack(cleanlist,*RTRel);
   
+  if(seed!=nullptr&&seed->get_number_of_hits()>7){
+    std::cout << "Number of hits in seedtrack: " << seed->get_number_of_hits() << std::endl;        
+    MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
+    GBL_seed_track *fittrack = FitGBL(seed, mpc);
+    if(fittrack!=nullptr){
+      TVector3 pos=fittrack->get_position();
+      TVector3 dir=fittrack->get_direction();
+      DrawDTTTrackX(pos, dir, disp);
+      DrawDTTTrackX(pos, dir, bdisp);
+      DrawDTTTrackX(pos, dir, fdisp);
+      DrawDTTTrackY(pos, dir, fdisp);
+      delete fittrack;
+    }
+    delete mpc;
+    delete seed;
+  }  
   
 }
 
@@ -597,6 +637,7 @@ void dtPatSeed(TTreeReader *t){
  
   
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
+  TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits(*t, "Digi_LateMufluxSpectrometerHits");
   TTreeReaderArray <ScintillatorHit> Digi_Triggers(*t, "Digi_Triggers");
 
 
@@ -609,7 +650,7 @@ void dtPatSeed(TTreeReader *t){
   Double_t distance;
   Double_t drifttime;
   bool hashit;
-  Int_t event=0;
+  Int_t event=-1;
   
   TFit->Branch("DetID",&DetID,"DetID/I");
   TFit->Branch("residual",&residual,"residual/D");
@@ -625,17 +666,65 @@ void dtPatSeed(TTreeReader *t){
   //t->SetEntry(8204);
   //{
   while (t->Next()) {
-    
+    event++;
     std::cout << "Event " << event << std::endl;
 
     if(!TriggersGood(Digi_Triggers)) continue;
     
-    GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+    /*
+    std::vector<MufluxSpectrometerHit> HitsT12X;
+    std::vector<MufluxSpectrometerHit> HitsT1U;
+    std::vector<MufluxSpectrometerHit> HitsT2V;
+    std::vector<MufluxSpectrometerHit> HitsT34X;
+    std::vector<MufluxSpectrometerHit> HitsT1234X;
+
+    MufluxSpectrometerHit* hit;
+    for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+      hit = &(Digi_MufluxSpectrometerHits[i]);
+      
+      if(!HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())) continue;
+      if(hit->GetTimeOverThreshold() > 167.1 && hit->GetTimeOverThreshold() < 167.3) continue;
+
+      Int_t ModID=hit->GetDetectorID()/1e6;
+
+      if(ModID>=30){
+	HitsT1234X.push_back(Digi_MufluxSpectrometerHits[i]);
+	HitsT34X.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==10||ModID==21){
+	HitsT1234X.push_back(Digi_MufluxSpectrometerHits[i]);
+	HitsT12X.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==11){
+	HitsT1U.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==20){
+	HitsT2V.push_back(Digi_MufluxSpectrometerHits[i]);
+      }	
+      
+    }
+    */
+
+    std::vector<MufluxSpectrometerHit> cleanhits;
+    MufluxSpectrometerHit* hit;
+    for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+      hit = &(Digi_MufluxSpectrometerHits[i]);
+      if(!HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())) continue;
+      if(hit->GetTimeOverThreshold() > 167.1 && hit->GetTimeOverThreshold() < 167.3) continue;
+      cleanhits.push_back(Digi_MufluxSpectrometerHits[i]);
+    }
+    
+    //GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+    GBL_seed_track *seed = seedtrack(cleanhits,*RTRel);
+    if(seed==nullptr) continue;
     std::cout << "Number of hits in seedtrack: " << seed->get_number_of_hits() << std::endl;      
     if(seed!=nullptr&&seed->get_number_of_hits()>7){
 
       GBL_seed_track *fittrack = FitGBL(seed, mpc);
-      if(fittrack==nullptr) continue;
+      if(fittrack==nullptr){
+	delete seed;
+	continue;
+      }
       
       std::vector<int> hits = seed->get_hit_detIDs();
       
@@ -654,6 +743,7 @@ void dtPatSeed(TTreeReader *t){
 	distance=vdist.Mag();
 	radius=seedhits[i].second;
 	residual=radius-distance;
+	DetID=seedhits[i].first;
 	
 	drifttime=-1000;
 	for(int p=0;p<nprimary;p++){
@@ -733,7 +823,7 @@ void dtPatSeed(TTreeReader *t){
     
     }
     delete seed;
-    event++;
+   
   
   }
 
