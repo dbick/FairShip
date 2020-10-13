@@ -6,6 +6,7 @@
 #include "TTree.h"
 //includes for GBL fitter from genfit
 #include <vector>
+#include <stdexcept>
 #include "GblPoint.h"
 #include "GblTrajectory.h"
 #include "MilleBinary.h"
@@ -50,8 +51,8 @@ public:
 	MillepedeCaller(const char* out_file_name);
 	virtual ~MillepedeCaller();
 
-	double perform_GBL_refit(const genfit::Track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
-	double perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
+	gbl::GblTrajectory perform_GBL_refit(const genfit::Track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
+	gbl::GblTrajectory perform_GBL_refit(const GBL_seed_track& track, double sigma_spatial, std::map<int,double>* pede_corrections = nullptr, const char* spillname = nullptr);
 	double MC_GBL_refit(unsigned int n_tracks, double smearing_sigma, unsigned int min_hits = 3, std::map<int,double>* pede_corrections = nullptr);
 	void write_resolution_function(const char* filename, const genfit::Track& track, std::vector<MufluxSpectrometerHit>* raw_hits = nullptr) const;
 
@@ -109,6 +110,7 @@ private:
 	 */
 	std::vector<TVector3> MC_gen_track();
 	std::vector<TVector3> MC_gen_track_boosted();
+	std::vector<std::vector<TVector3>> resample_tracks(const std::vector<std::vector<TVector3>>& tracks);
 	std::vector<std::pair<int,double>> MC_gen_clean_hits(const TVector3& start, const TVector3& direction, const std::vector<int>* shifted_det_ids = nullptr);
 	void smear_hits(std::vector<std::pair<int,double>>& unsmeared, const double sigma);
 	TMatrixD* calc_jacobian(const TVector3& PCA_1, const TVector3& PCA_2) const;

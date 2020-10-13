@@ -8,6 +8,8 @@
 #include "MufluxSpectrometerDTTools.h"
 #include "MufluxSpectrometerDTSurvey.h"
 #include "MufluxSpectrometerDTPatRec.h"
+#include "MillepedeCaller.h"
+#include "GblTrajectory.h"
 
 #include "TTreeReaderArray.h"
 #include "TVector3.h"
@@ -147,30 +149,48 @@ void dtAnaChain(TTreeReader *t, int event){
 
   //t->Restart();
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
+  TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits(*t, "Digi_LateMufluxSpectrometerHits");
   
   
   //t->Next();
   //t->SetEntry(71832);
   //t->SetEntry(2);
   t->SetEntry(event);
+  
+  std::vector<MufluxSpectrometerHit> cleanlist;
+  MufluxSpectrometerHit* hit;
+  for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+    hit = &(Digi_MufluxSpectrometerHits[i]);
     
-  tangent2d front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
+    if(HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())){
+      if( hit->GetTimeOverThreshold() < 167.1 || hit->GetTimeOverThreshold() > 167.3){
+	cleanlist.push_back(Digi_MufluxSpectrometerHits[i]);					     
+      }
+    }
+  }
+  
+  //tangent2d front = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,0);
+  tangent2d front = SimplePattern2D(cleanlist,*RTRel,0b0011,0);
 
   TCanvas *fdisp;
   DrawDTGeomT12(fdisp);
-  DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,fdisp);
+  //DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,fdisp);
+  DrawDTHitsRT(cleanlist,*RTRel,fdisp);
   DrawDTTangent(front,fdisp);
 
   
-  tangent2d back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
+  //tangent2d back = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1100,0);
+  tangent2d back = SimplePattern2D(cleanlist,*RTRel,0b1100,0);
 
   TCanvas *bdisp;
   DrawDTGeomT34(bdisp);
-  DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,bdisp);
+  //DrawDTHitsRT(Digi_MufluxSpectrometerHits,*RTRel,bdisp);
+  DrawDTHitsRT(cleanlist,*RTRel,bdisp);
   DrawDTTangent(back,bdisp);
 
   
-  tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
+  //tangent2d all = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
+  tangent2d all = SimplePattern2D(cleanlist,*RTRel,0b1111,0);
 
   TCanvas *disp;
   DrawDTGeom(disp);
@@ -188,8 +208,10 @@ void dtAnaChain(TTreeReader *t, int event){
  
   //SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b1111,0);
 
-  tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,1);
-  tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,2);
+  //tangent2d stereo1 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,1);
+  //tangent2d stereo2 = SimplePattern2D(Digi_MufluxSpectrometerHits,*RTRel,0b0011,2);
+  tangent2d stereo1 = SimplePattern2D(cleanlist,*RTRel,0b0011,1);
+  tangent2d stereo2 = SimplePattern2D(cleanlist,*RTRel,0b0011,2);
 
   DrawDTStereoTangent(stereo1,fdisp,1);
   DrawDTStereoTangent(stereo2,fdisp,2);
@@ -240,7 +262,27 @@ void dtAnaChain(TTreeReader *t, int event){
 
   std::cout << "Slope:\t" << yslope << " \t" << yslope1 << " \t" << yslope2 << std::endl;
   std::cout << "Y0:\t" << y0 << " \t" << y01 << " \t" << y02 << std::endl;
+
+
+  //GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+  GBL_seed_track *seed = seedtrack(cleanlist,*RTRel);
   
+  if(seed!=nullptr&&seed->get_number_of_hits()>7){
+    std::cout << "Number of hits in seedtrack: " << seed->get_number_of_hits() << std::endl;        
+    MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
+    GBL_seed_track *fittrack = FitGBL(seed, mpc);
+    if(fittrack!=nullptr){
+      TVector3 pos=fittrack->get_position();
+      TVector3 dir=fittrack->get_direction();
+      DrawDTTTrackX(pos, dir, disp);
+      DrawDTTTrackX(pos, dir, bdisp);
+      DrawDTTTrackX(pos, dir, fdisp);
+      DrawDTTTrackY(pos, dir, fdisp);
+      delete fittrack;
+    }
+    delete mpc;
+    delete seed;
+  }  
   
 }
 
@@ -528,30 +570,300 @@ void dtPatAna(TTreeReader *t){
 }
 
 
+GBL_seed_track *FitGBL(GBL_seed_track *seed,  MillepedeCaller *mpc){
+  gbl::GblTrajectory trajectory = mpc->perform_GBL_refit(*seed, 5e-2);
+  
+  if(!trajectory.isValid()) return nullptr;
+  
+  TVectorD localPar(5);
+  TMatrixDSym localCov(5,5);
+  
+  std::vector<int> hits = seed->get_hit_detIDs();
+  
+  TVector3 vtop;
+  TVector3 vbot;
+  
+  TVector3 pos=seed->get_position();
+  TVector3 mom=seed->get_direction();
+  
+  
+  TVectorT<double> parameters(5);
+  TMatrixTSym<double> covariance(5, 5);
+  
+  MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
+  Int_t detID=hits[0];
+  surv->TubeEndPointsSurvey(detID, vtop, vbot);
+  delete surv;
+  
+  TVector3 PCA_track=seed->PCA_track(vtop,vbot);
+  
+  trajectory.getResults(1, parameters, covariance);
+  
+  TVector3 fitpos(parameters[3],parameters[4],0);
+  fitpos+=PCA_track;
+  TVector3 fitmom(parameters[1],parameters[2],0);
+  fitmom+=mom;
+  
+  Double_t zfactor=-(fitpos[2])/(fitmom[2]);
+  
+  TVector3 reference=fitpos+zfactor*fitmom;
+  
+  std::cout << "Track parameters position:  \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;
+  std::cout << "Track parameters direction: \t" << fitmom[0] << " \t" << fitmom[1] << " \t" << fitmom[2] << std::endl;
+  
+  GBL_seed_track *fittrack=new GBL_seed_track(reference,fitmom);
+  
+  return fittrack;
+}
 
 void dtPatSeed(TTreeReader *t){
-
+  
   
   MufluxSpectrometerDTSurvey *surv = new MufluxSpectrometerDTSurvey();
   surv->Init();
   Double_t beta1=surv->DTSurveyStereoAngle(11002001);
   Double_t beta2=surv->DTSurveyStereoAngle(20002001);
+
+  MillepedeCaller *mpc= new MillepedeCaller("bla.milleout");
+  TFile *fout=new TFile("seedtest.root","recreate");
   
   TH1D *HDriftTimes = FilterDTSpectrum(t);
 
   MufluxSpectrometerRTRelation *RTRel = new MufluxSpectrometerRTRelation(*HDriftTimes);
 
+  HDriftTimes->Write();
+  RTRel->Write();
 
+ 
+  
   TTreeReaderArray <MufluxSpectrometerHit> Digi_MufluxSpectrometerHits(*t, "Digi_MufluxSpectrometerHits");
-  while (t->Next()) {
-    GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+  TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits(*t, "Digi_LateMufluxSpectrometerHits");
+  TTreeReaderArray <ScintillatorHit> Digi_Triggers(*t, "Digi_Triggers");
 
+
+  TTree *TFit = new TTree("TFit","Fit");
+  TTree *TEff = new TTree("TEff","Efficiency");
+  
+  Int_t DetID;
+  Double_t residual;
+  Double_t radius;
+  Double_t distance;
+  Double_t drifttime;
+  bool hashit;
+  Int_t event=-1;
+  
+  TFit->Branch("DetID",&DetID,"DetID/I");
+  TFit->Branch("residual",&residual,"residual/D");
+  TFit->Branch("radius",&radius,"radius/D");
+  TFit->Branch("distance",&distance,"distance/D");
+  TFit->Branch("drifttime",&drifttime,"drifttime/D");
+  TFit->Branch("event",&event,"event/I");
+  
+  TEff->Branch("DetID",&DetID,"DetID/I");
+  TEff->Branch("distance",&distance,"distance/D");
+  TEff->Branch("hashit",&hashit,"hashit/O");
+
+  //t->SetEntry(8204);
+  //{
+  while (t->Next()) {
+    event++;
+    std::cout << "Event " << event << std::endl;
+
+    if(!TriggersGood(Digi_Triggers)) continue;
+    
+    /*
+    std::vector<MufluxSpectrometerHit> HitsT12X;
+    std::vector<MufluxSpectrometerHit> HitsT1U;
+    std::vector<MufluxSpectrometerHit> HitsT2V;
+    std::vector<MufluxSpectrometerHit> HitsT34X;
+    std::vector<MufluxSpectrometerHit> HitsT1234X;
+
+    MufluxSpectrometerHit* hit;
+    for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+      hit = &(Digi_MufluxSpectrometerHits[i]);
+      
+      if(!HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())) continue;
+      if(hit->GetTimeOverThreshold() > 167.1 && hit->GetTimeOverThreshold() < 167.3) continue;
+
+      Int_t ModID=hit->GetDetectorID()/1e6;
+
+      if(ModID>=30){
+	HitsT1234X.push_back(Digi_MufluxSpectrometerHits[i]);
+	HitsT34X.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==10||ModID==21){
+	HitsT1234X.push_back(Digi_MufluxSpectrometerHits[i]);
+	HitsT12X.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==11){
+	HitsT1U.push_back(Digi_MufluxSpectrometerHits[i]);
+      }
+      else if(ModID==20){
+	HitsT2V.push_back(Digi_MufluxSpectrometerHits[i]);
+      }	
+      
+    }
+    */
+
+    std::vector<MufluxSpectrometerHit> cleanhits;
+    MufluxSpectrometerHit* hit;
+    for(int i=0;i<Digi_MufluxSpectrometerHits.GetSize();i++){
+      hit = &(Digi_MufluxSpectrometerHits[i]);
+      if(!HitGood(Digi_LateMufluxSpectrometerHits, hit->GetDetectorID())) continue;
+      if(hit->GetTimeOverThreshold() > 167.1 && hit->GetTimeOverThreshold() < 167.3) continue;
+      cleanhits.push_back(Digi_MufluxSpectrometerHits[i]);
+    }
+    
+    //GBL_seed_track *seed = seedtrack(Digi_MufluxSpectrometerHits,*RTRel);
+    GBL_seed_track *seed = seedtrack(cleanhits,*RTRel);
+    if(seed==nullptr) continue;
+    std::cout << "Number of hits in seedtrack: " << seed->get_number_of_hits() << std::endl;      
+    if(seed!=nullptr&&seed->get_number_of_hits()>7){
+
+      GBL_seed_track *fittrack = FitGBL(seed, mpc);
+      if(fittrack==nullptr){
+	delete seed;
+	continue;
+      }
+      
+      std::vector<int> hits = seed->get_hit_detIDs();
+      
+      TVector3 vtop;
+      TVector3 vbot;
+      
+      std::vector<std::pair<int,double>> seedhits = seed->get_hits() ;
+      
+      int nprimary =  Digi_MufluxSpectrometerHits.GetSize();
+      
+      for(int i=0;i<seedhits.size();i++){
+	surv->TubeEndPointsSurvey(seedhits[i].first,vbot,vtop);
+	std::pair<TVector3,TVector3> PCA=fittrack->PCA(vbot,vtop);
+	
+	TVector3 vdist=PCA.first-PCA.second;
+	distance=vdist.Mag();
+	radius=seedhits[i].second;
+	residual=radius-distance;
+	DetID=seedhits[i].first;
+	
+	drifttime=-1000;
+	for(int p=0;p<nprimary;p++){
+	  MufluxSpectrometerHit* hit = &(Digi_MufluxSpectrometerHits[p]);
+	  if(hit->GetDetectorID()==seedhits[i].first){
+	    drifttime=hit->GetDigi();
+	    continue;
+	  }
+	}
+	
+	TFit->Fill();
+      }
+      
+      
+      
+      for (auto const& tube : surv->TubeList()) {
+	surv->TubeEndPointsSurvey(tube,vbot,vtop);
+	
+	std::pair<TVector3,TVector3> PCA=fittrack->PCA(vbot,vtop);
+	
+	TVector3 vdist=PCA.first-PCA.second;
+	distance=vdist.Mag();
+	DetID=tube;
+	if(distance<1.85){
+	  hashit=false;
+	  //Do analysis here
+	  for(int i=0;i<hits.size();i++){
+	    if(hits[i]==tube){
+	      hashit=true;
+	      continue;
+	    }
+	  }
+	  TEff->Fill();
+	}
+	
+	
+      }
+      
+      
+      delete fittrack;
+      
+	
+	/*
+	for (unsigned int i = 1; i <= trajectory.getNumPoints(); ++i){
+
+	  Int_t detID=hits[i-1];
+	  surv->TubeEndPointsSurvey(detID, vtop, vbot);
+
+	  TVector3 PCA_track=seed->PCA_track(vbot,vtop);
+	  
+	  trajectory.getResults(i, parameters, covariance);
+
+
+	  TVector3 fitpos(parameters[3],parameters[4],0);
+	  fitpos+=PCA_track;
+	  TVector3 fitmom(parameters[1],parameters[2],0);
+	  fitmom+=mom;
+	  
+	  Double_t zfactor=-(fitpos[2])/(fitmom[2]);
+
+	  TVector3 reference=fitpos+zfactor*fitmom;
+
+	  //std::cout << "Hit " << i << " \t" << detID << " \t" << reference[0] << " \t" << reference[1] << " \t" << reference[2] << std::endl;	
+
+	  
+	  //std::cout << "Hit: " << i << std::endl;
+	  //for (unsigned int j = 0; j < parameters.GetNrows(); ++j)
+	  //  {
+	  //    std::cout << "Parameter: " << j << " value: " << parameters[j] << std::endl;
+	  //  }
+	  
+	}
+	*/	
+	//}
+      
+    
+    
+    }
     delete seed;
+   
+  
   }
+
+
+  fout->Write();
+  delete TEff;
+  delete TFit;
+  delete fout;
 }
 
 
+bool TriggersGood(TTreeReaderArray <ScintillatorHit> Digi_Triggers){
 
+  int trigger_n =  Digi_Triggers.GetSize();
+  for (int i = 0; i < trigger_n; ++i) {
+    ScintillatorHit* thit = &(Digi_Triggers[i]);
+    if(thit->GetFlags()!=1){
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+
+bool HitGood(TTreeReaderArray <MufluxSpectrometerHit> Digi_LateMufluxSpectrometerHits, Int_t DetectorID){
+
+  int late_n =  Digi_LateMufluxSpectrometerHits.GetSize();
+  for(int j=0;j<late_n;j++){
+    MufluxSpectrometerHit* latehit = &(Digi_LateMufluxSpectrometerHits[j]);
+    if(DetectorID==latehit->GetDetectorID()){
+      if(latehit->GetFlags()!=1){
+	return false;
+      }
+    }
+  }
+  
+  return true;
+}
+  
 TH1D *FilterDTSpectrum(TTreeReader *&t){
   
   
@@ -562,8 +874,8 @@ TH1D *FilterDTSpectrum(TTreeReader *&t){
   TTreeReaderArray <ScintillatorHit> Digi_Scintillators(*t, "Digi_Scintillators");
   
   
-  TH1D *HDriftTimes = new TH1D("HDriftTimes","Drift Time Spectrum",3000,-500,2500);
-  TH1D *HToT = new TH1D("HToT","Time Over Threshold",600,0,600);
+  TH1D *HDriftTimes = new TH1D("HDriftTimes","Drift Time Spectrum",3000,-500,2440);
+  TH1D *HToT = new TH1D("HToT","Time Over Threshold",600,0,588);
 
   t->Restart();
   while (t->Next()) {
