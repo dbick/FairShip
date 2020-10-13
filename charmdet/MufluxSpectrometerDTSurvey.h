@@ -69,7 +69,8 @@ class MufluxSpectrometerDTSurvey{
   DTSurveyPoints DTSurveyDistanceToRefTube(Int_t DetectorID);
   TVector3 DTStaggering(Int_t DetectorID);
   void TubeEndPointsSurvey(Int_t DetectorID, TVector3 &vtop, TVector3 &vbot) const;
-
+  TubeEndPoints TubeEndPointsSurvey(Int_t DetectorID);
+  
   Double_t DTSurveyStereoAngle(Int_t DetectorID);
   Double_t DTSurveyTubeLength(Int_t DetectorID);
   TVector3 AtY(Int_t DetectorID, Double_t y);
