@@ -15,8 +15,6 @@ class GBL_seed_track
 {
 public:
 	GBL_seed_track(const genfit::Track& track);
-
-	GBL_seed_track(TVector3 position, TVector3 direction);
 	GBL_seed_track(const std::vector<TVector3>& pos_mom, const std::vector<std::pair<int,double>> hits);
 	GBL_seed_track(TVector3 position, TVector3 direction);
 
